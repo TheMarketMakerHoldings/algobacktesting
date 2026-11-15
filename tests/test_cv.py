@@ -277,3 +277,65 @@ def test_rejects_bad_fold_count(k: int) -> None:
 def test_rejects_bad_cpcv_settings(n_groups: int, k: int) -> None:
     with pytest.raises(ValueError, match=r"n_groups|n_test_groups"):
         combinatorial_purged_cv(np.arange(10.0), np.arange(10.0), n_groups, k)
+
+
+# ---------------------------------------------------------------------------------------
+# 5. Agreement with AFML Snippet 7.3's rules (from a secondary reproduction of the snippet)
+#    Book: keep pre-test rows if label end <= test start; keep post-test rows from the first
+#    row whose start >= the latest test label end, after skipping int(n * pct) rows.
+#    Ours is identical except that exactly-touching labels are purged (closed intervals).
+#    With continuous, tie-free timestamps no label touches exactly, so both must agree.
+# ---------------------------------------------------------------------------------------
+
+
+def _afml_snippet_7_3(
+    starts: np.ndarray, ends: np.ndarray, n_splits: int, pct_embargo: float
+) -> list[list[int]]:
+    n = starts.size
+    h = int(n * pct_embargo)
+    trains = []
+    for fold in np.array_split(np.arange(n), n_splits):
+        t0 = starts[fold[0]]
+        before = [i for i in range(n) if ends[i] <= t0]
+        first_after = int(np.searchsorted(starts, ends[fold].max(), side="left"))
+        after = list(range(first_after + h, n)) if first_after < n else []
+        trains.append(sorted(set(before) | set(after)))
+    return trains
+
+
+@settings(max_examples=200, deadline=None)
+@given(
+    seed=st.integers(0, 100_000),
+    n=st.integers(6, 80),
+    k=st.integers(2, 6),
+    embargo=st.sampled_from([0.0, 0.03, 0.1]),
+)
+def test_matches_afml_snippet_7_3_without_exact_ties(
+    seed: int, n: int, k: int, embargo: float
+) -> None:
+    rng = np.random.default_rng(seed)
+    starts = np.sort(rng.uniform(0, 100, n))
+    ends = starts + rng.exponential(3.0, n)  # continuous: no label touches another exactly
+    k = min(k, n)
+    ours = [s.train.tolist() for s in purged_kfold(starts, ends, k, embargo=embargo)]
+    assert ours == _afml_snippet_7_3(starts, ends, k, embargo)
+
+
+def test_afml_rules_leak_test_rows_with_zero_length_labels() -> None:
+    # Zero-length labels (end == start, e.g. a barrier hit on the entry bar) plus row 4's
+    # label ending exactly at the test start (time 5). Under the AFML rules:
+    #   * "keep if label end <= test start" admits row 4 (touching) AND test row 5 itself;
+    #   * "first row with start >= latest test end (9)" lands on test row 9 itself.
+    # So AFML's training set contains test rows 5 and 9: leakage. Ours never overlaps.
+    starts = np.arange(10.0)
+    ends = starts.copy()
+    ends[4] = 5.0
+    test = purged_kfold(starts, ends, 2)[1].test.tolist()
+    afml = _afml_snippet_7_3(starts, ends, 2, 0.0)[1]
+    ours = purged_kfold(starts, ends, 2)[1].train.tolist()
+    assert test == [5, 6, 7, 8, 9]
+    assert afml == [0, 1, 2, 3, 4, 5, 9]
+    assert set(afml) & set(test) == {5, 9}  # test rows inside AFML's training set
+    assert ours == [0, 1, 2, 3]
+    assert not set(ours) & set(test)
+    assert sorted(set(afml) - {4, 5, 9}) == ours  # otherwise identical

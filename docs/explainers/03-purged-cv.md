@@ -82,6 +82,33 @@ group 3 for no reason. Adjacent test groups (2 and 3) merge into one block.
 | How are folds and groups sized? | Contiguous, sizes differ by at most one row, never shuffled |
 | How are paths assembled? | Path p takes, for each group, the p-th split (in order) that tested that group |
 
+## Review checklist against AFML
+
+The table compares ours with AFML's purged k-fold code (Snippet 7.3) as reproduced in a
+**secondary source** (a published reproduction of the snippet, not the book itself).
+A randomized test (`test_matches_afml_snippet_7_3_without_exact_ties`) confirms the
+training sets are **identical on 200 random datasets** whenever no label touches another
+exactly. Still to do: confirm against the book itself.
+
+| Point | AFML 7.3 (secondary source) | Ours | Effect of the difference |
+| --- | --- | --- | --- |
+| Training rows before the test fold | keep if label end ≤ test start | keep if label end **<** test start | We also drop a label that ends *exactly* at the test start (at most a row or two) |
+| Training rows after the test fold | keep if start ≥ the latest test label end, after the embargo | keep if start **>** that end, after the embargo | Same, at the equality boundary only |
+| Embargo size | `int(n × pct_embargo)` rows | `floor(n × embargo)` rows | Same |
+| Embargo position | right after the test fold's latest label end | same, after purging | Same |
+| Folds | `np.array_split`, no shuffling | same | Same |
+| CPCV paths | C(N−1, k−1) = k·C(N, k)/N | same | Same. As far as recalled, the book gives no code for CPCV, so check the path assembly against its Chapter 12 description |
+
+**A leak in the book's rules, and why we keep closed intervals.** With **zero-length
+labels** (a label that ends on its own start, e.g. a barrier hit on the entry bar of
+daily data), the snippet's rules put *test rows into the training set*:
+- the first test row passes "label end ≤ test start";
+- "first row starting at or after the latest test end" lands on the last test row.
+
+In our test case, AFML trains on test rows 5 and 9. Our closed intervals make that
+impossible: train and test are proven disjoint. So the stricter choice is kept on
+purpose.
+
 ## When it misleads
 
 - **Wrong label end times = wrong purging.** The function trusts the ends you give it.

@@ -23,6 +23,12 @@ then be stitched into C(N-1, k-1) complete backtest paths instead of one.
    reference, not against the book's code. It needs review against AFML before being
    relied on.
 
+   Partial check (2026-11): a secondary reproduction of AFML Snippet 7.3 (``PurgedKFold``)
+   was compared rule by rule and in a 200-case randomized test. On tie-free timestamps the
+   training sets are identical. The only difference is at exactly touching labels, which
+   the snippet keeps and this module purges. With zero-length labels the snippet's rules
+   can place test rows in the training set; closed intervals prevent that.
+
 Conventions (deliberate, documented):
 
 * Label intervals are **closed**: [start, end]. Two labels overlap if they share any
