@@ -19,6 +19,8 @@ import math
 
 import numpy as np
 import pytest
+from hypothesis import given, settings
+from hypothesis import strategies as st
 from numpy.typing import NDArray
 
 from algobacktesting.pbo import (
@@ -289,3 +291,26 @@ def test_rejects_metric_with_wrong_shape() -> None:
 
     with pytest.raises(ValueError, match="3 finite numbers"):
         probability_of_backtest_overfitting(np.ones((32, 3)), 4, metric=bad_metric)
+
+
+# ---------------------------------------------------------------------------------------
+# 5. Invariances: transformations that must not change the answer
+# ---------------------------------------------------------------------------------------
+
+
+@settings(max_examples=25, deadline=None)
+@given(seed=st.integers(0, 10_000), scale=st.floats(0.01, 100.0))
+def test_pbo_invariances(seed: int, scale: float) -> None:
+    rng = np.random.default_rng(seed)
+    x = rng.normal(0.001, 0.01, size=(96, 7))
+    base = probability_of_backtest_overfitting(x, 8)
+    assert 0.0 <= base.pbo <= 1.0
+    assert np.all((base.relative_ranks > 0) & (base.relative_ranks < 1))
+    # Relabelling the strategies (column order) changes nothing.
+    shuffled = probability_of_backtest_overfitting(x[:, rng.permutation(7)], 8)
+    assert shuffled.pbo == base.pbo
+    assert np.array_equal(shuffled.logits, base.logits)
+    # The Sharpe ratio ignores position size, so scaling every strategy changes nothing.
+    scaled = probability_of_backtest_overfitting(x * scale, 8)
+    assert scaled.pbo == base.pbo
+    assert np.allclose(scaled.is_performance, base.is_performance, rtol=1e-9)

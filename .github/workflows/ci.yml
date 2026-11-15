@@ -29,8 +29,20 @@ jobs:
         run: uv run ruff format --check .
       - name: Types
         run: uv run mypy src tests
-      - name: Tests
-        run: uv run pytest --cov --cov-report=term-missing
+      - name: Tests (100% coverage required)
+        run: uv run pytest --cov --cov-report=term-missing --cov-fail-under=100
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - name: Build sdist and wheel
+        run: uv build
+      - name: Install the wheel in a clean environment and use it
+        run: >
+          uv run --isolated --no-project --with dist/*.whl python -c
+          "import algobacktesting as a; assert round(a.expected_max_sharpe(100, 1/500), 4) == 0.1132"
 
   secret-scan:
     runs-on: ubuntu-latest

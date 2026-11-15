@@ -1,0 +1,44 @@
+# Publishes to PyPI when a version tag (e.g. v0.1.0) is pushed.
+# Uses PyPI "trusted publishing": no API token is stored anywhere. Before the first
+# release, the maintainer must register this repository + workflow + environment "pypi"
+# as a trusted publisher in the PyPI project settings.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+      - run: uv sync --locked
+      - name: Full test suite
+        run: uv run pytest --cov --cov-fail-under=100
+      - name: Tag must match the package version
+        run: |
+          version="$(uv run python -c 'import algobacktesting; print(algobacktesting.__version__)')"
+          test "${GITHUB_REF_NAME#v}" = "$version" || { echo "tag $GITHUB_REF_NAME != $version"; exit 1; }
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # required for trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
