@@ -80,7 +80,12 @@ def return_stats(returns: ArrayLike) -> ReturnStats:
     (1.8974, 5, 0.0, 1.7)
 
     """
-    x = np.asarray(returns, dtype=float).ravel()
+    x = np.asarray(returns, dtype=float)
+    if x.ndim != 1:
+        raise ValueError(
+            f"returns must be a single 1-D series, got shape {x.shape}; "
+            "for several strategies, call this once per column"
+        )
     if x.size < 2:
         raise ValueError("need at least 2 returns")
     if not np.all(np.isfinite(x)):
@@ -111,6 +116,8 @@ def annualize_sharpe(sharpe: float, periods_per_year: float) -> float:
     1.585
 
     """
+    _require_finite(sharpe=sharpe)
+    _require_positive_periods(periods_per_year)
     return sharpe * math.sqrt(periods_per_year)
 
 
@@ -121,16 +128,48 @@ def deannualize_sharpe(annual_sharpe: float, periods_per_year: float) -> float:
     0.1581
 
     """
+    _require_finite(annual_sharpe=annual_sharpe)
+    _require_positive_periods(periods_per_year)
     return annual_sharpe / math.sqrt(periods_per_year)
 
 
+def _require_finite(**values: float) -> None:
+    for name, value in values.items():
+        if not math.isfinite(value):
+            raise ValueError(f"{name} must be a finite number, got {value!r}")
+
+
+def _require_positive_periods(periods_per_year: float) -> None:
+    if not (math.isfinite(periods_per_year) and periods_per_year > 0):
+        raise ValueError(f"periods_per_year must be positive, got {periods_per_year!r}")
+
+
+def _check_moments(skew: float, kurtosis: float) -> None:
+    """Reject moment pairs no distribution can have (Pearson: kurtosis >= 1 + skew^2).
+
+    The most common way to break this is passing *excess* kurtosis (Normal = 0) where raw
+    kurtosis (Normal = 3) is expected.
+    """
+    _require_finite(skew=skew, kurtosis=kurtosis)
+    if kurtosis < 1.0 + skew**2 - 1e-9:
+        raise ValueError(
+            f"impossible moments: kurtosis {kurtosis} < 1 + skew^2 = {1 + skew**2:.6g}. "
+            "kurtosis must be raw (Normal = 3); did you pass excess kurtosis?"
+        )
+
+
 def _sharpe_dispersion(sharpe: float, skew: float, kurtosis: float) -> float:
-    """Return sqrt(1 - skew*SR + (kurtosis-1)/4 * SR^2), the PSR denominator's shape term."""
+    """Return sqrt(1 - skew*SR + (kurtosis-1)/4 * SR^2), the PSR denominator's shape term.
+
+    With valid moments (kurtosis >= 1 + skew^2) the radicand is at least
+    (1 - skew*SR/2)^2 >= 0, so it can only reach zero on that boundary.
+    """
+    _check_moments(skew, kurtosis)
     value = 1.0 - skew * sharpe + (kurtosis - 1.0) / 4.0 * sharpe**2
     if value <= 0.0:
         raise ValueError(
-            "skew/kurtosis/Sharpe combination gives a non-positive variance; "
-            "check that kurtosis is raw (Normal = 3), not excess"
+            "skew, kurtosis and Sharpe ratio give a zero standard error "
+            "(a degenerate two-point distribution); PSR is undefined"
         )
     return math.sqrt(value)
 
@@ -168,6 +207,7 @@ def probabilistic_sharpe_ratio(
     0.982
 
     """
+    _require_finite(sharpe=sharpe, n_obs=n_obs, benchmark=benchmark)
     if n_obs < 2:
         raise ValueError("n_obs must be at least 2")
     z = (sharpe - benchmark) * math.sqrt(n_obs - 1) / _sharpe_dispersion(sharpe, skew, kurtosis)
@@ -184,10 +224,16 @@ def expected_max_sharpe(n_trials: float, sharpe_variance: float) -> float:
         SR0 = sqrt(V) * ( (1 - g) * Z^-1[1 - 1/N] + g * Z^-1[1 - 1/(N e)] )
 
     where g is the Euler-Mascheroni constant. The approximation slightly overestimates the
-    exact expected maximum for small N and converges as N grows ([BLdP2014] A.2).
+    exact expected maximum for N >= 10 and converges as N grows ([BLdP2014] A.2).
+
+    The closed form is an approximation for large N. Between 1 and 2 trials it is not
+    usable (it turns negative near N = 1, which would *reward* selection), so a
+    fractional N in that range is rejected: pass 1 for "no selection" or N >= 2.
+    ``Z^-1[1 - p]`` is evaluated as ``-Z^-1[p]`` so very large N stays accurate.
 
     Args:
-        n_trials: Number of independent strategy configurations tried (N >= 1).
+        n_trials: Number of independent strategy configurations tried: exactly 1, or at
+            least 2 (may be fractional, e.g. an effective number of trials).
         sharpe_variance: Variance of the Sharpe ratios across those trials (V), in the
             same per-period units as the Sharpe ratio it will be compared against.
 
@@ -195,16 +241,21 @@ def expected_max_sharpe(n_trials: float, sharpe_variance: float) -> float:
     0.1132
 
     """
+    _require_finite(n_trials=n_trials, sharpe_variance=sharpe_variance)
     if n_trials < 1:
         raise ValueError("n_trials must be at least 1")
+    if 1 < n_trials < 2:
+        raise ValueError(
+            "n_trials between 1 and 2 is outside the closed form's valid range "
+            "(it turns negative near 1); use 1 for no selection or a value >= 2"
+        )
     if sharpe_variance < 0:
         raise ValueError("sharpe_variance cannot be negative")
     if n_trials == 1:
         return 0.0  # a single trial involves no selection, so no selection bias
     g = EULER_GAMMA
-    return math.sqrt(sharpe_variance) * (
-        (1 - g) * _NORMAL.inv_cdf(1 - 1 / n_trials)
-        + g * _NORMAL.inv_cdf(1 - 1 / (n_trials * math.e))
+    return math.sqrt(sharpe_variance) * -(
+        (1 - g) * _NORMAL.inv_cdf(1 / n_trials) + g * _NORMAL.inv_cdf(1 / (n_trials * math.e))
     )
 
 
@@ -277,6 +328,7 @@ def min_track_record_length(
     2.73
 
     """
+    _require_finite(sharpe=sharpe, benchmark=benchmark, confidence=confidence)
     if not 0.5 <= confidence < 1.0:
         raise ValueError("confidence must be at least 0.5 and below 1")
     if sharpe <= benchmark:

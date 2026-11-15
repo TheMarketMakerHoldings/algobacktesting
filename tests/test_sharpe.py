@@ -280,7 +280,7 @@ kurts = st.floats(1.0, 20.0)
 @given(sr=sharpes, gap=st.floats(0.005, 1.0), skew=skews, kurt=kurts, conf=st.floats(0.5, 0.999))
 def test_min_trl_inverts_psr(sr: float, gap: float, skew: float, kurt: float, conf: float) -> None:
     # Eq. (13) is Eq. (11) solved for n: PSR at n = MinTRL equals the confidence level.
-    assume(1 - skew * sr + (kurt - 1) / 4 * sr**2 > 1e-6)
+    assume(kurt >= 1 + skew**2 and 1 - skew * sr + (kurt - 1) / 4 * sr**2 > 1e-6)
     n = min_track_record_length(sr, benchmark=sr - gap, skew=skew, kurtosis=kurt, confidence=conf)
     assert n >= 1.0
     assume(n >= 2)  # PSR needs at least 2 observations to estimate a Sharpe ratio
@@ -295,7 +295,7 @@ def test_min_trl_is_one_observation_at_fifty_percent() -> None:
 
 @given(sr=st.floats(-1.0, 1.0), n=st.integers(2, 10_000), skew=skews, kurt=kurts)
 def test_psr_is_one_half_at_the_benchmark(sr: float, n: int, skew: float, kurt: float) -> None:
-    assume(1 - skew * sr + (kurt - 1) / 4 * sr**2 > 1e-6)
+    assume(kurt >= 1 + skew**2 and 1 - skew * sr + (kurt - 1) / 4 * sr**2 > 1e-6)
     psr = probabilistic_sharpe_ratio(sr, n, benchmark=sr, skew=skew, kurtosis=kurt)
     assert psr == pytest.approx(0.5)
 
@@ -354,10 +354,80 @@ def test_psr_rejects_too_few_observations() -> None:
         probabilistic_sharpe_ratio(0.1, 1)
 
 
-def test_psr_rejects_impossible_moments() -> None:
-    # 1 - 10*1 + ... < 0: usually means excess kurtosis or a wrong-units Sharpe was passed
-    with pytest.raises(ValueError, match="non-positive variance"):
-        probabilistic_sharpe_ratio(1.0, 100, skew=10.0, kurtosis=3.0)
+@pytest.mark.parametrize(
+    ("skew", "kurtosis"),
+    [
+        (0.0, 0.0),  # excess kurtosis of a Normal passed by mistake
+        (0.0, 0.5),
+        (2.0, 3.0),  # kurtosis 3 is impossible with skew 2 (needs >= 5)
+        (10.0, 3.0),
+    ],
+)
+def test_impossible_moments_rejected(skew: float, kurtosis: float) -> None:
+    # Pearson's inequality: every distribution has kurtosis >= 1 + skew^2.
+    with pytest.raises(ValueError, match="impossible moments"):
+        probabilistic_sharpe_ratio(0.1, 100, skew=skew, kurtosis=kurtosis)
+    with pytest.raises(ValueError, match="impossible moments"):
+        min_track_record_length(0.1, skew=skew, kurtosis=kurtosis)
+
+
+def test_moments_on_the_pearson_boundary_are_allowed() -> None:
+    # The DSR paper's own example sits exactly on the boundary: skew -3, kurtosis 10.
+    assert 0.0 < probabilistic_sharpe_ratio(0.1, 100, skew=-3.0, kurtosis=10.0) < 1.0
+
+
+def test_degenerate_zero_standard_error_rejected() -> None:
+    # skew 2, kurtosis 5 (boundary) and SR 1: 1 - 2*1 + (5-1)/4*1 = 0
+    with pytest.raises(ValueError, match="zero standard error"):
+        probabilistic_sharpe_ratio(1.0, 100, skew=2.0, kurtosis=5.0)
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda: probabilistic_sharpe_ratio(float("nan"), 100),
+        lambda: probabilistic_sharpe_ratio(0.1, float("nan")),
+        lambda: probabilistic_sharpe_ratio(0.1, 100, benchmark=float("inf")),
+        lambda: probabilistic_sharpe_ratio(0.1, 100, skew=float("nan")),
+        lambda: expected_max_sharpe(float("nan"), 1.0),
+        lambda: expected_max_sharpe(10, float("nan")),
+        lambda: min_track_record_length(float("nan")),
+        lambda: annualize_sharpe(float("inf"), 12),
+    ],
+)
+def test_non_finite_inputs_rejected(call: object) -> None:
+    assert callable(call)
+    with pytest.raises(ValueError, match="finite"):
+        call()
+
+
+@pytest.mark.parametrize("n", [1.0001, 1.3, 1.5, 1.999])
+def test_sr0_rejects_between_one_and_two_trials(n: float) -> None:
+    # The closed form turns negative near N = 1 (-0.78 at N = 1.01 before this guard),
+    # which would turn the selection penalty into a bonus.
+    with pytest.raises(ValueError, match="between 1 and 2"):
+        expected_max_sharpe(n, 1.0)
+
+
+def test_sr0_accurate_for_huge_trial_counts() -> None:
+    # Evaluated as -Z^-1[1/N]: stays finite and increasing far beyond where 1 - 1/N == 1.0
+    values = [expected_max_sharpe(n, 1.0) for n in (1e6, 1e12, 1e17, 1e100, 1e300)]
+    assert all(math.isfinite(v) for v in values)
+    assert values == sorted(values)
+
+
+def test_return_stats_rejects_a_matrix() -> None:
+    # Previously flattened a (T, N) matrix into one series without complaint.
+    with pytest.raises(ValueError, match="1-D series"):
+        return_stats(np.ones((3, 2)))
+
+
+@pytest.mark.parametrize("ppy", [0, -12, float("nan")])
+def test_bad_periods_per_year_rejected(ppy: float) -> None:
+    with pytest.raises(ValueError, match="periods_per_year"):
+        annualize_sharpe(0.1, ppy)
+    with pytest.raises(ValueError, match="periods_per_year"):
+        deannualize_sharpe(1.0, ppy)
 
 
 def test_sr0_rejects_bad_input() -> None:

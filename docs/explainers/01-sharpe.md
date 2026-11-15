@@ -81,6 +81,24 @@ data with typical hedge-fund skew and kurtosis.
   - (The paper also claims the error falls to 0.006 by 1,000 trials. Exact math says 0.014.
     This doesn't change the formula, just one sentence of the paper's commentary.)
 
+## Guard rails we added after a flaw hunt
+
+These inputs used to give quietly wrong answers. They now raise a clear error.
+
+- **Excess kurtosis by mistake.** Every distribution satisfies *kurtosis ≥ 1 + skew²*
+  (Pearson's inequality). Passing excess kurtosis (Normal = 0) almost always breaks that
+  bound, so the library now rejects it instead of returning a slightly wrong PSR.
+  - Bonus fact for interviews: inside that bound, PSR's denominator is at least
+    (1 − skew·SR/2)², so it can never go negative.
+- **Between 1 and 2 trials.** The SR0 formula is a large-N approximation. Near N = 1 it
+  turned *negative* (−0.78 at N = 1.01), which would reward you for selecting. Now: pass
+  exactly 1 (no selection) or at least 2.
+- **NaN or infinite inputs** are rejected instead of producing NaN.
+- **Passing a table of several strategies to `return_stats`** used to blend them into one
+  series. Now it must be a single series.
+- **Very large N** (like 10¹⁷) used to crash. The formula is now evaluated in a
+  numerically stable form.
+
 ## When it misleads
 
 - **N must count *independent* trials.** Twenty near-identical parameter tweaks are closer
