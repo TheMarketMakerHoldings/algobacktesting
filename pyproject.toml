@@ -60,7 +60,7 @@ strict = true
 python_version = "3.11"
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "src"]
 addopts = "-ra --strict-markers --doctest-modules --import-mode=importlib"
 pythonpath = ["src"]
 
