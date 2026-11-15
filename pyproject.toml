@@ -1,0 +1,69 @@
+[project]
+name = "algobacktesting"
+version = "0.1.0"
+description = "Is your backtest real? Deflated Sharpe Ratio, Probability of Backtest Overfitting, and purged cross-validation for trading research."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Daniel Heidary" }]
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.26"]
+keywords = [
+    "backtesting",
+    "overfitting",
+    "deflated sharpe ratio",
+    "probability of backtest overfitting",
+    "quantitative finance",
+    "cross-validation",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Office/Business :: Financial :: Investment",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Repository = "https://github.com/TheMarketMakerHoldings/algobacktesting"
+
+[build-system]
+requires = ["uv_build>=0.11.16,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "hypothesis>=6.170.15",
+    "mypy>=2.4.1",
+    "pre-commit>=4.7.0",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.5",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "RUF", "N", "D", "NPY", "PT", "ANN"]
+ignore = ["D203", "D213", "D105", "D107"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D", "ANN", "S101"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --doctest-modules --import-mode=importlib"
+pythonpath = ["src"]
+
+[tool.coverage.run]
+source = ["algobacktesting"]
+branch = true
