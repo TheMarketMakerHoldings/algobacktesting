@@ -9,3 +9,5 @@ Ideas that are deliberately **not** in v0.1. Nothing here gets built until v0.1.
 - A False Strategy Theorem simulator.
 - pandas and scikit-learn adapters (optional extras, never required).
 - An example notebook on real futures data (local only; licensed data is never published).
+- Stochastic dominance analysis for PBO (first- and second-order), from the PBO
+  paper Section 3.3.
