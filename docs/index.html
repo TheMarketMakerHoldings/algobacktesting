@@ -265,6 +265,7 @@ footer { margin-top: 48px; border-top: 1px solid var(--rule); padding-block: 22p
           <p>The check measures how far your average result stands above zero, relative to how much your trades swing, and how unusual that would be for someone with no edge.</p>
           <p>Then it asks what the <strong>best of several no-edge setups</strong> would look like, and holds your results to that standard instead.</p>
           <p>The method is the Probabilistic and Deflated Sharpe Ratio of Bailey and López de Prado (2012, 2014). This page assumes the setups you tried were independent and tested on a similar number of trades. Treat results from fewer than 30 trades as rough.</p>
+          <p>We tested it on simulated traders with <strong>no edge at all</strong>. With one setup it wrongly called the edge proven about 5% of the time, as intended. With five or more setups it did so about 1% of the time or less.</p>
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
@@ -416,6 +417,15 @@ function tradesNeeded(stats, nTrials, confidence) {
 (function () {
   var W = 640, H = 250, M = { l: 46, r: 18, t: 14, b: 36 };
   var PW = W - M.l - M.r, PH = H - M.t - M.b;
+  // Phones get a narrower drawing so the axis labels stay readable instead of shrinking.
+  function layout() {
+    var narrow = chart.clientWidth > 0 && chart.clientWidth < 480;
+    W = narrow ? 360 : 640;
+    H = narrow ? 240 : 250;
+    PW = W - M.l - M.r;
+    PH = H - M.t - M.b;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  }
   var EXAMPLE = [140, -80, 95, -80, -80, 210, -75, 160, -80, 120, -80, -80, 185, 90, -80, -70, 230, -80, 110, -80,
                  -80, 150, -80, 175, 60, -80, -80, 205, -80, 130, -80, 95, -80, -80, 190, -80, 145, -75, -80, 220];
   function $(id) { return document.getElementById(id); }
@@ -465,6 +475,7 @@ function tradesNeeded(stats, nTrials, confidence) {
   function y(v) { return M.t + (1 - v) * PH; }
 
   function draw(s) {
+    layout();
     var parts = [], i;
     [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
       parts.push('<line class="grid-line" x1="' + M.l + '" x2="' + (W - M.r) + '" y1="' + y(v) + '" y2="' + y(v) + '"/>');
@@ -578,6 +589,7 @@ function tradesNeeded(stats, nTrials, confidence) {
     update();
   });
   $("calc").addEventListener("input", update);
+  window.addEventListener("resize", function () { if (view) draw(view); });
   $("calc").addEventListener("submit", function (ev) { ev.preventDefault(); });
   update();
 })();

@@ -405,7 +405,7 @@ papers' numbers, and E3 matters for small, odd N.
 The code, tests and this report are in the `algobacktesting` repository.
 
 - `uv run python docs/paper/reproduce_numbers.py` regenerates every number above.
-- `uv run pytest` runs 159 tests, including every paper target. Line and branch coverage
+- `uv run pytest` runs 168 tests, including every paper target. Line and branch coverage
   is 100%, measured on Python 3.12, and the tests pass on 3.11, 3.12 and 3.14.
 
 ## References
