@@ -3,13 +3,24 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>algobacktesting</title>
+<title>Are you actually profitable, or just lucky? · algobacktesting</title>
 <meta name="description" content="Are you actually profitable, or just lucky? Enter your trading results and see how likely it is that your edge is real.">
+<link rel="canonical" href="https://themarketmakerholdings.github.io/algobacktesting/">
+<meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0f15" media="(prefers-color-scheme: dark)">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="algobacktesting">
+<meta property="og:url" content="https://themarketmakerholdings.github.io/algobacktesting/">
 <meta property="og:title" content="Are you actually profitable, or just lucky?">
 <meta property="og:description" content="Enter your win rate and number of trades. See how likely it is that your edge is real, and how many more trades it would take to prove it.">
-<meta name="twitter:card" content="summary">
+<meta property="og:image" content="https://themarketmakerholdings.github.io/algobacktesting/social-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Are you actually profitable, or just lucky? A free check for traders.">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1422'/%3E%3Cpath d='M6 23c8 0 8-13 20-13' fill='none' stroke='%233987e5' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='15' cy='17' r='3.2' fill='%233987e5'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* Layout: one 1040px column. The hero is the instrument itself: your results on the left,
@@ -19,9 +30,11 @@
   --surface: #ffffff;
   --ink: #0f1422;
   --ink-2: #4b5466;
-  --muted: #7c8494;
+  --muted: #687080;
+  --field: #858d9c;
   --rule: #dde2ea;
   --accent: #2a78d6;
+  --link: #1f6bc7;
   --accent-soft: #e6effb;
   --good: #0ca30c;
   --good-ink: #006300;
@@ -35,14 +48,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0c0f15; --surface: #141922; --ink: #eef1f6; --ink-2: #b7bfcc; --muted: #8891a0;
-    --rule: #262e3b; --accent: #3987e5; --accent-soft: #16263d; --good: #0ca30c;
+    --rule: #262e3b; --field: #687182; --accent: #3987e5; --link: #3987e5; --accent-soft: #16263d; --good: #0ca30c;
     --good-ink: #57cf57; --crit: #d03b3b; --crit-ink: #f29393; --code-bg: #06080c;
     --code-ink: #e8ecf3; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0c0f15; --surface: #141922; --ink: #eef1f6; --ink-2: #b7bfcc; --muted: #8891a0;
-  --rule: #262e3b; --accent: #3987e5; --accent-soft: #16263d; --good: #0ca30c;
+  --rule: #262e3b; --field: #687182; --accent: #3987e5; --link: #3987e5; --accent-soft: #16263d; --good: #0ca30c;
   --good-ink: #57cf57; --crit: #d03b3b; --crit-ink: #f29393; --code-bg: #06080c;
   --code-ink: #e8ecf3; color-scheme: dark;
 }
@@ -62,7 +75,7 @@ body {
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-a { color: var(--accent); text-underline-offset: 0.18em; }
+a { color: var(--link); text-underline-offset: 0.18em; }
 a:focus-visible, input:focus-visible, button:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -102,10 +115,10 @@ p { margin: 0; }
 .field output { font: 500 0.95rem var(--font-data); font-variant-numeric: tabular-nums; }
 input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
 textarea {
-  width: 100%; min-height: 150px; resize: vertical; padding: 10px 12px; border: 1px solid var(--rule);
+  width: 100%; min-height: 150px; resize: vertical; padding: 10px 12px; border: 1px solid var(--field);
   border-radius: 8px; background: var(--bg); color: var(--ink); font: 400 0.9rem/1.45 var(--font-data);
 }
-.link-button { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--accent); font: 500 0.88rem var(--font-body); text-decoration: underline; text-underline-offset: 0.18em; cursor: pointer; }
+.link-button { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--link); font: 500 0.88rem var(--font-body); text-decoration: underline; text-underline-offset: 0.18em; cursor: pointer; }
 .divider { border-top: 1px solid var(--rule); padding-top: 16px; }
 .hint { font-size: 0.8rem; color: var(--ink-2); }
 .error { font-size: 0.85rem; color: var(--crit-ink); }
@@ -182,6 +195,8 @@ footer { margin-top: 48px; border-top: 1px solid var(--rule); padding-block: 22p
       <p class="lede">A winning record can be luck, especially if you tried a few setups before this one. Enter your results to see how likely it is that your edge is real, and how many more trades it would take to prove it.</p>
     </div>
 
+    <noscript><p class="error">This page needs JavaScript to work out your result. Nothing you enter leaves your browser.</p></noscript>
+
     <div class="instrument">
       <form class="controls" id="calc" autocomplete="off">
         <div class="modes" role="group" aria-label="How to enter your results">
@@ -223,11 +238,11 @@ footer { margin-top: 48px; border-top: 1px solid var(--rule); padding-block: 22p
       </form>
 
       <div class="readout">
-        <div>
+        <div role="status">
           <div class="eyebrow">Chance your edge is real</div>
           <div class="verdict-row">
             <span class="big" id="out-prob">46%</span>
-            <span class="pill fail" id="out-verdict">✕ Could easily be luck</span>
+            <span class="pill fail" id="out-verdict"><span aria-hidden="true">✕</span> Could easily be luck</span>
           </div>
         </div>
         <dl class="facts">
@@ -238,7 +253,7 @@ footer { margin-top: 48px; border-top: 1px solid var(--rule); padding-block: 22p
         <figure>
           <figcaption>How the answer changes as you log more trades at the same results</figcaption>
           <div class="chart" id="chart">
-            <svg id="chart-svg" viewBox="0 0 640 250" role="img" aria-label="Chance your edge is real, rising with the number of trades logged"></svg>
+            <svg id="chart-svg" viewBox="0 0 640 250" role="img" aria-label="Chance your edge is real as more trades are logged at the same results"></svg>
             <div class="tip" id="chart-tip" hidden></div>
           </div>
         </figure>
@@ -436,10 +451,17 @@ function tradesNeeded(stats, nTrials, confidence) {
   function $(id) { return document.getElementById(id); }
   var svg = $("chart-svg"), tip = $("chart-tip"), chart = $("chart");
   var mode = "quick", view = null;
+  var CHART_LABEL = svg.getAttribute("aria-label");
 
   function fromLog(v) { return Math.max(1, Math.round(Math.pow(10, v / 100))); }
   function signed(v, digits) { return (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(digits); }
   function whole(v) { return Math.round(v).toLocaleString("en-US"); }
+  // The mark is decoration: the words carry the verdict, so screen readers skip the mark.
+  function setVerdict(kind, mark, words) {
+    var verdict = $("out-verdict");
+    verdict.className = "pill " + kind;
+    verdict.innerHTML = (mark ? '<span aria-hidden="true">' + mark + "</span> " : "") + words;
+  }
   function pct(v) { return v > 0.995 ? "99%+" : v < 0.005 ? "under 1%" : Math.round(v * 100) + "%"; }
 
   function parseTrades(text) {
@@ -515,36 +537,31 @@ function tradesNeeded(stats, nTrials, confidence) {
     $("out-rr").textContent = (+$("in-rr").value).toFixed(1);
     $("out-trades").textContent = whole(fromLog(+$("in-trades").value));
     $("out-setups").textContent = String(fromLog(+$("in-setups").value));
-    var s = read(), errEl = $("calc-error"), verdict = $("out-verdict");
+    // Two sliders are on a log scale: tell screen readers the value shown, not the position.
+    ["winrate", "rr", "trades", "setups"].forEach(function (k) {
+      $("in-" + k).setAttribute("aria-valuetext", $("out-" + k).textContent);
+    });
+    var s = read(), errEl = $("calc-error");
     errEl.textContent = s.error || "";
     errEl.hidden = !s.error;
     if (s.error) {
       view = null;
       $("out-prob").textContent = "–";
-      verdict.className = "pill wait";
-      verdict.textContent = "Waiting for your trades";
+      setVerdict("wait", "", "Waiting for your trades");
       $("out-mean").textContent = "–";
       $("out-luck").textContent = "–";
       $("out-need").textContent = "–";
       svg.innerHTML = "";
+      svg.setAttribute("aria-label", CHART_LABEL);
       return;
     }
     view = s;
     var prob = edgeProbability(s.stats, s.trades, s.setups);
     $("out-prob").textContent = pct(prob);
-    if (!(s.stats.mean > 0)) {
-      verdict.className = "pill fail";
-      verdict.textContent = "✕ Losing on average";
-    } else if (prob >= 0.95) {
-      verdict.className = "pill pass";
-      verdict.textContent = "✓ Hard to explain by luck";
-    } else if (prob >= 0.5) {
-      verdict.className = "pill wait";
-      verdict.textContent = "● Promising, not proven";
-    } else {
-      verdict.className = "pill fail";
-      verdict.textContent = "✕ Could easily be luck";
-    }
+    if (!(s.stats.mean > 0)) setVerdict("fail", "✕", "Losing on average");
+    else if (prob >= 0.95) setVerdict("pass", "✓", "Hard to explain by luck");
+    else if (prob >= 0.5) setVerdict("wait", "●", "Promising, not proven");
+    else setVerdict("fail", "✕", "Could easily be luck");
     $("out-mean").innerHTML = signed(s.stats.mean, s.digits) + s.unit +
       (mode === "paste" ? "<small>" + Math.round(s.stats.winRate * 100) + "% win rate</small>" : "");
     $("out-luck").innerHTML = signed(luckPerTrade(s.stats, s.trades, s.setups), s.digits) + s.unit +
@@ -553,6 +570,9 @@ function tradesNeeded(stats, nTrials, confidence) {
     $("out-need").innerHTML = !isFinite(need) ? "none will<small>the average is not positive</small>"
       : whole(need) + "<small>" + (s.trades >= need ? "you have enough" : "you have " + whole(s.trades)) + "</small>";
     draw(s);
+    svg.setAttribute("aria-label", CHART_LABEL + ". At " + whole(s.trades) + " trades it is " + pct(prob) + ". " +
+      (isFinite(need) ? "It reaches 95% at about " + whole(need) + " trades."
+        : "It does not reach 95% because the average is not positive."));
   }
 
   function setMode(next) {

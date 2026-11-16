@@ -20,3 +20,8 @@ def test_public_api_is_exported() -> None:
 
 def test_typed_marker_ships() -> None:
     assert (ROOT / "src" / "algobacktesting" / "py.typed").exists()
+
+
+def test_citation_file_has_the_same_version() -> None:
+    citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+    assert f"\nversion: {algobacktesting.__version__}\n" in citation

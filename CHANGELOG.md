@@ -39,7 +39,17 @@ All notable changes are listed here. The format follows
 - API reference (`docs/api.md`), generated from the docstrings and checked by a test.
 - `CONTRIBUTING.md` with the verification standard, `CITATION.cff`, `SECURITY.md`, and
   issue and pull-request templates.
-- CI also runs on Windows and macOS.
+- CI also runs on Windows and macOS, and on NumPy 1.26, the oldest version supported.
+  Actions are pinned to exact commits, and the secret scan runs a pinned,
+  checksum-verified scanner.
+- `tests/test_docs.py`: the README's code is run, its tables are compared with the
+  demos' output, and links into the repository must resolve.
+- Website: screen-reader support (slider values, announced result, described chart),
+  text contrast that meets WCAG AA in both themes, a link-preview image and a
+  not-found page.
+- `RELEASING.md` (release checklist), `CODE_OF_CONDUCT.md`, and an issue template for
+  suggesting a new check. The release workflow validates the package description and
+  opens a GitHub release.
 
 ### Safety
 

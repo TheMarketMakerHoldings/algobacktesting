@@ -1,7 +1,7 @@
 # algobacktesting
 
 [![CI](https://github.com/TheMarketMakerHoldings/algobacktesting/actions/workflows/ci.yml/badge.svg)](https://github.com/TheMarketMakerHoldings/algobacktesting/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 ![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)
 
@@ -114,18 +114,20 @@ Requires Python 3.11+ and NumPy.
 - **Independent checks:** exact numerical integration, seeded Monte Carlo calibration,
   and a brute-force reference implementation for cross-validation, run on hundreds of
   random datasets.
-- **Coverage and platforms:** 100% line and branch coverage, tested on Python 3.11–3.14.
+- **Coverage and platforms:** 100% line and branch coverage. CI runs the tests on Python
+  3.11–3.14, on Linux, Windows and macOS, and on the oldest supported NumPy (1.26).
+- **Documentation:** the code and numbers in this README are run and compared by the tests.
 
 ## Documentation
 
 | If you want | Read |
 | --- | --- |
-| Every function and its signature | [API reference](docs/api.md) |
-| The ideas in plain English, with worked examples | [Explainers](docs/explainers/) |
-| The evidence: proofs, replication tables and errata | [Verification report](docs/paper/verification-report.md) |
-| Runnable demonstrations | [`examples/`](examples/) |
-| What changed | [Changelog](CHANGELOG.md) |
-| To contribute or report a wrong number | [Contributing](CONTRIBUTING.md) |
+| Every function and its signature | [API reference](https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/api.md) |
+| The ideas in plain English, with worked examples | [Explainers](https://github.com/TheMarketMakerHoldings/algobacktesting/tree/main/docs/explainers) |
+| The evidence: proofs, replication tables and errata | [Verification report](https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/paper/verification-report.md) |
+| Runnable demonstrations | [`examples/`](https://github.com/TheMarketMakerHoldings/algobacktesting/tree/main/examples) |
+| What changed | [Changelog](https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/CHANGELOG.md) |
+| To contribute or report a wrong number | [Contributing](https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/CONTRIBUTING.md) |
 
 ## References
 

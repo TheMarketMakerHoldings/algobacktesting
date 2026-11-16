@@ -62,7 +62,9 @@ def exact_expected_max(n: int) -> float:
     x = np.linspace(-12.0, 12.0, 240_001)
     phi = np.exp(-(x**2) / 2) / math.sqrt(2 * math.pi)
     big_phi = 0.5 * (1 + np.vectorize(math.erf)(x / math.sqrt(2)))
-    return float(np.trapezoid(x * n * phi * big_phi ** (n - 1), x))
+    f = x * n * phi * big_phi ** (n - 1)
+    # Trapezoid rule, written out so it runs on every supported NumPy version.
+    return float(np.sum((f[1:] + f[:-1]) * np.diff(x)) / 2)
 
 
 def false_alarm_rate(n_trades: int, setups: int, win_rate: float, reward_risk: float) -> float:

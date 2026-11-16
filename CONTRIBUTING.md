@@ -14,7 +14,8 @@ uv run pre-commit install
 
 ## Checks
 
-Run these before opening a pull request. CI runs the same ones on Python 3.11 to 3.14.
+Run these before opening a pull request. CI runs the same ones on Python 3.11 to 3.14, on
+Linux, Windows and macOS, and once more on the oldest NumPy the package supports.
 
 ```bash
 uv run ruff check .
@@ -28,6 +29,10 @@ If you change a public function or its docstring, regenerate the API reference:
 ```bash
 uv run python docs/build_api.py
 ```
+
+The documentation is tested too (`tests/test_docs.py`): the README's code must run, the
+numbers it quotes must match what the demos print, and links into the repository must
+resolve.
 
 ## The verification standard
 
@@ -61,6 +66,11 @@ All randomness takes an explicit seed, so every test is deterministic.
 
 Ideas beyond the current release are listed in `BACKLOG.md`. Please open an issue before
 building one, so the source and the verification plan can be agreed first.
+
+## Conduct and releases
+
+Taking part means following the [code of conduct](CODE_OF_CONDUCT.md). Maintainers:
+the release steps are in [RELEASING.md](RELEASING.md).
 
 ## Reporting a wrong number
 
