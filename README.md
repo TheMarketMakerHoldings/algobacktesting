@@ -64,6 +64,25 @@ strong real edge. Its output:
 - **Strong edge:** it wins, and PBO drops to 0.08, so the selection process works. DSR is
   still below 0.95: after 200 tries, four years of data is not enough to *prove* it.
 
+### Why purging matters
+
+`examples/leakage_demo.py` cross-validates a model that has **no real skill**: a
+nearest-neighbour model predicting 20-day returns from pure noise. Averaged over 200
+datasets:
+
+| Cross-validation scheme | Out-of-sample correlation (honest value: 0) |
+| --- | --- |
+| Shuffled k-fold | +0.816 (s.e. 0.002) |
+| Contiguous k-fold, no purging | +0.050 (s.e. 0.005) |
+| Purged k-fold | +0.000 (s.e. 0.005) |
+| Purged k-fold with a 5% embargo | -0.001 (s.e. 0.005) |
+| Leak removed by purging (paired difference) | +0.050 (s.e. 0.002) |
+
+Shuffling makes a worthless model look excellent. Without purging, even unshuffled
+folds leak at their edges. One dataset's score varies by about 0.07, so that leak is
+invisible in a single backtest while it inflates every one of them. Purged k-fold
+gives the honest answer.
+
 Each function's docstring cites the equation and page it implements. `docs/explainers/`
 has a plain-English guide to each module.
 

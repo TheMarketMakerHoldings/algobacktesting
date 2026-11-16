@@ -62,6 +62,37 @@ group 3 for no reason. Adjacent test groups (2 and 3) merge into one block.
 - **CPCV keeps the middle.** With 50 rows in 5 groups, testing groups 1 and 3 purges only
   the edge rows 9, 20, 29 and 40. Group 2's interior (rows 21–28) stays in training.
 
+## Does purging actually change the answer? (our demo)
+
+`examples/leakage_demo.py` cross-validates a model with **zero real skill**:
+- Daily returns are pure noise, so nothing can predict them.
+- The label is the next 20 days' return, so neighbouring days share most of their label.
+- The features are trailing moving averages, which barely change from day to day.
+- A nearest-neighbour model therefore finds yesterday and tomorrow as "similar" days
+  and copies their almost identical labels.
+
+Averaged over 200 datasets:
+
+| Cross-validation scheme | Out-of-sample correlation (honest value: 0) |
+| --- | --- |
+| Shuffled k-fold | +0.816 (s.e. 0.002) |
+| Contiguous k-fold, no purging | +0.050 (s.e. 0.005) |
+| Purged k-fold | +0.000 (s.e. 0.005) |
+| Purged k-fold with a 5% embargo | -0.001 (s.e. 0.005) |
+| Leak removed by purging (paired difference) | +0.050 (s.e. 0.002) |
+
+What this shows:
+- **Shuffled folds are a disaster** for overlapping labels: a worthless model scores 0.82.
+- **Unshuffled folds still leak** at their edges, by about 0.05.
+- **Purging removes the leak:** the purged score is zero to three decimals.
+- **You can't see this in one backtest.** One dataset's score swings by about 0.07, so
+  a 0.05 leak hides in the noise. In the first 20 datasets alone, the purged score
+  averaged +0.05 by chance. It took 200 datasets, and comparing both schemes on the
+  *same* data, to measure it cleanly: the unpurged score was higher in 199 of 200.
+- **The embargo made no difference here** (-0.001 with a 5% embargo), because these
+  returns are independent from day to day. It matters when returns or features stay correlated beyond the label
+  window.
+
 ## How we verified it (no source paper here)
 
 - **A slow, separately written brute-force reference** (plain Python loops) recomputes

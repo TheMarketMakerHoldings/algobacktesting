@@ -23,6 +23,14 @@ All notable changes are listed here. The format follows
   - `combinatorial_purged_cv` (CPCV, with backtest paths)
 - Plain-English explainers in `docs/explainers/` and a runnable demo in
   `examples/overfit_demo.py`.
+- `examples/leakage_demo.py`: a no-skill model scores +0.82 under shuffled k-fold,
+  +0.05 under unpurged contiguous k-fold and 0.00 under purged k-fold.
+
+- `docs/index.html`: a one-page site that asks "are you actually profitable, or just
+  lucky?". Enter a win rate, reward-to-risk ratio and number of trades, or paste trade
+  results, and it reports the chance the edge is real and the trades needed to prove it.
+  `tests/test_site.py` runs the page's JavaScript with Node.js and checks it against the
+  library on more than 500 cases.
 
 ### Safety
 

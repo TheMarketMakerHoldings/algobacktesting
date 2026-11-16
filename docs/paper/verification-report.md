@@ -335,6 +335,27 @@ entry bar of daily data), the rules admit **test observations into the training 
 In our constructed example (10 observations, 2 folds), the snippet's training set
 contains test rows 5 and 9. Closed intervals (Proposition 5) exclude this.
 
+**Does purging change the result? A no-skill experiment.** Daily returns are i.i.d.
+Normal, the label of day t is the sum of the next 20 returns, and the features are five
+trailing moving averages (20 to 320 days). A 5-nearest-neighbour regressor is
+cross-validated with 30 folds on 3,000 days. No predictability exists, so the expected
+out-of-sample correlation is zero. Averaged over 200 seeded datasets
+(`examples/leakage_demo.py`):
+
+| Cross-validation scheme | Out-of-sample correlation (honest value: 0) |
+| --- | --- |
+| Shuffled k-fold | +0.816 (s.e. 0.002) |
+| Contiguous k-fold, no purging | +0.050 (s.e. 0.005) |
+| Purged k-fold | +0.000 (s.e. 0.005) |
+| Purged k-fold with a 5% embargo | -0.001 (s.e. 0.005) |
+| Leak removed by purging (paired difference) | +0.050 (s.e. 0.002) |
+
+The per-dataset standard deviation of the score is about 0.07, larger than the leak
+itself. A single backtest therefore cannot reveal the leak, although it biases every
+backtest upward. The paired difference isolates it: the unpurged score exceeded the
+purged score in 199 of the 200 datasets. A 5% embargo left the purged score unchanged,
+as expected for serially independent returns.
+
 ### 5.5 Demonstration
 
 Two hundred strategies, each with 1% daily volatility over 1,008 days (seed 42):
@@ -384,7 +405,7 @@ papers' numbers, and E3 matters for small, odd N.
 The code, tests and this report are in the `algobacktesting` repository.
 
 - `uv run python docs/paper/reproduce_numbers.py` regenerates every number above.
-- `uv run pytest` runs 151 tests, including every paper target. Line and branch coverage
+- `uv run pytest` runs 159 tests, including every paper target. Line and branch coverage
   is 100%, measured on Python 3.12, and the tests pass on 3.11, 3.12 and 3.14.
 
 ## References
