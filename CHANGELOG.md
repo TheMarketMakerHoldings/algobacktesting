@@ -36,6 +36,11 @@ All notable changes are listed here. The format follows
   a false "proven" about 5% of the time for one setup and about 1% or less for five or more.
 - `docs/explainers/04-profitable-or-lucky.md`: how the website's number is computed.
 
+- API reference (`docs/api.md`), generated from the docstrings and checked by a test.
+- `CONTRIBUTING.md` with the verification standard, `CITATION.cff`, `SECURITY.md`, and
+  issue and pull-request templates.
+- CI also runs on Windows and macOS.
+
 ### Safety
 
 These inputs raise clear errors instead of returning plausible wrong numbers:

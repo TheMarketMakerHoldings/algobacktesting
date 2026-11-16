@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software or its verification report, please cite it as below."
+title: "algobacktesting: statistical checks for backtest overfitting"
+type: software
+authors:
+  - family-names: Heidary
+    given-names: Daniel
+    affiliation: "The Market Maker Holdings & Co."
+version: 0.1.0
+license: MIT
+repository-code: "https://github.com/TheMarketMakerHoldings/algobacktesting"
+url: "https://themarketmakerholdings.github.io/algobacktesting/"
+abstract: >-
+  Verified implementations of the Probabilistic and Deflated Sharpe Ratio, the Probability
+  of Backtest Overfitting, and purged cross-validation, with a report that reproduces the
+  source papers' worked examples and documents guard conditions and errata.
+keywords:
+  - backtesting
+  - overfitting
+  - deflated Sharpe ratio
+  - probability of backtest overfitting
+  - purged cross-validation
+  - quantitative finance

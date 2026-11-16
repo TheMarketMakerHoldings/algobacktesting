@@ -22,13 +22,21 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Office/Business :: Financial :: Investment",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Typing :: Typed",
 ]
 
 [project.urls]
+Homepage = "https://themarketmakerholdings.github.io/algobacktesting/"
 Repository = "https://github.com/TheMarketMakerHoldings/algobacktesting"
+Documentation = "https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/api.md"
+Changelog = "https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/CHANGELOG.md"
+Issues = "https://github.com/TheMarketMakerHoldings/algobacktesting/issues"
 
 [build-system]
 requires = ["uv_build>=0.11.16,<0.14.0"]

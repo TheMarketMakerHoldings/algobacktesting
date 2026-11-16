@@ -1,5 +1,10 @@
 # algobacktesting
 
+[![CI](https://github.com/TheMarketMakerHoldings/algobacktesting/actions/workflows/ci.yml/badge.svg)](https://github.com/TheMarketMakerHoldings/algobacktesting/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
+![Coverage 100%](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)
+
 **Is your backtest real? Overfitting checks for trading research.**
 
 > **Status: pre-release.** Not yet on PyPI. The Sharpe and PBO modules are verified
@@ -110,6 +115,17 @@ Requires Python 3.11+ and NumPy.
   and a brute-force reference implementation for cross-validation, run on hundreds of
   random datasets.
 - **Coverage and platforms:** 100% line and branch coverage, tested on Python 3.11–3.14.
+
+## Documentation
+
+| If you want | Read |
+| --- | --- |
+| Every function and its signature | [API reference](docs/api.md) |
+| The ideas in plain English, with worked examples | [Explainers](docs/explainers/) |
+| The evidence: proofs, replication tables and errata | [Verification report](docs/paper/verification-report.md) |
+| Runnable demonstrations | [`examples/`](examples/) |
+| What changed | [Changelog](CHANGELOG.md) |
+| To contribute or report a wrong number | [Contributing](CONTRIBUTING.md) |
 
 ## References
 
