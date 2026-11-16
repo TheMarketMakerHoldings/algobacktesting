@@ -371,6 +371,33 @@ Two hundred strategies, each with 1% daily volatility over 1,008 days (seed 42):
 - **Strong edge:** it wins and PBO falls to 0.08. But DSR stays below 0.95: after 200
   trials, four years of data do not suffice to establish it.
 
+### 5.6 Calibration of a null-variance Deflated Sharpe Ratio
+
+DSR needs the variance of the trial Sharpe ratios. When that is unknown, as for a trader who
+kept no record of discarded setups, a natural substitute is 1/(n - 1): the sampling variance
+of a Sharpe ratio estimated from n results when its true value is zero. The project's website
+uses this choice. We measured how it behaves when the null is true.
+
+Each simulated trader tests N setups with zero expectancy (each trade wins R or loses 1, with
+win rate 1/(1 + R)) on 120 trades, keeps the best, and is called "proven" if its DSR reaches
+95%. Share called proven, 20,000 traders per cell:
+
+| Win rate, reward-to-risk | N = 1 | N = 5 | N = 20 | N = 100 |
+| --- | --- | --- | --- | --- |
+| 40%, 1.5 | 4.2% | 1.1% | 0.3% | 0.1% |
+| 50%, 1.0 | 4.3% | 1.0% | 0.3% | 0.2% |
+| 25%, 3.0 | 5.9% | 0.8% | 0.2% | 0.0% |
+
+- **One setup:** the rate is close to the nominal 5%. It runs slightly high for a low win rate
+  with large wins, where the two-point distribution is most skewed.
+- **Several setups:** the rate is far below 5%. DSR compares the selected strategy with the
+  *expected* maximum of N null strategies. That maximum varies less than a single estimate
+  does, so exceeding its mean by a 95% margin is a stricter requirement than exceeding the
+  95th percentile of the maximum.
+
+A null-variance DSR is therefore conservative as a test of "no setup has an edge". It rarely
+credits a lucky trader, at the cost of needing more data to confirm a real edge.
+
 ## 6. Errata and clarifications
 
 | # | Source | Statement | Finding |

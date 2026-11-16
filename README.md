@@ -10,6 +10,10 @@ Try enough strategy variations and one of them will look brilliant by luck alone
 `algobacktesting` implements statistical tests from Bailey & López de Prado's research that
 tell a real edge apart from an overfit one.
 
+**Not a programmer?** The [online check](https://themarketmakerholdings.github.io/algobacktesting/)
+asks one question: are you actually profitable, or just lucky? Enter a win rate and a number of
+trades, or paste your trade results.
+
 | Question | Tool |
 | --- | --- |
 | Is this Sharpe ratio still impressive after counting every strategy I tried? | `deflated_sharpe_ratio` (DSR), `probabilistic_sharpe_ratio` (PSR), `min_track_record_length` |

@@ -32,6 +32,10 @@ All notable changes are listed here. The format follows
   `tests/test_site.py` runs the page's JavaScript with Node.js and checks it against the
   library on more than 500 cases.
 
+- `tests/test_luck_calibration.py` and report section 5.6: with no edge, the site's check gives
+  a false "proven" about 5% of the time for one setup and about 1% or less for five or more.
+- `docs/explainers/04-profitable-or-lucky.md`: how the website's number is computed.
+
 ### Safety
 
 These inputs raise clear errors instead of returning plausible wrong numbers:

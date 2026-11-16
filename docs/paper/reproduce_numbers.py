@@ -65,6 +65,33 @@ def exact_expected_max(n: int) -> float:
     return float(np.trapezoid(x * n * phi * big_phi ** (n - 1), x))
 
 
+def false_alarm_rate(n_trades: int, setups: int, win_rate: float, reward_risk: float) -> float:
+    """Share of 20,000 no-edge traders whose best setup the site would call proven."""
+    experiments = 20_000
+    rng = np.random.default_rng(7)
+    wins = rng.binomial(n_trades, win_rate, size=(experiments, setups))
+    p = wins / n_trades
+    usable = (p > 0) & (p < 1)
+    spread = np.sqrt(np.where(usable, p * (1 - p), 1.0))
+    sd = spread * (reward_risk + 1) * math.sqrt(n_trades / (n_trades - 1))
+    sharpe = np.where(usable, (p * reward_risk - (1 - p)) / sd, -np.inf)
+    best = sharpe.argmax(axis=1)
+    rows = np.arange(experiments)
+    proven = 0
+    for sr, p_best in zip(sharpe[rows, best], p[rows, best], strict=True):
+        skew = (1 - 2 * p_best) / math.sqrt(p_best * (1 - p_best))
+        chance = deflated_sharpe_ratio(
+            float(sr),
+            n_trades,
+            n_trials=setups,
+            sharpe_variance=1 / (n_trades - 1),
+            skew=float(skew),
+            kurtosis=float(1 + skew**2),
+        )
+        proven += chance >= 0.95
+    return proven / experiments
+
+
 def main() -> None:
     """Print every reported number."""
     section("DSR worked example, BLdP (2014) p.10")
@@ -195,6 +222,11 @@ def main() -> None:
     for n_groups, k in ((6, 2), (10, 4)):
         res = combinatorial_purged_cv(np.arange(60.0), np.arange(60.0), n_groups, k)
         print(f"N={n_groups} k={k}: splits={len(res.splits)} paths={res.n_paths}")
+    section("Luck adjustment calibration: no-edge traders called proven (120 trades)")
+    for win_rate, reward_risk in ((0.40, 1.5), (0.50, 1.0), (0.25, 3.0)):
+        rates = [false_alarm_rate(120, n, win_rate, reward_risk) for n in (1, 5, 20, 100)]
+        cells = "  ".join(f"N={n}: {r:.3f}" for n, r in zip((1, 5, 20, 100), rates, strict=True))
+        print(f"win rate {win_rate:.0%}, reward-to-risk {reward_risk}: {cells}")
 
 
 if __name__ == "__main__":
