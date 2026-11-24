@@ -1429,41 +1429,70 @@ function readStamp(raw, offsetCell) {
   return { clock: clock, utc: isFinite(clock) && isFinite(offset) ? clock - offset * 60000 : NaN };
 }
 
-// Bars from a CSV with a time column and open, high, low and close columns.
+// Cells of one CSV line. Lines without quotes take the fast path; `limit` stops after the
+// columns that are needed, so wide exports (Quantower writes about 40 columns) stay cheap.
+function splitLine(line, delimiter, limit) {
+  if (line.indexOf('"') < 0) {
+    return line.split(delimiter, limit).map(function (c) { return c.trim(); });
+  }
+  var cells = [], cell = "", inQuotes = false, i, ch;
+  for (i = 0; i < line.length; i++) {
+    ch = line[i];
+    if (inQuotes) {
+      if (ch !== '"') cell += ch;
+      else if (line[i + 1] === '"') { cell += '"'; i++; }
+      else inQuotes = false;
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === delimiter) {
+      cells.push(cell.trim()); cell = "";
+      if (limit && cells.length >= limit) return cells;
+    } else {
+      cell += ch;
+    }
+  }
+  cells.push(cell.trim());
+  return cells;
+}
+
+// Bars from a CSV with a time column and open, high, low and close columns. Reads line by
+// line and keeps only those columns, so a year of one-minute bars fits in a browser tab.
 function parseBars(text) {
-  var parsed = parseCsv(text), tables = splitTables(parsed.rows, parsed.delimiter), out = null;
-  tables.forEach(function (t) {
-    if (out) return;
-    var keys = t.header.map(headerKey), col = function (re) { return findColumn(keys, re); };
-    var c = {
+  text = String(text);
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  var delimiter = detectDelimiter(text), lines = text.split(/\r?\n/), start = -1, c = null, i;
+  for (i = 0; i < lines.length && i < 200 && start < 0; i++) {
+    var keys = splitLine(lines[i], delimiter).map(headerKey), col = function (re) { return findColumn(keys, re); };
+    var found = {
       time: col(/^(datetime|date\/time|time|timestamp|tsevent|tsrecv|date|bartime|starttime)$/),
       offset: col(/^(utc|utcoffset|offset|tz|timezone)$/),
       o: col(/^(open|o)$/), h: col(/^(high|h)$/), l: col(/^(low|l)$/), c: col(/^(close|c|last)$/),
       symbol: col(/^(symbol|instrument|contract|ticker)$/)
     };
-    if ([c.time, c.o, c.h, c.l, c.c].some(function (i) { return i < 0; })) return;
-    var bars = [], symbols = {};
-    t.rows.forEach(function (r) {
-      var stamp = readStamp(r[c.time], c.offset >= 0 ? r[c.offset] : undefined);
-      var o = parseNumber(r[c.o], t.delimiter), h = parseNumber(r[c.h], t.delimiter);
-      var l = parseNumber(r[c.l], t.delimiter), cl = parseNumber(r[c.c], t.delimiter);
-      if (!isFinite(stamp.clock) || ![o, h, l, cl].every(isFinite)) return;
-      var sym = c.symbol >= 0 ? r[c.symbol] : "";
-      symbols[sym] = (symbols[sym] || 0) + 1;
-      bars.push({ clock: stamp.clock, utc: stamp.utc, o: o, h: h, l: l, c: cl, symbol: sym });
-    });
-    out = { bars: bars, symbols: symbols };
-  });
-  if (!out || !out.bars.length) return null;
-  out.bars.sort(function (a, b) { return a.clock - b.clock; });
+    if ([found.time, found.o, found.h, found.l, found.c].every(function (k) { return k >= 0; })) { c = found; start = i + 1; }
+  }
+  if (!c) return null;
+  var limit = Math.max(c.time, c.offset, c.o, c.h, c.l, c.c, c.symbol) + 1, bars = [], symbols = {};
+  for (i = start; i < lines.length; i++) {
+    if (!lines[i]) continue;
+    var r = splitLine(lines[i], delimiter, limit);
+    var stamp = readStamp(r[c.time], c.offset >= 0 ? r[c.offset] : undefined);
+    var o = parseNumber(r[c.o], delimiter), h = parseNumber(r[c.h], delimiter);
+    var l = parseNumber(r[c.l], delimiter), cl = parseNumber(r[c.c], delimiter);
+    if (!isFinite(stamp.clock) || !isFinite(o) || !isFinite(h) || !isFinite(l) || !isFinite(cl)) continue;
+    var sym = c.symbol >= 0 ? r[c.symbol] || "" : "";
+    symbols[sym] = (symbols[sym] || 0) + 1;
+    bars.push({ clock: stamp.clock, utc: stamp.utc, o: o, h: h, l: l, c: cl, symbol: sym });
+  }
+  if (!bars.length) return null;
+  bars.sort(function (a, b) { return a.clock - b.clock; });
   var gaps = [];
-  for (var i = 1; i < out.bars.length && gaps.length < 2000; i++) {
-    var g = out.bars[i].clock - out.bars[i - 1].clock;
+  for (i = 1; i < bars.length && gaps.length < 2000; i++) {
+    var g = bars[i].clock - bars[i - 1].clock;
     if (g > 0) gaps.push(g);
   }
   gaps.sort(function (a, b) { return a - b; });
-  out.barMs = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 60000;
-  return out;
+  return { bars: bars, symbols: symbols, barMs: gaps.length ? gaps[Math.floor(gaps.length / 2)] : 60000 };
 }
 
 // Entries from the imported trade file: time, side, price and size of each trade, plus how it

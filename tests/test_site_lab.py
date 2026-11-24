@@ -200,6 +200,15 @@ ROOTS = [
     ("MES", "MES"),
 ]
 
+# Wide exports: Quantower writes about 40 columns with quoted, comma-holding names; some tools
+# quote prices that contain thousands separators. Only the needed columns may be read.
+WIDE = [
+    'DateTime,UTC,Open,High,Low,Close,"Buy (Ask) volume, %","Sell (Bid) volume, %",Delta\n'
+    "11/2/2026 9:30:00 AM,-05:00,6000,6001,5999.75,6000.5,55.5,44.5,12\n"
+    '"11/2/2026 9:31:00 AM","-05:00","6,000.5","6,002","6,000.25","6,001.75","49,1",50.9,-4\n',
+    "no bars here\njust,text\n",
+]
+
 
 @pytest.fixture(scope="module")
 def js() -> dict[str, Any]:
@@ -223,6 +232,7 @@ def js() -> dict[str, Any]:
         "cases": [{"bars": c[1], "start": c[2], "opt": c[3]} for c in CASES],
         "align": [{"bars": a["bars"], "trades": a["trades"]} for a in ALIGN],
         "roots": [r[0] for r in ROOTS],
+        "wide": WIDE,
     }
     with tempfile.TemporaryDirectory() as tmp:
         script, data = Path(tmp) / "lab.js", Path(tmp) / "input.json"
@@ -282,3 +292,13 @@ def test_trades_are_lined_up_with_bars(js: dict[str, Any]) -> None:
 
 def test_instrument_roots(js: dict[str, Any]) -> None:
     assert js["roots"] == [r[1] for r in ROOTS]
+
+
+def test_wide_and_quoted_bar_files(js: dict[str, Any]) -> None:
+    nine_thirty = calendar.timegm((2026, 11, 2, 9, 30, 0)) * 1000
+    five_hours = 5 * 3_600_000
+    assert js["wide"][0] == [
+        [nine_thirty, nine_thirty + five_hours, 6000, 6001, 5999.75, 6000.5],
+        [nine_thirty + 60_000, nine_thirty + 60_000 + five_hours, 6000.5, 6002, 6000.25, 6001.75],
+    ]
+    assert js["wide"][1] is None
