@@ -62,6 +62,12 @@ All notable changes are listed here. The format follows
   synthetic random-walk market (`docs/example-bars.csv`) and two strategies traded on it.
   `tests/test_site_lab.py` checks the replay against a separate Python implementation.
 - The website moved to https://algobacktesting.com/.
+- Prop-firm challenge simulator on the website: replays the trader's own results in random
+  order 5,000 times under an evaluation's rules (profit target; a loss limit that trails the
+  end-of-day balance, trails every trade or stays fixed; an optional daily limit; a day
+  limit) and reports the chance to pass, the chance to fail and the median days to pass,
+  plus the pass rate with the edge set to zero. `tests/test_site_prop.py` checks it against
+  the gambler's ruin formulas and hand-worked cases.
 - "Save as PDF" on the website: a one-page report of the verdict and breakdown, with the
   equity chart, the data used and the date.
 - Website redesigned as a light, corporate product page. It now loads nothing from other

@@ -110,6 +110,27 @@ The lab also reports how far winning trades went against the entry before they c
 stop can be before it starts cutting off winners. Bar data stays on the trader's computer;
 licensed exchange data must not be published.
 
+## The prop-firm simulator
+
+"Would this strategy pass an evaluation?" The simulator replays the trader's own results
+5,000 times. Each simulated day draws a number of trades (from the file's real trading days,
+or a fixed number) and that many results at random from the trade list, with replacement.
+The run passes as soon as the balance reaches the profit target and fails as soon as it
+falls to the loss limit. The limit stays fixed, trails the highest end-of-day balance, or
+trails the highest balance after any trade, and never rises above the starting balance. A
+daily loss limit either ends the day or fails the evaluation.
+
+It also runs every evaluation again with the average result subtracted from each trade:
+the same swings with no edge. The gap between the two pass rates is what the edge is worth,
+if the edge is real; if the check says it could be luck, the zero-edge figure is the honest
+one.
+
+Checks: with fair +-1 trades, a fixed limit of 20 and a target of 30, the pass rate must be
+20 / (20 + 30) = 40%, the gambler's ruin answer, and a biased coin must match its formula
+too. Because each run sees the same trades in the same order under every rule set, a fixed
+limit can never pass less often than an end-of-day trailing one, which can never pass less
+often than one that trails every trade; the tests check that ordering.
+
 ## How we know it behaves
 
 - **The page's math equals the library's.** A test runs the page's own code and compares it

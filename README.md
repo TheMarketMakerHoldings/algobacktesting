@@ -19,7 +19,8 @@ tell a real edge apart from an overfit one.
 asks one question: are you actually profitable, or just lucky? Import a strategy's trades from
 TopstepX, Quantower, NinjaTrader or thinkorswim, paste them, or enter a win rate. Its stop lab
 replays your entries on your own price bars to test other stop sizes, and counts every size
-tried so a lucky stop is not mistaken for a better one. It runs in the browser, and nothing is
+tried so a lucky stop is not mistaken for a better one. A prop-firm simulator estimates your
+chance of passing a funded-account evaluation from your own trades. It runs in the browser, and nothing is
 uploaded.
 
 | Question | Tool |

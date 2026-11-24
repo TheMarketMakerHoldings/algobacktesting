@@ -273,6 +273,14 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
 .footer .about p { font-size: 14px; max-width: 30em; margin-top: 12px; }
 .footer .legal { margin-top: 40px; padding-top: 22px; border-top: 1px solid #3a3c5c; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; font-size: 13px; }
 
+/* Prop-firm simulator */
+.headline.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.meter { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--warm); }
+.meter span { display: block; height: 100%; width: 0; }
+.meter .m-pass { background: var(--gain); }
+.meter .m-fail { background: var(--loss); }
+.meter .m-open { background: var(--line-2); }
+
 /* Print and "Save as PDF": the check's results only, on white, with a short header. */
 .print-only { display: none; }
 @media print {
@@ -312,7 +320,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
   .facts .wrap { grid-template-columns: minmax(0, 1fr); gap: 18px; }
 }
 @media (max-width: 480px) {
-  .row2, .row3, .headline { grid-template-columns: minmax(0, 1fr); }
+  .row2, .row3, .headline, .headline.three { grid-template-columns: minmax(0, 1fr); }
   .footer .cols { grid-template-columns: minmax(0, 1fr); }
   .card-head, .card-body, .chart-wrap { padding-left: 16px; padding-right: 16px; }
 }
@@ -328,6 +336,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
     </a>
     <nav class="nav" aria-label="Site">
       <a href="#check">The check</a>
+      <a href="#prop">Prop challenge</a>
       <a href="#lab">Stop lab</a>
       <a href="#how">How it works</a>
       <a href="#export">Export help</a>
@@ -471,6 +480,63 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
     </div>
   </section>
 
+  <section class="section" id="prop" aria-labelledby="prop-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Prop-firm challenge</span>
+        <h2 id="prop-title">Would this strategy <em>pass an evaluation?</em></h2>
+        <div class="dots center" aria-hidden="true"></div>
+        <p>Replays the trades from the check above in random order, 5,000 times, under an evaluation's rules, and counts how often you pass or blow the account. Firms change their rules: check yours and type them in.</p>
+      </div>
+      <div class="card lab-card">
+        <form class="card-body lab-inputs" id="prop-form" autocomplete="off">
+          <label class="field"><span>Start from</span>
+            <select id="prop-preset">
+              <option value="custom">My own rules</option>
+              <option value="50" selected>Typical 50K: $3,000 target, $2,000 limit</option>
+              <option value="100">Typical 100K: $6,000 target, $3,000 limit</option>
+              <option value="150">Typical 150K: $9,000 target, $4,500 limit</option>
+            </select>
+          </label>
+          <div class="row2">
+            <label class="field"><span>Profit target</span><input type="number" id="prop-target" min="1" step="50" value="3000" inputmode="decimal"></label>
+            <label class="field"><span>Max loss limit</span><input type="number" id="prop-maxloss" min="1" step="50" value="2000" inputmode="decimal"></label>
+          </div>
+          <label class="field"><span>The loss limit</span>
+            <select id="prop-drawdown">
+              <option value="eod" selected>Trails the end-of-day balance</option>
+              <option value="intraday">Trails every trade</option>
+              <option value="static">Stays fixed</option>
+            </select>
+          </label>
+          <div class="row2">
+            <label class="field"><span>Daily loss limit (0 = none)</span><input type="number" id="prop-daily" min="0" step="50" value="0" inputmode="decimal"></label>
+            <label class="field"><span>Hitting it</span>
+              <select id="prop-daily-mode"><option value="end" selected>Ends the day</option><option value="fail">Fails the evaluation</option></select>
+            </label>
+          </div>
+          <div class="row2">
+            <label class="field"><span>Trades per day</span><input type="number" id="prop-perday" min="1" max="200" step="1" value="3" inputmode="numeric"></label>
+            <label class="field"><span>Max trading days (0 = none)</span><input type="number" id="prop-days" min="0" max="2000" step="1" value="0" inputmode="numeric"></label>
+          </div>
+          <p class="note" id="prop-perday-note">Trades per day is used only when your file has no trade dates.</p>
+          <p class="note">A trailing limit never rises above your starting balance. Amounts are in the same money as your trades.</p>
+        </form>
+        <div class="card-body lab-out">
+          <div role="status" class="card-body" style="padding:0;gap:12px">
+            <div class="headline three">
+              <div><span class="k">Chance to pass</span><span class="big" id="prop-pass">–</span></div>
+              <div><span class="k">Chance to fail</span><span class="big" id="prop-fail">–</span></div>
+              <div><span class="k">Median days to pass</span><span class="big" id="prop-days-out">–</span></div>
+            </div>
+            <div class="meter" id="prop-meter" aria-hidden="true"><span class="m-pass"></span><span class="m-fail"></span><span class="m-open"></span></div>
+          </div>
+          <div class="findings" id="prop-findings"><p class="note">Load or paste trades in the check above to run the simulator.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section navy" id="lab" aria-labelledby="lab-title">
     <div class="wrap">
       <div class="section-head">
@@ -597,6 +663,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
       </div>
       <nav aria-labelledby="f-product"><h2 id="f-product">Product</h2><ul>
         <li><a href="#check">The check</a></li>
+        <li><a href="#prop">Prop-firm challenge</a></li>
         <li><a href="#lab">Stop lab</a></li>
         <li><a href="#export">Export help</a></li>
       </ul></nav>
@@ -1304,6 +1371,7 @@ function tradesFromTable(table, opt) {
     values: trades.map(function (t) { return Math.round((opt.subtractFees ? t.pnl - t.fee : t.pnl) * 1e8) / 1e8; }),
     // Each trade before fees: a net P&L column gets its fees added back. Breakevens are judged on this.
     before: trades.map(function (t) { return Math.round((opt.pnlIsNet ? t.pnl + t.fee : t.pnl) * 1e8) / 1e8; }),
+    times: trades.map(function (t) { return t.time; }),
     fees: feeTotal,
     skipped: skipped,
     unit: dollars ? "$" : "",
@@ -1374,6 +1442,7 @@ function fifoTrades(table, cols, filter) {
   return {
     values: trades.map(function (t) { return Math.round(t.pnl * 1e8) / 1e8; }),
     before: trades.map(function (t) { return Math.round(t.pnl * 1e8) / 1e8; }),
+    times: trades.map(function (t) { return t.time; }),
     fees: 0,
     skipped: skipped,
     unit: "$",
@@ -1683,11 +1752,79 @@ function excursionSummary(aligned, bars, tick) {
 }
 /* lab:end */
 
+/* prop:start */
+// Prop-firm evaluation simulator: replays a trader's own results in random order under an
+// evaluation's rules. Pure functions, checked against exact answers in tests/test_site_prop.py.
+
+// Seeded random numbers (mulberry32), so the same inputs always give the same answer.
+function seededRandom(seed) {
+  var a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    var t = Math.imul(a ^ (a >>> 15), a | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Trades per trading day, from trade times in milliseconds (unknown times are skipped).
+function tradesPerDay(times) {
+  var counts = {};
+  (times || []).forEach(function (t) {
+    if (Number.isFinite(t)) { var d = Math.floor(t / 86400000); counts[d] = (counts[d] || 0) + 1; }
+  });
+  return Object.keys(counts).map(function (d) { return counts[d]; });
+}
+
+// Run `runs` evaluations. Each day draws a trade count from `perDay`, then that many results
+// from `values` with replacement. Rules (money in the trades' unit, from a start of 0):
+//   target          pass as soon as the balance reaches it
+//   maxLoss         fail as soon as the balance falls to the floor: -maxLoss for "static";
+//                   for "eod" the floor follows the highest end-of-day balance, and for
+//                   "intraday" the highest balance after any trade, never rising above 0
+//   dailyLoss       0 for none; a day that loses this much ends there, or fails the
+//                   evaluation when dailyLossFails is true
+//   maxDays         0 for no limit; evaluations still open then are reported as open
+// opts.zeroEdge subtracts the average result from every trade: same swings, no edge.
+// Each run has its own random stream, so rule variants see the same trades in the same order.
+function simulateEvaluation(values, rules, opts) {
+  var n = values.length, runs = opts.runs || 5000;
+  var perDay = opts.perDay && opts.perDay.length ? opts.perDay : [Math.max(1, Math.round(opts.tradesPerDay || 1))];
+  var shift = 0, i;
+  if (opts.zeroEdge) { for (i = 0; i < n; i++) shift += values[i]; shift /= n; }
+  var dayCap = rules.maxDays > 0 ? rules.maxDays : Infinity, tradeCap = opts.maxTrades || 20000;
+  var passed = 0, failed = 0, open = 0, passDays = [];
+  for (var r = 0; r < runs; r++) {
+    var rnd = seededRandom((opts.seed || 1) + r * 7919);
+    var balance = 0, peak = 0, floor = -rules.maxLoss, outcome = 0, taken = 0, day = 0;
+    while (!outcome && day < dayCap && taken < tradeCap) {
+      day++;
+      var count = perDay[Math.floor(rnd() * perDay.length)], dayPnl = 0;
+      for (var j = 0; j < count; j++) {
+        var v = values[Math.floor(rnd() * n)] - shift;
+        balance += v; dayPnl += v; taken++;
+        if (rules.drawdown === "intraday" && balance > peak) { peak = balance; floor = Math.min(peak - rules.maxLoss, 0); }
+        if (balance <= floor) { outcome = -1; break; }
+        if (balance >= rules.target) { outcome = 1; break; }
+        if (rules.dailyLoss > 0 && dayPnl <= -rules.dailyLoss) { if (rules.dailyLossFails) outcome = -1; break; }
+      }
+      if (!outcome && rules.drawdown === "eod" && balance > peak) { peak = balance; floor = Math.min(peak - rules.maxLoss, 0); }
+    }
+    if (outcome === 1) { passed++; passDays.push(day); } else if (outcome === -1) failed++; else open++;
+  }
+  passDays.sort(function (a, b) { return a - b; });
+  return {
+    runs: runs, pass: passed / runs, fail: failed / runs, open: open / runs,
+    medianDays: passDays.length ? passDays[Math.floor((passDays.length - 1) / 2)] : NaN
+  };
+}
+/* prop:end */
+
 (function () {
   "use strict";
   function $(id) { return document.getElementById(id); }
   var svg = $("chart-svg"), tip = $("chart-tip"), chartBox = $("chart");
-  var mode = "import", chartMode = "equity", source = null, view = null, plot = null;
+  var mode = "import", chartMode = "equity", source = null, view = null, plot = null, verdictProb = NaN;
   var MINUS = "−";
 
   function num(v, digits) {
@@ -1804,7 +1941,7 @@ function excursionSummary(aligned, bars, tick) {
     if (!(stats.sd > 0)) return { error: "Every trade has the same result, so there is nothing to measure." };
     // Futures platforms report results in US dollars even when the cells carry no $ sign.
     var unit = res.unit || (source.platform || source.example ? "$" : "");
-    return { stats: stats, values: res.values, before: res.before, trades: n, unit: unit, digits: 2, fees: res.fees, feesOn: pick !== "fifo" && $("chk-fees").checked && t.cols.fees.length > 0, label: source.example ? "Example file" : source.name };
+    return { stats: stats, values: res.values, before: res.before, times: res.times, trades: n, unit: unit, digits: 2, fees: res.fees, feesOn: pick !== "fifo" && $("chk-fees").checked && t.cols.fees.length > 0, label: source.example ? "Example file" : source.name };
   }
 
   function parsePasted(text) {
@@ -1866,6 +2003,7 @@ function excursionSummary(aligned, bars, tick) {
     s.setups = n;
     view = s;
     var prob = edgeProbability(s.stats, s.trades, n), need = Math.ceil(tradesNeeded(s.stats, n, 0.95));
+    verdictProb = prob;
     var luck = luckPerTrade(s.stats, s.trades, n);
     if (!(s.stats.mean > 0)) { verdict.className = "state fail"; verdict.textContent = "Losing money"; }
     else if (prob >= 0.95) { verdict.className = "state pass"; verdict.textContent = "Hard to explain by luck"; }
@@ -1904,6 +2042,7 @@ function excursionSummary(aligned, bars, tick) {
     $("stats-body").innerHTML = html;
     draw();
     if (typeof runLab === "function") runLab();
+    if (typeof runProp === "function") runProp();
   }
 
   /* ---------- charts ---------- */
@@ -2176,6 +2315,50 @@ function excursionSummary(aligned, bars, tick) {
     table.innerHTML = html + "</tbody>";
   }
 
+  /* ---------- prop-firm simulator ---------- */
+  var PRESETS = { "50": [3000, 2000], "100": [6000, 3000], "150": [9000, 4500] };
+  function propNumber(id, lo, fallback) {
+    var v = +$(id).value;
+    return isFinite(v) && v >= lo ? v : fallback;
+  }
+  function runProp() {
+    var out = $("prop-findings"), ids = ["prop-pass", "prop-fail", "prop-days-out"];
+    function idle(msg) {
+      ids.forEach(function (id) { $(id).textContent = "\u2013"; });
+      ["m-pass", "m-fail", "m-open"].forEach(function (c) { document.querySelector("#prop-meter ." + c).style.width = "0"; });
+      out.textContent = "";
+      out.appendChild(Object.assign(document.createElement("p"), { className: "note", textContent: msg }));
+    }
+    if (!view || !view.values) return idle("Load or paste trades in the check above to run the simulator. The quick check has no trade list to replay.");
+    var rules = {
+      target: propNumber("prop-target", 0.01, 3000), maxLoss: propNumber("prop-maxloss", 0.01, 2000),
+      drawdown: $("prop-drawdown").value, dailyLoss: propNumber("prop-daily", 0, 0),
+      dailyLossFails: $("prop-daily-mode").value === "fail", maxDays: Math.round(propNumber("prop-days", 0, 0))
+    };
+    var perDay = tradesPerDay(view.times);
+    $("prop-perday-note").textContent = perDay.length
+      ? "Using your file's real days: " + perDay.length + " trading days, " + (view.values.length / perDay.length).toFixed(1) + " trades a day on average."
+      : "Your trades have no dates, so each day takes the trades per day above.";
+    var opts = { runs: 5000, seed: 20261124, perDay: perDay, tradesPerDay: propNumber("prop-perday", 1, 3) };
+    var real = simulateEvaluation(view.values, rules, opts);
+    var none = simulateEvaluation(view.values, rules, Object.assign({}, opts, { zeroEdge: true }));
+    $("prop-pass").textContent = pct(real.pass);
+    $("prop-fail").textContent = pct(real.fail);
+    $("prop-days-out").textContent = isFinite(real.medianDays) ? whole(real.medianDays) : "\u2013";
+    document.querySelector("#prop-meter .m-pass").style.width = (real.pass * 100).toFixed(2) + "%";
+    document.querySelector("#prop-meter .m-fail").style.width = (real.fail * 100).toFixed(2) + "%";
+    document.querySelector("#prop-meter .m-open").style.width = (real.open * 100).toFixed(2) + "%";
+    out.textContent = "";
+    function line(text, cls) { out.appendChild(Object.assign(document.createElement("p"), { className: cls || "", textContent: text })); }
+    line("Out of 5,000 simulated evaluations using your own trades: " + pct(real.pass) + " passed, " + pct(real.fail) + " hit a loss limit" +
+      (real.open > 0 ? ", and " + pct(real.open) + " were still going when the days ran out." : "."), "lead");
+    line("With your edge set to zero (the same swings, average result 0), " + pct(none.pass) + " would pass. " +
+      (real.pass - none.pass > 0.05 ? "The gap is what your edge adds, if it is real."
+        : "Your results add little over pure luck here."));
+    if (verdictProb < 0.5) line("The check above says your edge could be luck (" + pct(verdictProb) + "). If it is, expect the zero-edge figure, not the first one.");
+    line("Assumes future trades look like these, in any order, one evaluation at a time. Each trade is drawn at random from your list, so a streak you never had can happen here.", "note");
+  }
+
   /* ---------- wiring ---------- */
   function setMode(next) {
     mode = next;
@@ -2254,6 +2437,18 @@ function excursionSummary(aligned, bars, tick) {
     });
     watcher.observe($("lab"));
   }
+  $("prop-preset").addEventListener("change", function () {
+    var p = PRESETS[this.value];
+    if (p) { $("prop-target").value = p[0]; $("prop-maxloss").value = p[1]; }
+    runProp();
+  });
+  ["prop-target", "prop-maxloss", "prop-drawdown", "prop-daily", "prop-daily-mode", "prop-perday", "prop-days"].forEach(function (id) {
+    $(id).addEventListener("input", function () {
+      if (id === "prop-target" || id === "prop-maxloss") $("prop-preset").value = "custom";
+      runProp();
+    });
+  });
+  $("prop-form").addEventListener("submit", function (ev) { ev.preventDefault(); });
   chartBox.addEventListener("pointermove", hover);
   chartBox.addEventListener("pointerleave", unhover);
   var resizeTimer = 0;
