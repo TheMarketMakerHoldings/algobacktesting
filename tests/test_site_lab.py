@@ -196,13 +196,29 @@ TV_BARS = (
     "3/3/2026 10:20:00 AM,20145,20149,20140,20146\n"
     "3/4/2026 9:31:00 AM,20200,20203,20190,20199\n"
 )
-ALIGN.append(
-    # TradingView: entries come from each trade's Entry row, paired with its Exit row.
-    {
-        "bars": TV_BARS,
-        "trades": TRADINGVIEW,
-        "expect": {"useUtc": False, "shift": 0, "matched": 3, "entries": 3},
-    }
+ALIGN.extend(
+    [
+        # TradingView: entries come from each trade's Entry row, paired with its Exit row.
+        {
+            "bars": TV_BARS,
+            "trades": TRADINGVIEW,
+            "expect": {"useUtc": False, "shift": 0, "matched": 3, "entries": 3},
+        },
+        # A Signal filter reads the entry row's signal (L opens trades 1 and 3)...
+        {
+            "bars": TV_BARS,
+            "trades": TRADINGVIEW,
+            "filter": ["Signal", "L"],
+            "expect": {"useUtc": False, "shift": 0, "matched": 2, "entries": 2},
+        },
+        # ...and a Type filter reads the exit row, the only one that says "Exit short".
+        {
+            "bars": TV_BARS,
+            "trades": TRADINGVIEW,
+            "filter": ["Type", "Exit short"],
+            "expect": {"useUtc": False, "shift": 0, "matched": 1, "entries": 1},
+        },
+    ]
 )
 ROOTS = [
     ("ESU6", "ES"),
@@ -245,7 +261,9 @@ def js() -> dict[str, Any]:
         "bars": BARS.read_text(encoding="utf-8"),
         "scans": scans,
         "cases": [{"bars": c[1], "start": c[2], "opt": c[3]} for c in CASES],
-        "align": [{"bars": a["bars"], "trades": a["trades"]} for a in ALIGN],
+        "align": [
+            {"bars": a["bars"], "trades": a["trades"], "filter": a.get("filter")} for a in ALIGN
+        ],
         "roots": [r[0] for r in ROOTS],
         "wide": WIDE,
     }

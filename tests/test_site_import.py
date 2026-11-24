@@ -82,6 +82,8 @@ RUNS: list[tuple[str, str, list[str] | None]] = [
     ("thinkorswim", _export("thinkorswim"), None),
     ("tradingview", _export("tradingview"), None),
     ("tradingview short", _export("tradingview"), ["Type", "Exit short"]),
+    ("tradingview signal L", _export("tradingview"), ["Signal", "L"]),
+    ("tradingview exit signal", _export("tradingview"), ["Signal", "L_x"]),
     *((name, text, None) for name, text in INLINE.items()),
 ]
 
@@ -265,3 +267,12 @@ def test_tradingview_counts_each_trade_once(js: dict[str, Any]) -> None:
     assert r["subtractFees"] is False  # net already
     assert ["Type", ["Exit long", "Exit short"]] in r["filters"]  # entry values are not offered
     assert js["by_name"]["tradingview short"]["values"] == pytest.approx([-104.5])
+
+
+def test_tradingview_signal_names_the_setup(js: dict[str, Any]) -> None:
+    # The Signal column names the setup on entry rows (L, S) and how the trade closed on exit
+    # rows (L_x, S_x). Only entry signals are offered, and choosing one picks every trade that
+    # entry opened (trades 1 and 3), although results are read from the exit rows.
+    assert ["Signal", ["L", "S"]] in js["by_name"]["tradingview"]["filters"]
+    assert js["by_name"]["tradingview signal L"]["values"] == pytest.approx([195.5, -4.5])
+    assert js["by_name"]["tradingview exit signal"]["values"] == []  # never offered

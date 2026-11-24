@@ -46,6 +46,15 @@ def test_nothing_is_loaded_from_other_sites() -> None:
     assert "<iframe" not in HTML
 
 
+def test_only_saved_strategies_are_kept() -> None:
+    # The page keeps nothing about a visitor except the strategies they choose to save, in
+    # their own browser under one key: no cookies and no other storage.
+    for name in ("document.cookie", "sessionStorage", "indexedDB", "navigator.sendBeacon"):
+        assert name not in HTML, name
+    uses = set(re.findall(r"localStorage\.(\w+)\(([^,)]*)", HTML))
+    assert uses == {("getItem", "SAVED_KEY"), ("setItem", "SAVED_KEY"), ("removeItem", "SAVED_KEY")}
+
+
 def test_findable_by_search_engines() -> None:
     robots = (ROOT / "docs" / "robots.txt").read_text(encoding="utf-8")
     assert "Disallow: /\n" not in robots

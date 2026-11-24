@@ -82,6 +82,17 @@ All notable changes are listed here. The format follows
   the gambler's ruin formulas and hand-worked cases.
 - "Save as PDF" on the website: a one-page report of the verdict and breakdown, with the
   equity chart, the data used and the date.
+- Save and name strategies on the website: type a name and save the trades in the check;
+  they are kept in the browser's own storage on that device, never uploaded. Compare lists
+  saved strategies, so one export can be compared with another, and each can be deleted.
+  `tests/test_site_saved.py` checks names, limits, reading back damaged storage, and that a
+  saved strategy gives the same statistics and comparison as its original trades.
+- Fix: for TradingView exports, "Strategy / filter" listed both entry and exit signals, and
+  the exit ones matched no trade. It now lists each trade's entry signal (its setup), in the
+  check, the stop lab and Compare.
+- Fix: Compare no longer offers pairs that share trades, such as a strategy against long
+  trades from the same file.
+- Fix: "Save as PDF" no longer prints the simulator, timing and compare sections.
 - Website redesigned as a light, corporate product page. It now loads nothing from other
   sites (system fonts, no third-party scripts) and carries a Content-Security-Policy that
   only allows network requests to the site itself, so a visitor's files cannot be sent

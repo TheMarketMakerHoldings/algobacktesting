@@ -98,6 +98,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .pill.line { border-color: var(--navy); color: var(--navy); background: transparent; }
 .pill.line:hover { background: var(--navy); color: var(--white); }
 .pill.small { min-height: 38px; padding: 8px 18px; font-size: 12px; }
+.pill:disabled, .pill:disabled:hover { background: var(--line-2); color: var(--ink-2); cursor: not-allowed; }
 
 /* Dotted dividers: two rows of dots */
 .dots { height: 10px; background-image: radial-gradient(circle, var(--line-2) 1.3px, transparent 1.6px); background-size: 10px 5px; background-repeat: repeat-x; background-position: 0 0, 5px 5px; max-width: 300px; }
@@ -229,6 +230,19 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .findings strong { color: var(--navy); }
 .findings .lead { font: 400 1.25rem/1.35 var(--serif); color: var(--navy); }
 .lab-table-wrap { overflow-x: auto; }
+
+/* Saving and listing strategies */
+.save-box { border-top: 1px solid var(--line); gap: 10px; }
+.save-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; }
+.save-row .pill { min-height: 44px; }
+.saved-card { margin-top: 22px; }
+.saved-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.saved-list:empty { display: none; }
+.saved-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.saved-list li:first-child { padding-top: 0; }
+.saved-list b { display: block; color: var(--navy); font-weight: 600; overflow-wrap: anywhere; }
+.saved-list span { display: block; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.saved-list .linkbtn { align-self: center; flex: none; }
 .lab-table th, .lab-table td { padding: 8px 10px; text-align: right; white-space: nowrap; }
 .lab-table thead th { font: 700 11px/1.3 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); border-bottom: 2px solid var(--line-2); }
 .lab-table tbody th { color: var(--navy); font-weight: 600; text-align: right; }
@@ -289,7 +303,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
 @media print {
   @page { margin: 14mm; }
   body { font-size: 11pt; color: #000; }
-  .topbar, .hero, .facts, #lab, #how, #export, #developers, .footer, .skip, noscript,
+  .topbar, .hero, .facts, #prop, #timing, #compare, #lab, #how, #export, #developers, .footer, .skip, noscript,
   .toggles, .section-head, #pane-import .drop, #load-example, #print-report, .chart-cap, .tip { display: none !important; }
   .print-only { display: block; margin-bottom: 10mm; }
   .print-only h1 { font: 400 20pt/1.2 var(--serif); color: #000; }
@@ -448,6 +462,13 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
             </div>
             <p class="error" id="calc-error" role="alert" hidden></p>
           </form>
+          <div class="card-body save-box" id="save-box">
+            <div class="save-row">
+              <label class="field"><span>Save these trades as</span><input type="text" id="save-name" maxlength="60" placeholder="A name, e.g. NQ opening range v2" autocomplete="off" spellcheck="false"></label>
+              <button type="button" class="pill teal small" id="save-btn">Save</button>
+            </div>
+            <p class="note" id="save-note" aria-live="polite">Kept in this browser on this device, never uploaded. Compare saved strategies in the Compare section.</p>
+          </div>
         </section>
 
         <section class="card" aria-labelledby="verdict-title">
@@ -573,7 +594,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         <span class="eyebrow">Compare</span>
         <h2 id="compare-title">Which setup is <em>really better?</em></h2>
         <div class="dots center" aria-hidden="true"></div>
-        <p>Pick two groups from your trade file: two strategies, long against short, or two contracts. See them side by side, and how likely it is that the better one is really better.</p>
+        <p>Pick two strategies you saved, or two groups from your trade file: long against short, or two contracts. See them side by side, and how likely it is that the better one is really better.</p>
       </div>
       <div class="card">
         <div class="card-head">
@@ -586,7 +607,18 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         <div class="card-body">
           <div class="findings" id="compare-findings" aria-live="polite"><p class="note">Import a trade file in the check above to compare its strategies.</p></div>
           <div class="lab-table-wrap"><table class="stats lab-table" id="compare-table"></table></div>
-          <p class="note">Each group needs at least 20 trades. Fees follow the check's settings. Comparing many pairs and keeping the most striking one is a search too: treat one surprising result with care.</p>
+          <p class="note">Each group needs at least 20 trades. Groups from the file follow the check's fee setting; a saved strategy keeps the fees and setups count it was saved with. Only compare trades that do not overlap: a strategy against part of itself is not a fair test. Comparing many pairs and keeping the most striking one is a search too: treat one surprising result with care.</p>
+        </div>
+      </div>
+      <div class="card saved-card">
+        <div class="card-head">
+          <h3>Your saved strategies</h3>
+          <button type="button" class="linkbtn" id="saved-clear" hidden>Delete all</button>
+        </div>
+        <div class="card-body">
+          <ul class="saved-list" id="saved-list"></ul>
+          <p class="note" id="saved-empty">None yet. Load a strategy's trades in the check above, type a name under Save these trades as, and press Save. Save a few, then compare any two here.</p>
+          <p class="note">Saved strategies stay in this browser on this device. They are never uploaded, other visitors cannot see them, and clearing this site's data in your browser deletes them.</p>
         </div>
       </div>
     </div>
@@ -1358,6 +1390,12 @@ function detectColumns(header, rows, delimiter) {
     if (vals.length && vals.every(function (v) { return /^(entry|exit)\b/i.test(v); })) cols.legs = c;
   });
   cols.tradeNo = findColumn(keys, /^(tradenumber|trade#|tradeno|tradeid)$/);
+  // In a file of legs, a trade's setup is named on its entry row (TradingView's Signal, such as
+  // "RTH_L"); the exit row only says how it closed ("RTH_L_x"). Other filters therefore offer
+  // and test entry-row values, matched to the exit row by trade number (see filterRow).
+  var setupRows = cols.legs < 0 ? rows : rows.filter(function (r) {
+    return (cols.tradeNo >= 0 ? /^entry/i : /^exit/i).test(r[cols.legs]);
+  });
   var groups = [
     /strategy|setup|entryname|signal|tag|comment|label/,
     /^(symbol|instrument|contract|contractname|ticker|market|description)$/,
@@ -1369,8 +1407,9 @@ function detectColumns(header, rows, delimiter) {
     keys.forEach(function (k, c) {
       if (!pattern.test(k) || cols.numeric.indexOf(c) >= 0) return;
       if (cols.filters.some(function (f) { return f.col === c; })) return;
-      var values = distinctValues(rows, c);
-      if (c === cols.legs) values = values.filter(function (v) { return /^exit/i.test(v); });
+      var values = c === cols.legs
+        ? distinctValues(rows, c).filter(function (v) { return /^exit/i.test(v); })
+        : distinctValues(setupRows, c);
       if (values.length >= 2 && values.length <= 60) cols.filters.push({ col: c, name: header[c], values: values });
     });
   });
@@ -1407,6 +1446,25 @@ function matchesFilter(row, filter) {
   return !filter || filter.col < 0 || row[filter.col] === filter.value;
 }
 
+// Each trade's entry row in a file of legs, by trade number; null when the file has no legs.
+function entryRowsByTrade(table) {
+  var c = table.cols, map = Object.create(null);
+  if (!c || c.legs < 0 || c.tradeNo < 0) return null;
+  table.rows.forEach(function (r) {
+    var id = r[c.tradeNo];
+    if (id && /^entry/i.test(r[c.legs]) && !(id in map)) map[id] = r;
+  });
+  return map;
+}
+
+// The row a filter reads for the trade whose exit row is given: its entry row, which names the
+// setup, unless the filter is on the legs column itself ("Exit long"), which only exits carry.
+function filterRow(table, exitRow, filter, entryRows) {
+  var c = table.cols;
+  if (!entryRows || !filter || filter.col === c.legs) return exitRow;
+  return entryRows[exitRow[c.tradeNo]] || exitRow;
+}
+
 function orderByTime(trades) {
   if (trades.length && trades.every(function (t) { return isFinite(t.time); })) {
     trades.sort(function (a, b) { return a.time - b.time || a.first - b.first; });
@@ -1417,10 +1475,10 @@ function orderByTime(trades) {
 // One result per trade. Rows sharing a position ID are one trade (Quantower lists each fill).
 function tradesFromTable(table, opt) {
   var byKey = {}, order = [], skipped = 0, dollars = false, feeTotal = 0;
-  var legs = table.cols && table.cols.legs >= 0 ? table.cols.legs : -1;
+  var legs = table.cols && table.cols.legs >= 0 ? table.cols.legs : -1, entryRows = entryRowsByTrade(table);
   table.rows.forEach(function (r, i) {
-    if (!matchesFilter(r, opt.filter)) return;
     if (legs >= 0 && !/^exit/i.test(r[legs])) return; // the entry row repeats the trade's result
+    if (!matchesFilter(filterRow(table, r, opt.filter, entryRows), opt.filter)) return;
     var raw = r[opt.pnl], value = parseNumber(raw, table.delimiter);
     if (!isFinite(value)) { skipped++; return; }
     if (/\$/.test(raw)) dollars = true;
@@ -1691,7 +1749,7 @@ function tradeEntries(table, filter) {
     });
     tradeOrder.forEach(function (id) {
       var en = legsByTrade[id].entry, ex = legsByTrade[id].exit;
-      if (!en || !ex || !matchesFilter(ex, filter)) return;
+      if (!en || !ex || !matchesFilter(filter && filter.col !== cols.legs ? en : ex, filter)) return;
       var side = /long/i.test(en[cols.legs]) ? 1 : /short/i.test(en[cols.legs]) ? -1 : 0;
       var entry = readStamp(en[cols.time]), price = parseNumber(en[cols.price], d);
       if (!side || !isFinite(entry.clock) || !isFinite(price)) return;
@@ -1961,6 +2019,99 @@ function compareGroups(a, b) {
 }
 /* compare:end */
 
+/* saved:start */
+// Saved strategies: named lists of per-trade results kept in this browser's own storage
+// (localStorage). Nothing here touches the network. Pure functions, checked in
+// tests/test_site_saved.py.
+var SAVED_KEY = "algobacktesting.saved.v1", SAVED_MAX = 50, SAVED_MAX_TRADES = 50000, SAVED_NAME_MAX = 60;
+
+// A typed name made safe to keep: control characters become spaces, runs of spaces collapse,
+// and at most 60 characters (whole characters, never half of an emoji) are kept.
+function cleanName(raw) {
+  var s = String(raw == null ? "" : raw), out = "", i, c;
+  for (i = 0; i < s.length; i++) {
+    c = s.charCodeAt(i);
+    out += c < 32 || (c >= 127 && c < 160) ? " " : s.charAt(i);
+  }
+  return Array.from(out.replace(/\s+/g, " ").trim()).slice(0, SAVED_NAME_MAX).join("").trim();
+}
+function savedUnit(unit) { return unit === "$" || unit === "R" ? unit : ""; }
+function savedSetups(v) { v = Math.round(+v); return v >= 1 ? Math.min(v, 10000) : 1; }
+
+// One strategy ready to keep. Results are rounded to 6 decimals so the stored text stays short;
+// that moves any trade, and so the average, by at most 0.0000005.
+function makeSaved(name, values, unit, setups, now) {
+  var clean = cleanName(name), kept = [], i, v;
+  if (!clean) return { error: "Type a name for these trades first." };
+  if (!values || values.length < 10) return { error: "At least 10 trades are needed to save a strategy." };
+  if (values.length > SAVED_MAX_TRADES) return { error: "This page saves up to " + SAVED_MAX_TRADES + " trades per strategy." };
+  for (i = 0; i < values.length; i++) {
+    v = +values[i];
+    if (!isFinite(v)) return { error: "Every trade needs a number to be saved." };
+    kept.push(Math.round(v * 1e6) / 1e6 || 0);
+  }
+  return { item: { id: "s" + Math.floor(now).toString(36), name: clean, values: kept, unit: savedUnit(unit), setups: savedSetups(setups), savedAt: new Date(now).toISOString() } };
+}
+
+// The saved strategy with this name, ignoring case, or null.
+function savedByName(list, name) {
+  var key = cleanName(name).toLowerCase();
+  return list.filter(function (s) { return s.name.toLowerCase() === key; })[0] || null;
+}
+function savedById(list, id) {
+  return list.filter(function (s) { return s.id === id; })[0] || null;
+}
+
+// Adds a strategy to a copy of the list. A strategy with the same name (ignoring case) is
+// replaced in place and keeps its id, so a comparison that picked it still points at it.
+function addSaved(list, item) {
+  var old = savedByName(list, item.name), next = list.slice(), id = item.id, n = 1;
+  if (old) {
+    next[list.indexOf(old)] = Object.assign({}, item, { id: old.id });
+    return { list: next, replaced: true };
+  }
+  if (list.length >= SAVED_MAX) return { error: "This page keeps up to " + SAVED_MAX + " strategies. Delete one first." };
+  while (savedById(list, id)) id = item.id + "-" + n++;
+  next.push(Object.assign({}, item, { id: id }));
+  return { list: next, replaced: false };
+}
+function removeSaved(list, id) {
+  return list.filter(function (s) { return s.id !== id; });
+}
+
+function serializeSaved(list) {
+  return JSON.stringify({ version: 1, strategies: list });
+}
+
+// Reads what serializeSaved wrote. Anything malformed is dropped rather than trusted: browser
+// storage can be edited by hand or left behind by an older version of the page.
+function parseSaved(text) {
+  var data, out = [], ids = {}, names = {};
+  try { data = JSON.parse(text); } catch (e) { return []; }
+  if (!data || data.version !== 1 || !Array.isArray(data.strategies)) return [];
+  data.strategies.forEach(function (s) {
+    if (out.length >= SAVED_MAX || !s || typeof s !== "object") return;
+    var name = cleanName(s.name), key = name.toLowerCase(), id = typeof s.id === "string" ? s.id : "";
+    if (!name || names[key] || !/^[a-z0-9-]{1,40}$/.test(id) || ids[id]) return;
+    if (!Array.isArray(s.values) || s.values.length < 10 || s.values.length > SAVED_MAX_TRADES) return;
+    if (!s.values.every(function (v) { return typeof v === "number" && isFinite(v); })) return;
+    ids[id] = names[key] = true;
+    out.push({
+      id: id, name: name, values: s.values.slice(), unit: savedUnit(s.unit), setups: savedSetups(s.setups),
+      savedAt: typeof s.savedAt === "string" && isFinite(Date.parse(s.savedAt)) ? s.savedAt : ""
+    });
+  });
+  return out;
+}
+
+// True when two lists hold the same trades in the same order (to the 6 decimals kept).
+function sameTrades(a, b) {
+  if (a.length !== b.length) return false;
+  for (var i = 0; i < a.length; i++) if (Math.abs(a[i] - b[i]) > 1e-6) return false;
+  return true;
+}
+/* saved:end */
+
 (function () {
   "use strict";
   function $(id) { return document.getElementById(id); }
@@ -2029,7 +2180,7 @@ function compareGroups(a, b) {
       $("fees-row").hidden = !t.cols.fees.length || t.kind !== "pnl";
       $("fees-text").textContent = "Subtract fees (" + t.cols.fees.map(function (c) { return t.header[c]; }).join(" + ") + ")";
     }
-    fillCompare(t);
+    compareFresh = true;
     if (isExample) {
       var orb = Array.prototype.filter.call(filterSel.options, function (o) { return /\|ORB$/.test(o.value); })[0];
       if (orb) filterSel.value = orb.value;
@@ -2070,7 +2221,9 @@ function compareGroups(a, b) {
     if (pick === "fifo") notes.push("Buys and sells paired first in, first out. Fees are not in this file, so results are before fees.");
     if (res.open) notes.push(res.open + (res.open === 1 ? " position is" : " positions are") + " still open and not counted.");
     if (res.unknownMultiplier) notes.push("Some futures contracts were not recognised, so their results are in points.");
-    if (!filter && t.cols.filters.some(function (x) { return /strategy|setup|entryname|signal/.test(t.cols.keys[x.col]); })) {
+    if (!filter && t.cols.legs >= 0 && t.cols.filters.some(function (x) { return /signal/.test(t.cols.keys[x.col]); })) {
+      notes.push("Each trade's entry signal is listed under Strategy / filter, to judge one setup alone.");
+    } else if (!filter && t.cols.filters.some(function (x) { return /strategy|setup|entryname|signal/.test(t.cols.keys[x.col]); })) {
       notes.push("This file has several strategies. Pick one under Strategy / filter to judge it alone.");
     }
     var fileLine = "<b>" + esc(source.name) + "</b><span>" + whole(t.rows.length) + " rows</span>";
@@ -2130,6 +2283,8 @@ function compareGroups(a, b) {
     err.hidden = !s.error;
     $("chart-equity").disabled = mode === "quick";
     if (mode === "quick" && chartMode === "equity") setChart("proof", true);
+    $("save-box").hidden = mode === "quick";
+    $("save-btn").disabled = !!s.error;
     if (s.error) {
       view = null;
       verdict.className = "state idle";
@@ -2144,7 +2299,8 @@ function compareGroups(a, b) {
       if (typeof runLab === "function") runLab();
       if (typeof runProp === "function") runProp();
       if (typeof runTiming === "function") runTiming();
-      if (typeof runCompare === "function") runCompare();
+      fillCompare();
+      runCompare();
       return;
     }
     s.setups = n;
@@ -2191,7 +2347,8 @@ function compareGroups(a, b) {
     if (typeof runLab === "function") runLab();
     if (typeof runProp === "function") runProp();
     if (typeof runTiming === "function") runTiming();
-    if (typeof runCompare === "function") runCompare();
+    fillCompare();
+    runCompare();
   }
 
   /* ---------- charts ---------- */
@@ -2473,41 +2630,94 @@ function compareGroups(a, b) {
       filter: filter, group: t.cols.group, time: t.cols.time
     });
   }
-  function fillCompare(t) {
-    ["compare-a", "compare-b"].forEach(function (id) { $(id).textContent = ""; });
-    if (!t) return;
-    t.cols.filters.forEach(function (f) {
-      ["compare-a", "compare-b"].forEach(function (id) {
-        var group = document.createElement("optgroup");
-        group.label = f.name;
-        f.values.forEach(function (v) { group.appendChild(Object.assign(document.createElement("option"), { value: f.col + "|" + v, textContent: v })); });
-        $(id).appendChild(group);
-      });
+  // A new trade file resets the two choices; other changes keep them when they still exist.
+  var compareFresh = true;
+  // The trades now in the check, named after their file and filter: "Example file (ORB)".
+  function currentLabel() {
+    var f = $("sel-filter"), picked = mode === "import" && f.selectedIndex > 0 ? " (" + f.options[f.selectedIndex].textContent + ")" : "";
+    var label = (view && view.label ? view.label : "Trades in the check").replace(/\.(csv|txt)$/i, "");
+    if (label.length > 40) label = label.slice(0, 38) + "...";
+    return label + picked;
+  }
+  function fillCompare() {
+    var keep = compareFresh ? [] : [$("compare-a").value, $("compare-b").value];
+    var t = mode === "import" && source && source.table ? source.table : null, hasView = !!(view && view.values);
+    compareFresh = false;
+    ["compare-a", "compare-b"].forEach(function (id) {
+      var sel = $(id);
+      sel.textContent = "";
+      function group(label, options) {
+        var g = document.createElement("optgroup");
+        g.label = label;
+        options.forEach(function (o) { g.appendChild(Object.assign(document.createElement("option"), { value: o[0], textContent: o[1] })); });
+        sel.appendChild(g);
+      }
+      if (hasView) group("Now in the check", [["cur", currentLabel()]]);
+      if (saved.length) group("Saved strategies", saved.map(function (s) { return ["s:" + s.id, s.name]; }));
+      if (t) t.cols.filters.forEach(function (f) { group(f.name, f.values.map(function (v) { return [f.col + "|" + v, v]; })); });
     });
-    var first = t.cols.filters[0];
-    if (first && first.values.length > 1) {
-      $("compare-a").value = first.col + "|" + first.values[0];
-      $("compare-b").value = first.col + "|" + first.values[1];
+    var all = Array.prototype.map.call($("compare-a").options, function (o) { return o.value; });
+    function has(v) { return all.indexOf(v) >= 0; }
+    var a = keep[0], b = keep[1], first = t && t.cols.filters[0];
+    if (!(has(a) && has(b))) {
+      // The example shows its two strategies; your own file is set against your first saved one.
+      if (first && first.values.length > 1 && (source.example || !saved.length)) { a = first.col + "|" + first.values[0]; b = first.col + "|" + first.values[1]; }
+      else if (saved.length && hasView) { a = "cur"; b = "s:" + saved[0].id; }
+      else { a = all[0] || ""; b = all[1] || a; }
     }
+    $("compare-a").value = a;
+    $("compare-b").value = b;
+  }
+  // What a choice in Compare stands for: the trades now in the check, a saved strategy, or a
+  // group of rows in the loaded file.
+  function comparePick(value) {
+    if (value === "cur") return view && view.values ? { kind: "cur", name: currentLabel(), values: view.values, unit: view.unit, setups: setups() } : null;
+    if (value.indexOf("s:") === 0) {
+      var s = savedById(saved, value.slice(2));
+      return s ? { kind: "saved", name: s.name, values: s.values, unit: s.unit, setups: s.setups } : null;
+    }
+    var cut = value.indexOf("|");
+    if (cut < 1 || mode !== "import" || !source || !source.table) return null;
+    var f = { col: +value.slice(0, cut), value: value.slice(cut + 1) };
+    return {
+      kind: "group", col: f.col, name: f.value, values: tradesFor(source.table, f).values,
+      unit: view && view.unit ? view.unit : (source.platform || source.example ? "$" : ""), setups: setups()
+    };
   }
   function runCompare() {
     var out = $("compare-findings"), table = $("compare-table");
     function para(text, cls) { out.appendChild(Object.assign(document.createElement("p"), { className: cls || "", textContent: text })); }
     out.textContent = "";
     table.textContent = "";
-    if (mode !== "import" || !source || !source.table) { para("Import a trade file in the check above to compare its strategies.", "note"); return; }
-    if (!source.table.cols.filters.length) { para("This file has no strategy, side or contract column to split by.", "note"); return; }
-    var picks = ["compare-a", "compare-b"].map(function (id) { var v = $(id).value, cut = v.indexOf("|"); return { col: +v.slice(0, cut), value: v.slice(cut + 1) }; });
-    if (picks[0].col === picks[1].col && picks[0].value === picks[1].value) { para("Pick two different groups.", "note"); return; }
-    var sets = picks.map(function (f) { return tradesFor(source.table, f).values; });
+    if ($("compare-a").options.length < 2) {
+      para(saved.length || (view && view.values)
+        ? "To compare, save these trades under a name in the check above, then load another strategy's file."
+        : "Load a strategy's trades in the check above and save them under a name, or import a file with several strategies.", "note");
+      return;
+    }
+    var va = $("compare-a").value, vb = $("compare-b").value;
+    if (va === vb) { para("Pick two different groups.", "note"); return; }
+    var picks = [comparePick(va), comparePick(vb)];
+    if (!picks[0] || !picks[1]) { para("Pick two groups to compare.", "note"); return; }
+    var kinds = picks.map(function (p) { return p.kind; }).sort().join(" ");
+    if (kinds === "cur group") { para("The trades in the check and a group from the same file overlap, so comparing them would not be fair. Pick two groups from the file, or compare against a saved strategy.", "note"); return; }
+    if (kinds === "group group" && picks[0].col !== picks[1].col) {
+      para("These groups come from different columns, so one trade can be in both (" + picks[0].name + " and " + picks[1].name + " at once). That would not be a fair test: pick two values from the same column.", "note");
+      return;
+    }
+    if (picks[0].unit && picks[1].unit && picks[0].unit !== picks[1].unit) { para("These two are in different units (" + picks[0].unit + " and " + picks[1].unit + "), so they cannot be compared.", "note"); return; }
+    var sets = picks.map(function (p) { return p.values; });
+    if (sameTrades(sets[0], sets[1])) { para("These two hold exactly the same trades, so there is nothing to compare.", "note"); return; }
     if (sets[0].length < 20 || sets[1].length < 20) { para("Each group needs at least 20 trades: A has " + sets[0].length + ", B has " + sets[1].length + ".", "note"); return; }
-    var u = view && view.unit ? view.unit : (source.platform || source.example ? "$" : ""), n = setups();
-    var info = sets.map(function (vals) {
-      var st = statsFromTrades(vals), sum = tradeSummary(vals);
-      return { n: vals.length, winRate: sum.wins / vals.length, mean: st.mean, total: sum.total, dd: sum.maxDrawdown, chance: st.sd > 0 ? edgeProbability(st, vals.length, n) : NaN };
+    var u = picks[0].unit || picks[1].unit;
+    var info = picks.map(function (pick) {
+      var vals = pick.values, st = statsFromTrades(vals), sum = tradeSummary(vals);
+      return { n: vals.length, winRate: sum.wins / vals.length, mean: st.mean, total: sum.total, dd: sum.maxDrawdown, setups: pick.setups, chance: st.sd > 0 ? edgeProbability(st, vals.length, pick.setups) : NaN };
     });
     var c = compareGroups(sets[0], sets[1]), aWins = c.diff >= 0, p = aWins ? c.probABetter : 1 - c.probABetter;
-    var names = picks.map(function (f) { return f.value; }), better = aWins ? names[0] : names[1], worse = aWins ? names[1] : names[0];
+    var names = picks.map(function (pick) { return pick.name; });
+    if (names[0] === names[1]) names = picks.map(function (pick) { return pick.name + (pick.kind === "saved" ? " (saved)" : pick.kind === "cur" ? " (check)" : " (file)"); });
+    var better = aWins ? names[0] : names[1], worse = aWins ? names[1] : names[0];
     para(better + " averaged " + money(Math.abs(c.diff), u, 2) + " more per trade than " + worse + ".", "lead");
     para("The chance " + better + " is really the better one, not just luckier in this sample, is " + pct(p) + ". " +
       (p >= 0.95 ? "That difference holds up." : p >= 0.8 ? "It leans that way, but is not proven." : "That could easily be luck: more trades are needed to tell them apart."));
@@ -2521,6 +2731,7 @@ function compareGroups(a, b) {
      ["Average per trade", function (i) { return money(i.mean, u, 2, true); }, function (i) { return signClass(i.mean); }],
      ["Net result", function (i) { return money(i.total, u, 0, true); }, function (i) { return signClass(i.total); }],
      ["Max drawdown", function (i) { return money(-i.dd, u, 0); }, function () { return "neg"; }],
+     ["Setups counted", function (i) { return whole(i.setups); }, null],
      ["Chance its edge is real", function (i) { return isFinite(i.chance) ? pct(i.chance) : "\u2013"; }, null]
     ].forEach(function (row) {
       var tr = document.createElement("tr");
@@ -2529,6 +2740,81 @@ function compareGroups(a, b) {
       body.appendChild(tr);
     });
     table.appendChild(body);
+  }
+
+  /* ---------- saved strategies ---------- */
+  // Kept in this browser's localStorage under one key. Every read and write is guarded: a
+  // private window or a browser with storage turned off simply cannot save.
+  var saved = [];
+  function storeRead() {
+    try { return window.localStorage.getItem(SAVED_KEY); } catch (e) { return null; }
+  }
+  function storeWrite(list) {
+    try {
+      if (list.length) window.localStorage.setItem(SAVED_KEY, serializeSaved(list));
+      else window.localStorage.removeItem(SAVED_KEY);
+      return true;
+    } catch (e) { return false; }
+  }
+  function loadSaved() { saved = parseSaved(storeRead()); }
+  function savedChanged() {
+    renderSaved();
+    fillCompare();
+    runCompare();
+  }
+  function renderSaved() {
+    var list = $("saved-list");
+    list.textContent = "";
+    saved.forEach(function (s) {
+      var sum = tradeSummary(s.values), li = document.createElement("li"), text = document.createElement("div");
+      var when = s.savedAt ? " · saved " + new Date(s.savedAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "";
+      text.appendChild(Object.assign(document.createElement("b"), { textContent: s.name }));
+      text.appendChild(Object.assign(document.createElement("span"), {
+        textContent: whole(s.values.length) + " trades · " + money(sum.total, s.unit, 0, true) + " net · " + whole(s.setups) + (s.setups === 1 ? " setup" : " setups") + when
+      }));
+      var del = Object.assign(document.createElement("button"), { type: "button", className: "linkbtn", textContent: "Delete" });
+      del.setAttribute("aria-label", "Delete " + s.name);
+      del.addEventListener("click", function () { deleteSaved(s.id); });
+      li.appendChild(text);
+      li.appendChild(del);
+      list.appendChild(li);
+    });
+    $("saved-empty").hidden = saved.length > 0;
+    $("saved-clear").hidden = saved.length < 2;
+  }
+  function saveNow() {
+    var note = $("save-note");
+    if (!view || !view.values) { note.textContent = "Load at least 10 trades first. A quick check has no trades to save."; return; }
+    var made = makeSaved($("save-name").value, view.values, view.unit, setups(), Date.now());
+    if (made.error) { note.textContent = made.error; $("save-name").focus(); return; }
+    loadSaved(); // another tab may have changed the list
+    var old = savedByName(saved, made.item.name);
+    if (old && !window.confirm("Replace your saved “" + old.name + "” (" + whole(old.values.length) + " trades) with these " + whole(made.item.values.length) + " trades?")) return;
+    var added = addSaved(saved, made.item);
+    if (added.error) { note.textContent = added.error; return; }
+    if (!storeWrite(added.list)) { note.textContent = "Your browser did not allow saving here (a private window, or site storage turned off or full). Nothing was saved."; return; }
+    saved = added.list;
+    $("save-name").value = "";
+    note.textContent = (added.replaced ? "Replaced " : "Saved ") + "“" + made.item.name + "”: " + whole(made.item.values.length) + " trades, " + setups() + (setups() === 1 ? " setup" : " setups") + ". Compare it in the Compare section.";
+    savedChanged();
+  }
+  function deleteSaved(id) {
+    loadSaved();
+    var s = savedById(saved, id);
+    if (!s) { savedChanged(); return; }
+    if (!window.confirm("Delete “" + s.name + "” from this browser? This cannot be undone.")) return;
+    var next = removeSaved(saved, id);
+    if (!storeWrite(next)) { window.alert("Your browser did not allow the change, so nothing was deleted."); return; }
+    saved = next;
+    savedChanged();
+  }
+  function deleteAllSaved() {
+    loadSaved();
+    if (!saved.length) { savedChanged(); return; }
+    if (!window.confirm("Delete all " + saved.length + " saved strategies from this browser? This cannot be undone.")) return;
+    if (!storeWrite([])) { window.alert("Your browser did not allow the change, so nothing was deleted."); return; }
+    saved = [];
+    savedChanged();
   }
 
   /* ---------- timing breakdown ---------- */
@@ -2728,6 +3014,13 @@ function compareGroups(a, b) {
   }
   $("timing-hour").addEventListener("click", function () { setTiming("hour"); });
   ["compare-a", "compare-b"].forEach(function (id) { $(id).addEventListener("change", runCompare); });
+  $("save-btn").addEventListener("click", saveNow);
+  $("save-name").addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); saveNow(); } });
+  $("saved-clear").addEventListener("click", deleteAllSaved);
+  // Another tab of this site saved or deleted a strategy: show the same list here.
+  window.addEventListener("storage", function (ev) {
+    if (ev.key === SAVED_KEY || ev.key === null) { loadSaved(); savedChanged(); }
+  });
   $("timing-day").addEventListener("click", function () { setTiming("weekday"); });
   $("prop-form").addEventListener("submit", function (ev) { ev.preventDefault(); });
   chartBox.addEventListener("pointermove", hover);
@@ -2735,6 +3028,8 @@ function compareGroups(a, b) {
   var resizeTimer = 0;
   window.addEventListener("resize", function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 100); });
 
+  loadSaved();
+  renderSaved();
   loadText($("example-csv").textContent.trim(), "example-trades.csv", true);
 })();
 </script>

@@ -76,6 +76,9 @@ The import reads the file in the browser; nothing is uploaded. It:
   apart from wins and losses, together with what the breakevens cost in fees. The win rate
   is shown both with and without them;
 - **filters to one strategy**, so a file with several setups is judged one setup at a time.
+  In a TradingView export the setup is the entry signal (such as `RTH_L`). The exit row's
+  signal (`RTH_L_x`) only says how the trade closed, so the filter reads each trade's entry
+  row, matched to its exit row by trade number.
 
 Only Quantower's column names come from a published list. The TopstepX, NinjaTrader and
 thinkorswim samples in `tests/exports/` are modelled on secondhand descriptions, so every
@@ -140,6 +143,39 @@ setups, so each slice with at least 5 trades is scored with the Deflated Sharpe 
 negated results scores whether a losing slice's losses are a real pattern. On the page's
 random-walk example the best hour reaches only "promising, not proven": exactly what should
 happen where no edge exists.
+
+## Comparing strategies, and saving them
+
+"Which of my setups is really better?" The compare section takes two groups of trades and
+reports the difference in average result per trade, and the chance the better one is really
+better. That chance is the difference divided by its standard error, read off the normal
+curve (Welch's two-sample comparison). The standard error is the square root of each group's
+variance divided by its number of trades, added together. Each group needs 20 trades.
+
+A group can be:
+
+- one value of a column in the loaded file: a strategy, long or short trades, a contract;
+- the trades now in the check;
+- a strategy saved earlier. A TradingView export holds one strategy, so saving is how two
+  exports get compared: load one, type a name, save, then load the next and compare.
+
+Saved strategies are kept in the browser's own storage on that device (localStorage), under
+one key. Nothing is uploaded, and clearing the site's data in the browser deletes them. Each
+keeps its per-trade results, its unit and the number of setups tried when it was saved, so
+its chance of being real is scored with its own count of setups. Results are rounded to six
+decimals, which moves the average by at most 0.0000005.
+
+**The comparison assumes the two groups are separate trades.** Welch's test treats them as
+independent samples. ORB trades and long trades can share trades, and so can the trades in
+the check and a group from the same file, so the page refuses those pairs. It cannot see
+overlap between two saved strategies, so the page warns: comparing a strategy with part of
+itself is not a fair test.
+
+Checks: the formula matches a separate Python computation to 12 decimal places. With 2,000
+pairs drawn from one distribution, about 5% are called different (within four binomial
+standard errors). A saved strategy read back gives the same statistics and the same
+comparison as its original trades to within 0.000001. The stored list is checked entry by
+entry, so a damaged or hand-edited list is dropped, never trusted.
 
 ## How we know it behaves
 

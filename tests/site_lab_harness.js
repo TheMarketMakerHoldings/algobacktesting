@@ -22,7 +22,9 @@ out.cases = input.cases.map(function (c) {
   return replayBracket(bars, times, c.start, c.opt);
 });
 out.align = input.align.map(function (a) {
-  const parsedBars = parseBars(a.bars), trades = readExport(a.trades).table, entries = tradeEntries(trades, null);
+  const parsedBars = parseBars(a.bars), trades = readExport(a.trades).table;
+  const filter = a.filter ? { col: trades.header.indexOf(a.filter[0]), value: a.filter[1] } : null;
+  const entries = tradeEntries(trades, filter);
   const al = alignEntries(entries, parsedBars.bars, parsedBars.barMs, 0.25);
   return { useUtc: al.useUtc, shift: al.shiftHours, matched: al.matched.length, entries: entries.length };
 });
