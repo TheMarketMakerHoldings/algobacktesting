@@ -55,6 +55,13 @@ All notable changes are listed here. The format follows
   maximum drawdown. Fees are subtracted unless the P&L column is already net.
   `tests/test_site_import.py` checks the importer on sample exports from all four
   platforms and on the built-in example.
+- Stop lab on the website: replays each imported trade's entry on the trader's own price bars
+  (CSV, such as a Quantower history export) with a range of stop sizes, a target and an
+  optional move to breakeven. Each stop size counts as a trial, so a stop that only looks
+  better by luck is reported as luck. `docs/build_example.py` generates the example: a
+  synthetic random-walk market (`docs/example-bars.csv`) and two strategies traded on it.
+  `tests/test_site_lab.py` checks the replay against a separate Python implementation.
+- The website moved to https://algobacktesting.com/.
 - `RELEASING.md` (release checklist), `CODE_OF_CONDUCT.md`, and an issue template for
   suggesting a new check. The release workflow validates the package description and
   opens a GitHub release.

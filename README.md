@@ -17,8 +17,10 @@ tell a real edge apart from an overfit one.
 
 **Not a programmer?** The [online check](https://algobacktesting.com/)
 asks one question: are you actually profitable, or just lucky? Import a strategy's trades from
-TopstepX, Quantower, NinjaTrader or thinkorswim, paste them, or enter a win rate. It runs in
-the browser, and nothing is uploaded.
+TopstepX, Quantower, NinjaTrader or thinkorswim, paste them, or enter a win rate. Its stop lab
+replays your entries on your own price bars to test other stop sizes, and counts every size
+tried so a lucky stop is not mistaken for a better one. It runs in the browser, and nothing is
+uploaded.
 
 | Question | Tool |
 | --- | --- |

@@ -2,7 +2,8 @@
 
 Page: `docs/index.html`
 Tests: `tests/test_site.py` (the page's math against the library),
-`tests/test_site_import.py` (reading trade exports) and
+`tests/test_site_import.py` (reading trade exports), `tests/test_site_lab.py` (the stop lab)
+and
 `tests/test_luck_calibration.py` (how often it gives a false alarm)
 
 ## The question it answers
@@ -80,11 +81,43 @@ Only Quantower's column names come from a published list. The TopstepX, NinjaTra
 thinkorswim samples in `tests/exports/` are modelled on secondhand descriptions, so every
 choice the importer makes is shown on the page and can be changed.
 
+## The stop lab
+
+"Would a different stop have done better?" The lab keeps each trade's entry (time, side,
+price) from the trade file and replays it on the trader's own price bars with a fixed stop,
+a fixed target and, optionally, a stop moved to the entry price once the trade is some
+ticks in profit. It does that for every stop size in a range, then reports each size's win
+rate, average per trade, net result, drawdown and the chance its edge is real.
+
+The rules, all stated on the page:
+
+- **When a bar touches both the stop and the target, the stop counts.** One-minute bars do
+  not say which came first, so the lab assumes the worse one.
+- **The entry bar can only stop a trade out**, unless the entry was at that bar's open: its
+  earlier prices happened before the trade existed.
+- **Stops and targets fill at their exact price.** Real fills can be worse.
+- **Trades and bars are lined up by time.** If the two files use different clocks, the lab
+  tries whole-hour shifts and keeps the one where most entry prices fall inside their bar.
+
+**The search counts.** Comparing 19 stop sizes and keeping the best is itself a search,
+just like trying 19 setups. So the lab scores each size as one of (setups tried × stop
+sizes) trials. On the page's example, built on a random walk where no edge exists, the best
+stop looks clearly better than the real one, and the lab still says it is luck. That is the
+point: tuning a stop to past data is the easiest way to fool yourself.
+
+The lab also reports how far winning trades went against the entry before they closed
+("9 in 10 of your winners never went more than 6 ticks against you"), which shows how tight a
+stop can be before it starts cutting off winners. Bar data stays on the trader's computer;
+licensed exchange data must not be published.
+
 ## How we know it behaves
 
 - **The page's math equals the library's.** A test runs the page's own code and compares it
   with the Python library on 401 quick-check cases and 120 pasted-trade cases.
 - **"Trades needed" is exact.** At that number of trades the library returns exactly 95%.
+- **The stop lab replays exactly.** A separate Python version of its rules gives the same
+  result on every example trade at every stop size, and replaying the example strategy with
+  its own settings reproduces each of its 151 trades to the cent.
 - **False alarms were measured.** We simulated traders with no edge at all (20,000 per
   case, 120 trades each) and counted how often the page would call the edge proven:
 
