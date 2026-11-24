@@ -1802,7 +1802,9 @@ function excursionSummary(aligned, bars, tick) {
     if (n < 10) return { error: n ? "Only " + n + (n === 1 ? " trade" : " trades") + " match. At least 10 are needed." : "No trades match this filter." };
     var stats = statsFromTrades(res.values);
     if (!(stats.sd > 0)) return { error: "Every trade has the same result, so there is nothing to measure." };
-    return { stats: stats, values: res.values, before: res.before, trades: n, unit: res.unit, digits: 2, fees: res.fees, feesOn: pick !== "fifo" && $("chk-fees").checked && t.cols.fees.length > 0, label: source.example ? "Example file" : source.name };
+    // Futures platforms report results in US dollars even when the cells carry no $ sign.
+    var unit = res.unit || (source.platform || source.example ? "$" : "");
+    return { stats: stats, values: res.values, before: res.before, trades: n, unit: unit, digits: 2, fees: res.fees, feesOn: pick !== "fifo" && $("chk-fees").checked && t.cols.fees.length > 0, label: source.example ? "Example file" : source.name };
   }
 
   function parsePasted(text) {
