@@ -1693,6 +1693,13 @@ function excursionSummary(aligned, bars, tick) {
   }
 
   function loadText(text, name, isExample) {
+    // Settings the example bars put in the stop lab must not carry over to the user's own file.
+    if (!isExample && labFromExample) {
+      $("lab-be").value = 0;
+      labTargetEdited = false;
+      labFromExample = false;
+      labKey = "";
+    }
     var result = readExport(text), t = result.table;
     source = { name: name, example: !!isExample, table: t, platform: result.platform };
     var pnlSel = $("sel-pnl"), filterSel = $("sel-filter");
@@ -1997,7 +2004,7 @@ function excursionSummary(aligned, bars, tick) {
   }
 
   /* ---------- stop lab ---------- */
-  var lab = null, labTargetEdited = false, labKey = "";
+  var lab = null, labTargetEdited = false, labKey = "", labFromExample = false;
   var LAB_EMPTY = '<p class="note">Load a trade file above and a bar file here to see how different stops would have done.</p>';
 
   (function () {
@@ -2018,7 +2025,7 @@ function excursionSummary(aligned, bars, tick) {
       parsed.note = "Several contracts in this file; using " + top + ".";
     }
     lab = { name: name, parsed: parsed, example: !!isExample };
-    if (isExample) { $("lab-be").value = 12; $("lab-target").value = 24; labTargetEdited = true; }
+    if (isExample) { $("lab-be").value = 12; $("lab-target").value = 24; labTargetEdited = true; labFromExample = true; }
     runLab();
   }
 
