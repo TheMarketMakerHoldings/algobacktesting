@@ -2,6 +2,9 @@
 
 Ideas that are deliberately **not** in v0.1. Nothing here gets built until v0.1.0 ships.
 
+- From chart data to a verdict: load historical price bars (CSV) and simple entry and
+  exit rules, produce per-trade results, and run them through the checks. A bridge into
+  the existing tests, not a full backtesting engine. Private market data stays local.
 - Multiple-testing haircuts for Sharpe ratios: Bonferroni, Holm, Benjamini-Hochberg and
   Harvey-Liu style.
 - Estimating the effective number of independent trials by clustering correlated

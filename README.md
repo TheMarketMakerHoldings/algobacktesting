@@ -27,9 +27,27 @@ trades, or paste your trade results.
 
 ## Why this matters
 
-<!-- DANIEL: write this section yourself, in your own words. Placeholder until then. -->
+I've consistently struggled with trading setups that had amazing winning streaks. They
+looked great, but my overall profitability was neglected because of my obsession with my
+strategies. The problem was that I didn't realize how unreliable my strategies really were
+until I started calculating them. My strategies had incredibly high reward-to-risk setups
+that happened frequently, and I launched them on Quantower using Python algorithms I wrote in
+Visual Studio 2022, so the code ran my strategies automatically. I would often watch around
+the peak hours of my setups and sometimes see them take off, and I told myself the winning
+trades would take care of the occasional losses. Little did I know I had a 33% win rate and
+my account was turning very negative.
 
-_To be written by the author._
+When I saw the numbers, I didn't believe them. I blamed my brokerage for counting breakevens
+as negative, but in reality a breakeven is a negative trade: if your strategy has a real edge,
+you shouldn't need to worry about breakevens counting against you. Seeing my win rate broke
+my dreams. It made me feel like trading without professional experience is for losers. I
+called myself "exit liquidity", the target market for day-trading gurus, even though I had
+started with my own analysis of the market instead of listening to gurus who tell you that
+you can draw random patterns on a chart and that watching level 2 tick data is stupid. They
+say that to hide the truth: trading comes down to data.
+
+Now, when I develop a strategy, I backtest it on historical market data and run the results
+through `algobacktesting` to see whether the strategy really has an edge.
 
 ## Quickstart
 
@@ -97,13 +115,14 @@ has a plain-English guide to each module.
 
 ## Installation
 
-Not yet published. After v0.1.0:
+Install the latest version straight from GitHub (needs Git):
 
 ```bash
-pip install algobacktesting
+pip install git+https://github.com/TheMarketMakerHoldings/algobacktesting
 ```
 
-Requires Python 3.11+ and NumPy.
+Requires Python 3.11+ and NumPy. Once version 0.1.0 is on PyPI, `pip install algobacktesting`
+will work too.
 
 ## Verification
 
