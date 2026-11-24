@@ -62,6 +62,11 @@ All notable changes are listed here. The format follows
   synthetic random-walk market (`docs/example-bars.csv`) and two strategies traded on it.
   `tests/test_site_lab.py` checks the replay against a separate Python implementation.
 - The website moved to https://algobacktesting.com/.
+- Website redesigned as a light, corporate product page. It now loads nothing from other
+  sites (system fonts, no third-party scripts) and carries a Content-Security-Policy that
+  only allows network requests to the site itself, so a visitor's files cannot be sent
+  anywhere. Added robots.txt, a sitemap and structured data for search engines.
+  `tests/test_site_privacy.py` guards both.
 - `RELEASING.md` (release checklist), `CODE_OF_CONDUCT.md`, and an issue template for
   suggesting a new check. The release workflow validates the package description and
   opens a GitHub release.

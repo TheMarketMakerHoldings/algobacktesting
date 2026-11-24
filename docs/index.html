@@ -3,311 +3,466 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Are you actually profitable, or just lucky? · algobacktesting</title>
-<meta name="description" content="Import your trades from TopstepX, Quantower, NinjaTrader or thinkorswim and see whether a strategy's edge is real or luck. Free, open source, runs in your browser.">
-<link rel="canonical" href="https://themarketmakerholdings.github.io/algobacktesting/">
-<meta name="theme-color" content="#07090c">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Are you profitable, or just lucky? · algobacktesting</title>
+<meta name="description" content="Free trading strategy check. Import your trades from TopstepX, Quantower, NinjaTrader or thinkorswim and see the chance your edge is real, after counting every setup you tried. Runs in your browser; nothing is uploaded.">
+<link rel="canonical" href="https://algobacktesting.com/">
+<meta name="theme-color" content="#5f6f7e">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="algobacktesting">
-<meta property="og:url" content="https://themarketmakerholdings.github.io/algobacktesting/">
-<meta property="og:title" content="Are you actually profitable, or just lucky?">
+<meta property="og:url" content="https://algobacktesting.com/">
+<meta property="og:title" content="Are you profitable, or just lucky?">
 <meta property="og:description" content="Import a strategy's trades and see how likely it is that its edge is real, and how many more trades it would take to prove it.">
-<meta property="og:image" content="https://themarketmakerholdings.github.io/algobacktesting/social-card.png">
+<meta property="og:image" content="https://algobacktesting.com/social-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Are you actually profitable, or just lucky? A free check for traders.">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307090c'/%3E%3Cpath d='M5 24h6v-7h5v-5h5V6h6' fill='none' stroke='%23f2a93b' stroke-width='3'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='16' fill='%2323243a'/%3E%3Cpath d='M7 22l6-6 4 3 8-9' fill='none' stroke='%236fe0c4' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "algobacktesting",
+  "url": "https://algobacktesting.com/",
+  "description": "Checks whether a trading strategy's results are a real edge or luck, using the Probabilistic and Deflated Sharpe Ratio. Imports trades from TopstepX, Quantower, NinjaTrader and thinkorswim, and replays entries on price bars to test stop sizes.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "Any (runs in the browser)",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Daniel Heidary" },
+  "publisher": { "@type": "Organization", "name": "The Market Maker Holdings & Co." },
+  "sameAs": ["https://github.com/TheMarketMakerHoldings/algobacktesting"]
+}
+</script>
 <style>
-/* A trading terminal: one dark desk of square panels. Inputs on the left, the verdict on the
-   right, the chart underneath. Amber marks what you can act on; green and red only ever mean
-   gain and loss. Every number is monospaced so columns line up. */
+/* Layout follows a corporate product page: a slate top bar, a white hero with a serif
+   headline, then alternating white, warm-grey and navy bands. The tool itself sits in white
+   cards. Teal marks actions and good news; red only ever marks losses. All fonts are the
+   visitor's own system fonts, so the page loads nothing from anywhere else. */
 :root {
-  --bg: #07090c;
-  --panel: #0d1117;
-  --panel-2: #121821;
-  --line: #1f2731;
-  --line-2: #2c3644;
-  --text: #dbe2ea;
-  --dim: #95a1b1;
-  --amber: #f2a93b;
-  --amber-ink: #0b0d10;
-  --gain: #3fcf8e;
-  --loss: #f26b6b;
-  --grid: #18202a;
-  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
-  --cond: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
-  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  color-scheme: dark;
+  --navy: #23243a;
+  --navy-2: #2f3150;
+  --slate: #5f6f7e;
+  --teal: #17806a;
+  --teal-ink: #137360;
+  --teal-bright: #1f9e80;
+  --mint: #6fe0c4;
+  --warm: #ebe8e1;
+  --warm-2: #f6f4f0;
+  --white: #ffffff;
+  --ink: #23243a;
+  --ink-2: #4d5466;
+  --line: #d9d6ce;
+  --line-2: #c4c0b6;
+  --gain: #137360;
+  --loss: #b4322f;
+  --wait: #9a5b00;
+  --serif: "Iowan Old Style", "Charter", "Bitstream Charter", "Sitka Text", Cambria, Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+  --wrap: 1180px;
+  color-scheme: light;
 }
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--bg); color: var(--text); font: 400 15px/1.5 var(--sans); }
-a { color: var(--amber); text-underline-offset: 0.2em; }
-:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 72px; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--white); color: var(--ink); font: 400 17px/1.55 var(--sans); }
 h1, h2, h3, p { margin: 0; }
+a { color: var(--teal-ink); text-underline-offset: 0.18em; }
+a:hover { color: var(--navy); }
+:focus-visible { outline: 3px solid var(--teal-bright); outline-offset: 2px; }
 button, input, select, textarea { font: inherit; color: inherit; }
-
-.shell { max-width: 1180px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-left, 0px)) 24px max(16px, env(safe-area-inset-right, 0px)); }
+.wrap { max-width: var(--wrap); margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); }
+.skip { position: absolute; left: -9999px; top: 8px; background: var(--white); padding: 8px 12px; z-index: 10; }
+.skip:focus { left: 8px; }
 
 /* Top bar */
-.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 12px 0; border-bottom: 1px solid var(--line); font: 500 12px/1.4 var(--mono); letter-spacing: 0.04em; }
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.12em; }
-.brand-mark { width: 12px; height: 12px; background: var(--amber); }
-.brand .ver { color: var(--dim); font-weight: 400; letter-spacing: 0.04em; }
-.bar-links { display: flex; gap: 18px; margin-left: auto; }
-.bar-links a { color: var(--dim); text-decoration: none; text-transform: uppercase; }
-.bar-links a:hover { color: var(--text); }
-.bar-status { display: flex; align-items: center; gap: 8px; color: var(--dim); }
-.live { width: 7px; height: 7px; border-radius: 50%; background: var(--gain); }
+.topbar { position: sticky; top: 0; z-index: 5; background: var(--slate); color: var(--white); }
+.topbar .wrap { display: flex; align-items: center; gap: 12px 28px; min-height: 64px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; color: var(--white); text-decoration: none; font: 400 21px/1 var(--serif); letter-spacing: 0.01em; }
+.brand:hover { color: var(--white); }
+.brand svg { flex: none; }
+.nav { display: flex; gap: 6px 22px; margin-left: auto; flex-wrap: wrap; }
+.nav a { color: var(--white); text-decoration: none; font: 600 12px/1 var(--sans); letter-spacing: 0.11em; text-transform: uppercase; padding: 8px 0; border-bottom: 2px solid transparent; }
+.nav a:hover { border-bottom-color: var(--mint); color: var(--white); }
 
-/* Intro */
-.intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 12px 40px; align-items: end; padding: 34px 0 22px; }
-.intro h1 { font: 600 clamp(2rem, 5vw, 3.3rem)/1.02 var(--cond); letter-spacing: -0.01em; }
-.intro h1 em { font-style: normal; color: var(--amber); }
-.intro p { color: var(--dim); max-width: 52ch; }
+/* Buttons */
+.pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 12px 26px; border-radius: 999px; border: 2px solid transparent; font: 700 13px/1.2 var(--sans); letter-spacing: 0.13em; text-transform: uppercase; text-decoration: none; cursor: pointer; }
+.pill.teal { background: var(--teal); color: var(--white); }
+.pill.teal:hover { background: var(--teal-ink); color: var(--white); }
+.pill.mint { background: var(--mint); color: var(--navy); }
+.pill.mint:hover { background: #8ce8d1; color: var(--navy); }
+.pill.line { border-color: var(--navy); color: var(--navy); background: transparent; }
+.pill.line:hover { background: var(--navy); color: var(--white); }
+.pill.small { min-height: 38px; padding: 8px 18px; font-size: 12px; }
 
-/* Panels */
-.desk { display: grid; grid-template-columns: minmax(0, 390px) minmax(0, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
-.panel { background: var(--panel); min-width: 0; }
-.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--panel-2); }
-.panel-head h2 { font: 700 11px/1.2 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); }
-.panel-body { padding: 16px 14px; display: flex; flex-direction: column; gap: 14px; }
-.toggles { display: flex; gap: 2px; }
-.toggles button { padding: 5px 10px; border: 1px solid var(--line-2); background: transparent; color: var(--dim); font: 500 11px/1.2 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
-.toggles button[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: var(--amber-ink); }
-.toggles button:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Dotted dividers: two rows of dots */
+.dots { height: 10px; background-image: radial-gradient(circle, var(--line-2) 1.3px, transparent 1.6px); background-size: 10px 5px; background-repeat: repeat-x; background-position: 0 0, 5px 5px; max-width: 300px; }
+.dots.center { margin: 0 auto; }
+.dots.light { background-image: radial-gradient(circle, rgba(255, 255, 255, 0.45) 1.3px, transparent 1.6px); }
+
+/* Hero */
+.hero { padding: clamp(40px, 7vw, 88px) 0 clamp(40px, 6vw, 72px); overflow: hidden; }
+.hero .wrap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 40px 56px; align-items: center; }
+.hero h1 { font: 400 clamp(2.5rem, 5.6vw, 4.1rem)/1.08 var(--serif); letter-spacing: -0.01em; color: var(--navy); }
+.hero h1 em { display: block; color: var(--teal-bright); font-style: italic; }
+.hero .dots { margin: 26px 0; }
+.lede { font-size: clamp(1.05rem, 1.6vw, 1.2rem); font-weight: 500; color: var(--ink); max-width: 34em; }
+.lede + .lede { margin-top: 14px; color: var(--ink-2); font-weight: 400; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.orb { position: relative; aspect-ratio: 1; width: min(100%, 520px); justify-self: center; border-radius: 50%; background: radial-gradient(circle at 30% 25%, #ffffff 0%, #f2fbf8 45%, #d4f5ec 72%, #9eead6 100%); box-shadow: 0 30px 80px rgba(23, 128, 106, 0.18); display: grid; place-items: center; }
+.orb svg { width: 78%; height: auto; }
+.orb-label { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); font: 600 12px/1.3 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); white-space: nowrap; }
+
+/* Facts strip */
+.facts { background: var(--warm); }
+.facts .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding-top: 36px; padding-bottom: 36px; }
+.fact b { display: block; font: 400 1.6rem/1.2 var(--serif); color: var(--navy); margin-bottom: 6px; }
+.fact span { font-size: 15px; color: var(--ink-2); }
+
+/* Section headings */
+.section { padding: clamp(56px, 8vw, 96px) 0; }
+.section.warm { background: var(--warm-2); }
+.section.navy { background: var(--navy); color: var(--white); }
+.section-head { text-align: center; max-width: 760px; margin: 0 auto 40px; }
+.section-head h2 { font: 400 clamp(2rem, 4vw, 2.9rem)/1.12 var(--serif); color: var(--navy); }
+.section-head h2 em { color: var(--teal-bright); }
+.section.navy .section-head h2 { color: var(--white); }
+.section.navy .section-head h2 em { color: var(--mint); }
+.section-head .dots { margin: 22px auto; }
+.section-head p { color: var(--ink-2); font-size: 1.05rem; }
+.section.navy .section-head p { color: #c9cddc; }
+.eyebrow { display: block; font: 700 12px/1 var(--sans); letter-spacing: 0.16em; text-transform: uppercase; color: var(--teal); margin-bottom: 14px; }
+.section.navy .eyebrow { color: var(--mint); }
+
+/* Tool cards */
+.card { background: var(--white); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 14px 40px rgba(35, 36, 58, 0.08); min-width: 0; }
+.desk { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); gap: 22px; }
+.card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; padding: 18px 22px; border-bottom: 1px solid var(--line); }
+.card-head h3 { font: 600 1.2rem/1.2 var(--serif); color: var(--navy); }
+.card-body { padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 16px; }
+.sub { font-size: 13px; color: var(--ink-2); }
+.toggles { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--warm); gap: 2px; }
+.toggles button { border: 0; border-radius: 999px; padding: 7px 14px; background: transparent; color: var(--ink-2); font: 600 12px/1.2 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
+.toggles button[aria-pressed="true"] { background: var(--navy); color: var(--white); }
+.toggles button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* Inputs */
-.drop { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 22px 16px; border: 1px dashed var(--line-2); background: var(--bg); cursor: pointer; text-align: center; }
-.drop:hover, .drop.over { border-color: var(--amber); }
-.drop:focus-within { outline: 2px solid var(--amber); outline-offset: 2px; }
+.drop { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 26px 18px; border: 2px dashed var(--line-2); border-radius: 14px; background: var(--warm-2); cursor: pointer; text-align: center; }
+.drop:hover, .drop.over { border-color: var(--teal); background: #eef9f5; }
+.drop:focus-within { outline: 3px solid var(--teal-bright); outline-offset: 2px; }
 .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-.drop-main { font: 700 13px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
-.drop-sub { font-size: 12.5px; color: var(--dim); }
-.file-line { display: flex; flex-wrap: wrap; gap: 4px 12px; font: 400 12px/1.4 var(--mono); color: var(--dim); }
-.file-line b { color: var(--text); font-weight: 500; overflow-wrap: anywhere; }
-.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.field > span { font: 500 11px/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
-.field input, .field select, .field textarea { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: 0; background: var(--bg); font: 400 13.5px/1.3 var(--mono); }
-.field select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%), linear-gradient(135deg, var(--dim) 50%, transparent 50%); background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 26px; }
-.field textarea { min-height: 150px; resize: vertical; line-height: 1.45; }
-.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
-.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.check { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; cursor: pointer; }
-.check input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--amber); flex: none; }
-.note { font-size: 12.5px; color: var(--dim); }
-.error { font: 400 12.5px/1.45 var(--mono); color: var(--loss); }
-.linkbtn { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--amber); font: 500 12px/1.4 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 0.25em; cursor: pointer; }
-.setups { border-top: 1px solid var(--line); padding-top: 14px; }
-.stepper { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; }
-.stepper button { border: 1px solid var(--line-2); background: var(--panel-2); font: 500 16px/1 var(--mono); cursor: pointer; }
-.stepper input { text-align: center; border-left: 0; border-right: 0; font-weight: 700; font-size: 15px; -moz-appearance: textfield; }
+.drop-main { font: 700 13px/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--navy); }
+.drop-sub { font-size: 14px; color: var(--ink-2); max-width: 30em; }
+.file-line { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 14px; color: var(--ink-2); }
+.file-line b { color: var(--navy); font-weight: 600; overflow-wrap: anywhere; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > span { font: 700 11px/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--slate); }
+.field input, .field select, .field textarea { width: 100%; min-width: 0; min-height: 44px; padding: 9px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--white); font: 400 16px/1.3 var(--sans); font-variant-numeric: tabular-nums; }
+.field input:hover, .field select:hover, .field textarea:hover { border-color: var(--slate); }
+.field select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--slate) 50%), linear-gradient(135deg, var(--slate) 50%, transparent 50%); background-position: calc(100% - 17px) 55%, calc(100% - 12px) 55%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
+.field textarea { min-height: 150px; resize: vertical; font-family: var(--mono); font-size: 14px; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.check { display: flex; align-items: flex-start; gap: 10px; font-size: 15px; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--teal); flex: none; }
+.note { font-size: 14px; color: var(--ink-2); }
+.error { font-size: 14px; color: var(--loss); font-weight: 500; }
+.linkbtn { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--teal-ink); font: 700 12px/1.4 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 0.3em; cursor: pointer; }
+.setups { border-top: 1px solid var(--line); padding-top: 16px; }
+.stepper { display: grid; grid-template-columns: 46px minmax(0, 1fr) 46px; }
+.stepper button { border: 1px solid var(--line-2); background: var(--warm-2); font: 600 20px/1 var(--sans); cursor: pointer; color: var(--navy); }
+.stepper button:first-child { border-radius: 10px 0 0 10px; }
+.stepper button:last-child { border-radius: 0 10px 10px 0; }
+.stepper input { text-align: center; border-radius: 0; border-left: 0; border-right: 0; font-weight: 700; -moz-appearance: textfield; }
 .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* Verdict */
-.state { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-left: 4px solid currentColor; background: color-mix(in srgb, currentColor 11%, var(--panel)); font: 700 15px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
-.state.pass { color: var(--gain); }
-.state.wait { color: var(--amber); }
-.state.fail { color: var(--loss); }
-.state.idle { color: var(--dim); }
-.headline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
-.headline > div { background: var(--panel); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.k { font: 500 11px/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
-.big { font: 700 clamp(2rem, 5vw, 2.8rem)/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
-.sub { font: 400 12px/1.3 var(--mono); color: var(--dim); }
-.stats { width: 100%; border-collapse: collapse; font: 400 13px/1.35 var(--mono); font-variant-numeric: tabular-nums; }
-.stats th, .stats td { padding: 7px 0; border-bottom: 1px solid var(--grid); text-align: left; vertical-align: baseline; }
-.stats th { font-weight: 400; color: var(--dim); padding-right: 12px; }
-.stats td { text-align: right; white-space: nowrap; }
-.stats td small { display: block; font-size: 11px; color: var(--dim); }
-.pos { color: var(--gain); }
-.neg { color: var(--loss); }
+.state { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 12px; font: 700 15px/1.2 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; }
+.state::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: none; }
+.state.pass { color: var(--gain); background: #e3f5ef; }
+.state.wait { color: var(--wait); background: #fbf0dc; }
+.state.fail { color: var(--loss); background: #f9e5e3; }
+.state.idle { color: var(--slate); background: var(--warm-2); }
+.headline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.headline > div { background: var(--warm-2); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.k { font: 700 11px/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--slate); }
+.big { font: 400 clamp(2.3rem, 5vw, 3.1rem)/1.05 var(--serif); color: var(--navy); font-variant-numeric: tabular-nums; }
+.stats { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+.stats th, .stats td { padding: 9px 0; border-bottom: 1px solid var(--line); text-align: left; vertical-align: baseline; }
+.stats th { font-weight: 400; color: var(--ink-2); padding-right: 14px; }
+.stats td { text-align: right; white-space: nowrap; font-weight: 600; color: var(--navy); }
+.stats td small { display: block; font-size: 12.5px; font-weight: 400; color: var(--ink-2); }
+.pos { color: var(--gain) !important; }
+.neg { color: var(--loss) !important; }
 
 /* Chart */
-.chart-panel { margin-top: 1px; border: 1px solid var(--line); border-top: 0; }
-.chart-wrap { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
-.chart-cap { font-size: 13px; color: var(--dim); max-width: 80ch; }
+.chart-card { margin-top: 22px; }
+.chart-wrap { padding: 18px 22px 22px; display: flex; flex-direction: column; gap: 12px; }
+.chart-cap { font-size: 15px; color: var(--ink-2); max-width: 70ch; }
 .chart { position: relative; }
 .chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
-.legend { display: flex; flex-wrap: wrap; gap: 6px 20px; font: 400 12px/1.3 var(--mono); color: var(--dim); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 14px; color: var(--ink-2); }
 .legend span { display: inline-flex; align-items: center; gap: 8px; }
-.swatch { width: 18px; height: 0; border-top: 2px solid var(--amber); }
-.swatch.luck { border-top: 2px dashed var(--dim); }
+.swatch { width: 20px; height: 0; border-top: 3px solid var(--navy); }
+.swatch.luck { border-top: 2px dashed var(--teal-bright); }
 .swatch.zero { border-top: 1px solid var(--line-2); }
-.gridline { stroke: var(--grid); stroke-width: 1; }
+.gridline { stroke: #ece9e2; stroke-width: 1; }
 .axis { stroke: var(--line-2); stroke-width: 1; }
-.tick { fill: var(--dim); font: 400 11px var(--mono); }
-.you { fill: none; stroke: var(--amber); stroke-width: 2; stroke-linejoin: round; }
-.luck { fill: none; stroke: var(--dim); stroke-width: 1.5; stroke-dasharray: 5 4; }
-.thresh { stroke: var(--dim); stroke-width: 1; stroke-dasharray: 3 4; }
-.thresh-label { fill: var(--dim); font: 500 11px var(--mono); }
-.dot { fill: var(--amber); stroke: var(--panel); stroke-width: 2; }
+.tick { fill: var(--ink-2); font: 400 12px var(--sans); }
+.you { fill: none; stroke: var(--navy); stroke-width: 2.5; stroke-linejoin: round; }
+.luck { fill: none; stroke: var(--teal-bright); stroke-width: 2; stroke-dasharray: 6 5; }
+.thresh { stroke: var(--teal-bright); stroke-width: 1.5; stroke-dasharray: 4 4; }
+.thresh-label { fill: var(--teal-ink); font: 600 12px var(--sans); }
+.dot { fill: var(--teal); stroke: var(--white); stroke-width: 3; }
 .cross { stroke: var(--line-2); stroke-width: 1; }
-.tip { position: absolute; top: 0; left: 0; pointer-events: none; white-space: nowrap; padding: 6px 9px; border: 1px solid var(--line-2); background: var(--bg); font: 400 12px/1.4 var(--mono); transform: translate(-50%, calc(-100% - 10px)); }
-
-/* Reference sections */
-.info { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-top: 28px; background: var(--line); border: 1px solid var(--line); }
-.info .panel-body { gap: 10px; }
-.info h3 { font: 600 17px/1.25 var(--cond); }
-.info p, .info li { font-size: 14px; color: var(--dim); }
-.info p strong, .info li strong { color: var(--text); font-weight: 500; }
-.info ol, .info ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
-pre { margin: 0; padding: 10px 12px; overflow-x: auto; background: var(--bg); border: 1px solid var(--line); font: 400 12.5px/1.5 var(--mono); }
-details { border-top: 1px solid var(--line); }
-details:first-of-type { border-top: 0; }
-summary { padding: 10px 0; cursor: pointer; font: 500 13px/1.3 var(--mono); letter-spacing: 0.04em; }
-details[open] summary { color: var(--amber); }
-details > :not(summary) { margin-bottom: 12px; }
+.tip { position: absolute; top: 0; left: 0; pointer-events: none; white-space: nowrap; padding: 7px 11px; border-radius: 8px; background: var(--navy); color: var(--white); font: 500 13px/1.4 var(--sans); transform: translate(-50%, calc(-100% - 12px)); box-shadow: 0 6px 18px rgba(35, 36, 58, 0.25); }
 
 /* Stop lab */
-.lab-grid { display: grid; grid-template-columns: minmax(0, 390px) minmax(0, 1fr); }
+.lab-card { display: grid; grid-template-columns: minmax(0, 400px) minmax(0, 1fr); color: var(--ink); }
 .lab-inputs { border-right: 1px solid var(--line); }
-.findings { display: flex; flex-direction: column; gap: 8px; }
-.findings p { font-size: 14px; }
-.findings .lead { font: 500 14px/1.45 var(--mono); color: var(--text); }
+.findings { display: flex; flex-direction: column; gap: 10px; }
+.findings p { font-size: 15px; color: var(--ink-2); }
+.findings strong { color: var(--navy); }
+.findings .lead { font: 400 1.25rem/1.35 var(--serif); color: var(--navy); }
 .lab-table-wrap { overflow-x: auto; }
-.lab-table th, .lab-table td { padding: 6px 8px; text-align: right; white-space: nowrap; }
-.lab-table thead th { font: 500 11px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line-2); }
-.lab-table tbody th { color: var(--text); text-align: right; }
-.lab-table tr.now { background: color-mix(in srgb, var(--amber) 9%, transparent); }
-.lab-table tr.best td:first-of-type { color: var(--amber); }
-.bar { display: inline-block; height: 8px; background: var(--line-2); vertical-align: middle; }
-.bar.pos { background: var(--gain); }
-.bar.neg { background: var(--loss); }
+.lab-table th, .lab-table td { padding: 8px 10px; text-align: right; white-space: nowrap; }
+.lab-table thead th { font: 700 11px/1.3 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); border-bottom: 2px solid var(--line-2); }
+.lab-table tbody th { color: var(--navy); font-weight: 600; text-align: right; }
+.lab-table tr.now { background: #eef9f5; }
+.lab-table tr.best th { color: var(--teal-ink); }
+.grid-art { display: block; width: min(100%, 520px); height: auto; margin: 0 auto 8px; opacity: 0.9; }
 
-.foot { margin-top: 28px; border-top: 1px solid var(--line); border-bottom: 0; color: var(--dim); font-weight: 400; justify-content: space-between; }
+/* Information cards */
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.info { background: var(--white); border-radius: 16px; padding: 28px 26px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--line); }
+.info svg { width: 44px; height: 44px; color: var(--teal); }
+.info h3 { font: italic 400 1.35rem/1.25 var(--serif); color: var(--navy); }
+.info p { font-size: 15.5px; color: var(--ink-2); }
+.info p strong { color: var(--navy); }
 
-@media (max-width: 900px) {
-  .intro, .desk, .info, .lab-grid { grid-template-columns: minmax(0, 1fr); }
+/* Export help */
+.faq { max-width: 860px; margin: 0 auto; border-top: 1px solid var(--line); }
+details { border-bottom: 1px solid var(--line); }
+summary { list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 4px; cursor: pointer; font: 400 1.3rem/1.3 var(--serif); color: var(--navy); }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font: 400 26px/1 var(--sans); color: var(--teal); }
+details[open] summary::after { content: "\2212"; }
+details p { padding: 0 4px 20px; color: var(--ink-2); max-width: 70ch; }
+
+/* Developers */
+.dev { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px 56px; align-items: center; }
+.dev h2 { font: 400 clamp(1.9rem, 3.6vw, 2.6rem)/1.15 var(--serif); }
+.dev h2 em { color: var(--mint); }
+.dev p { color: #c9cddc; margin-top: 16px; }
+.dev .actions { margin-top: 24px; }
+pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; background: #191a2c; color: #e6e8f2; font: 400 14px/1.6 var(--mono); border: 1px solid #3a3c5c; }
+.pill.on-navy { border-color: var(--white); color: var(--white); }
+.pill.on-navy:hover { background: var(--white); color: var(--navy); }
+
+/* Footer */
+.footer { background: var(--navy); color: #c9cddc; padding: 56px 0 32px; border-top: 1px solid #3a3c5c; }
+.footer .cols { display: grid; grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr)); gap: 32px; }
+.footer h2 { font: 700 12px/1.2 var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--white); margin-bottom: 14px; }
+.footer ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.footer a { color: #c9cddc; text-decoration: none; font-size: 14px; }
+.footer a:hover { color: var(--mint); }
+.footer .about p { font-size: 14px; max-width: 30em; margin-top: 12px; }
+.footer .legal { margin-top: 40px; padding-top: 22px; border-top: 1px solid #3a3c5c; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; font-size: 13px; }
+
+@media (max-width: 960px) {
+  .hero .wrap, .desk, .lab-card, .dev { grid-template-columns: minmax(0, 1fr); }
   .lab-inputs { border-right: 0; border-bottom: 1px solid var(--line); }
-  .intro { padding-top: 24px; }
-  .bar-links { margin-left: 0; }
+  .cards { grid-template-columns: minmax(0, 1fr); }
+  .footer .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .orb { width: min(100%, 400px); }
+}
+@media (max-width: 720px) {
+  .topbar .wrap { padding-top: 10px; padding-bottom: 10px; }
+  .nav { margin-left: 0; width: 100%; overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+  .nav a { white-space: nowrap; }
+  .facts .wrap { grid-template-columns: minmax(0, 1fr); gap: 18px; }
 }
 @media (max-width: 480px) {
   .row2, .row3, .headline { grid-template-columns: minmax(0, 1fr); }
-  .bar-status { display: none; }
+  .footer .cols { grid-template-columns: minmax(0, 1fr); }
+  .card-head, .card-body, .chart-wrap { padding-left: 16px; padding-right: 16px; }
 }
 </style>
 </head>
 <body>
-<div class="shell">
-  <header class="bar">
-    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>ALGOBACKTESTING <span class="ver">v0.1</span></div>
-    <nav class="bar-links" aria-label="Site">
+<a class="skip" href="#check">Skip to the check</a>
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="algobacktesting home">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="none" stroke="#ffffff" stroke-width="1.5"/><path d="M8 21l5-5 4 3 7-8" fill="none" stroke="#6fe0c4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      algobacktesting
+    </a>
+    <nav class="nav" aria-label="Site">
+      <a href="#check">The check</a>
+      <a href="#lab">Stop lab</a>
       <a href="#how">How it works</a>
       <a href="#export">Export help</a>
-      <a href="https://github.com/TheMarketMakerHoldings/algobacktesting">GitHub</a>
+      <a href="#developers">Developers</a>
     </nav>
-    <div class="bar-status"><span class="live" aria-hidden="true"></span>Runs in your browser. Nothing is uploaded.</div>
-  </header>
+  </div>
+</header>
 
-  <main>
-    <section class="intro">
-      <h1>Are you profitable, <em>or just lucky?</em></h1>
-      <p>Load the trade history of one strategy. The check asks whether its results beat what luck alone produces once every setup you tried is counted, and how many more trades it would take to know.</p>
-    </section>
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Are you profitable, <em>or just lucky?</em></h1>
+        <div class="dots" aria-hidden="true"></div>
+        <p class="lede">A winning streak can be luck, especially after trying a few setups. Load the trades of one strategy and see the chance its edge is real, once every setup you tried is counted.</p>
+        <p class="lede">Free, open source, and private: your trades are read in your browser and never uploaded.</p>
+        <div class="actions">
+          <a class="pill teal" href="#check">Check my trades</a>
+          <a class="pill line" href="#how">How it works</a>
+        </div>
+      </div>
+      <div class="orb" aria-hidden="true">
+        <svg viewBox="0 0 400 260">
+          <line x1="20" y1="200" x2="380" y2="200" stroke="#c4c0b6" stroke-width="1.5"/>
+          <path d="M20 200 C 80 190, 120 150, 170 140 S 260 96, 380 70" fill="none" stroke="#1f9e80" stroke-width="3" stroke-dasharray="8 7"/>
+          <path d="M20 200 L 48 188 L 70 205 L 96 176 L 118 184 L 140 160 L 166 172 L 190 150 L 214 166 L 240 132 L 262 142 L 288 118 L 312 128 L 338 100 L 362 108 L 380 92" fill="none" stroke="#23243a" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="380" cy="92" r="9" fill="#17806a" stroke="#ffffff" stroke-width="4"/>
+        </svg>
+        <span class="orb-label">Your results against luck alone</span>
+      </div>
+    </div>
+  </section>
 
-    <noscript><p class="error">This page needs JavaScript to work out your result. Nothing you enter leaves your browser.</p></noscript>
+  <section class="facts" aria-label="At a glance">
+    <div class="wrap">
+      <div class="fact"><b>Private by design</b><span>Your files are read on your device. The page is locked so it cannot send data to any other site.</span></div>
+      <div class="fact"><b>Peer-reviewed math</b><span>The Probabilistic and Deflated Sharpe Ratio of Bailey and López de Prado, with every published example reproduced.</span></div>
+      <div class="fact"><b>Built for futures traders</b><span>Reads TopstepX, Quantower, NinjaTrader and thinkorswim exports, fees and breakevens included.</span></div>
+    </div>
+  </section>
 
-    <div class="desk">
-      <section class="panel" aria-labelledby="input-title">
-        <div class="panel-head">
-          <h2 id="input-title">Input</h2>
-          <div class="toggles" role="group" aria-label="How to enter your results">
-            <button type="button" id="mode-import" aria-pressed="true">Import CSV</button>
-            <button type="button" id="mode-paste" aria-pressed="false">Paste</button>
-            <button type="button" id="mode-quick" aria-pressed="false">Quick</button>
+  <section class="section warm" id="check" aria-labelledby="check-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">The check</span>
+        <h2 id="check-title">One strategy, <em>one honest answer</em></h2>
+        <div class="dots center" aria-hidden="true"></div>
+        <p>The page opens on a made-up example. Drop your own export to replace it.</p>
+      </div>
+      <noscript><p class="error">This page needs JavaScript to work out your result. Nothing you enter leaves your browser.</p></noscript>
+
+      <div class="desk">
+        <section class="card" aria-labelledby="input-title">
+          <div class="card-head">
+            <h3 id="input-title">Your trades</h3>
+            <div class="toggles" role="group" aria-label="How to enter your results">
+              <button type="button" id="mode-import" aria-pressed="true">Import</button>
+              <button type="button" id="mode-paste" aria-pressed="false">Paste</button>
+              <button type="button" id="mode-quick" aria-pressed="false">Quick</button>
+            </div>
+          </div>
+          <form class="card-body" id="calc" autocomplete="off">
+            <div class="card-body" id="pane-import" style="padding:0">
+              <label class="drop" id="drop">
+                <input type="file" id="in-file" accept=".csv,.txt,text/csv">
+                <span class="drop-main">Drop your trades CSV</span>
+                <span class="drop-sub">or click to choose a file. TopstepX, Quantower, NinjaTrader, thinkorswim, or any CSV with a profit/loss column.</span>
+              </label>
+              <div class="file-line" id="file-line" aria-live="polite"></div>
+              <div class="row2">
+                <label class="field"><span>P&amp;L column</span><select id="sel-pnl"></select></label>
+                <label class="field"><span>Strategy / filter</span><select id="sel-filter"></select></label>
+              </div>
+              <label class="check" id="fees-row" hidden><input type="checkbox" id="chk-fees"><span id="fees-text">Subtract fees</span></label>
+              <p class="note" id="import-note"></p>
+              <button type="button" class="linkbtn" id="load-example">Load the example file</button>
+            </div>
+
+            <div class="card-body" id="pane-paste" style="padding:0" hidden>
+              <label class="field"><span>Profit or loss of each trade, one per line</span>
+                <textarea id="in-pasted" spellcheck="false" placeholder="312.50&#10;-141.62&#10;-129.12&#10;..."></textarea>
+              </label>
+              <p class="note" id="paste-note">Any unit works, as long as every trade uses the same one.</p>
+            </div>
+
+            <div class="card-body" id="pane-quick" style="padding:0" hidden>
+              <div class="row3">
+                <label class="field"><span>Win rate %</span><input type="number" id="in-winrate" min="1" max="99" step="1" value="45" inputmode="decimal"></label>
+                <label class="field"><span>Win ÷ loss</span><input type="number" id="in-rr" min="0.1" max="20" step="0.1" value="1.5" inputmode="decimal"></label>
+                <label class="field"><span>Trades</span><input type="number" id="in-trades" min="10" max="100000" step="1" value="120" inputmode="numeric"></label>
+              </div>
+              <p class="note">Assumes every trade risks the same amount and ends at its target or its stop. Results are in R, the amount risked per trade.</p>
+            </div>
+
+            <div class="setups field">
+              <span id="setups-label">Setups tried, including this one</span>
+              <div class="stepper">
+                <button type="button" id="setups-dec" aria-label="One fewer setup">−</button>
+                <input type="number" id="in-setups" min="1" max="10000" step="1" value="5" inputmode="numeric" aria-labelledby="setups-label">
+                <button type="button" id="setups-inc" aria-label="One more setup">+</button>
+              </div>
+              <p class="note">Every strategy, indicator or rule set you tested and dropped. Be honest: this number matters most.</p>
+            </div>
+            <p class="error" id="calc-error" role="alert" hidden></p>
+          </form>
+        </section>
+
+        <section class="card" aria-labelledby="verdict-title">
+          <div class="card-head"><h3 id="verdict-title">Verdict</h3><span class="sub" id="verdict-source"></span></div>
+          <div class="card-body">
+            <div role="status" class="card-body" style="padding:0;gap:12px">
+              <div class="state idle" id="out-verdict">Waiting for trades</div>
+              <div class="headline">
+                <div><span class="k">Chance the edge is real</span><span class="big" id="out-prob">–</span><span class="sub" id="out-prob-sub"></span></div>
+                <div><span class="k">Trades needed to prove it</span><span class="big" id="out-need">–</span><span class="sub" id="out-need-sub"></span></div>
+              </div>
+            </div>
+            <table class="stats"><caption hidden>Trade statistics</caption><tbody id="stats-body"></tbody></table>
+          </div>
+        </section>
+      </div>
+
+      <section class="card chart-card" aria-labelledby="chart-title">
+        <div class="card-head">
+          <h3 id="chart-title">Chart</h3>
+          <div class="toggles" role="group" aria-label="Which chart">
+            <button type="button" id="chart-equity" aria-pressed="true">Equity vs luck</button>
+            <button type="button" id="chart-proof" aria-pressed="false">Proof curve</button>
           </div>
         </div>
-        <form class="panel-body" id="calc" autocomplete="off">
-          <div class="panel-body" id="pane-import" style="padding:0">
-            <label class="drop" id="drop">
-              <input type="file" id="in-file" accept=".csv,.txt,text/csv">
-              <span class="drop-main">Drop your trades CSV</span>
-              <span class="drop-sub">or click to choose a file. TopstepX, Quantower, NinjaTrader, thinkorswim, or any CSV with a profit/loss column.</span>
-            </label>
-            <div class="file-line" id="file-line" aria-live="polite"></div>
-            <div class="row2">
-              <label class="field"><span>P&amp;L column</span><select id="sel-pnl"></select></label>
-              <label class="field"><span>Strategy / filter</span><select id="sel-filter"></select></label>
-            </div>
-            <label class="check" id="fees-row" hidden><input type="checkbox" id="chk-fees"><span id="fees-text">Subtract fees</span></label>
-            <p class="note" id="import-note"></p>
-            <button type="button" class="linkbtn" id="load-example">Load the example file</button>
+        <div class="chart-wrap">
+          <p class="chart-cap" id="chart-cap"></p>
+          <div class="chart" id="chart">
+            <svg id="chart-svg" viewBox="0 0 1000 300" role="img" aria-label="Chart of your results"></svg>
+            <div class="tip" id="chart-tip" hidden></div>
           </div>
-
-          <div class="panel-body" id="pane-paste" style="padding:0" hidden>
-            <label class="field"><span>Profit or loss of each trade, one per line</span>
-              <textarea id="in-pasted" spellcheck="false" placeholder="312.50&#10;-141.62&#10;-129.12&#10;..."></textarea>
-            </label>
-            <p class="note" id="paste-note">Any unit works, as long as every trade uses the same one.</p>
-          </div>
-
-          <div class="panel-body" id="pane-quick" style="padding:0" hidden>
-            <div class="row3">
-              <label class="field"><span>Win rate %</span><input type="number" id="in-winrate" min="1" max="99" step="1" value="45" inputmode="decimal"></label>
-              <label class="field"><span>Win ÷ loss</span><input type="number" id="in-rr" min="0.1" max="20" step="0.1" value="1.5" inputmode="decimal"></label>
-              <label class="field"><span>Trades</span><input type="number" id="in-trades" min="10" max="100000" step="1" value="120" inputmode="numeric"></label>
-            </div>
-            <p class="note">Assumes every trade risks the same amount and ends at its target or its stop. Results are in R, the amount risked per trade.</p>
-          </div>
-
-          <div class="setups field">
-            <span id="setups-label">Setups tried, including this one</span>
-            <div class="stepper">
-              <button type="button" id="setups-dec" aria-label="One fewer setup">−</button>
-              <input type="number" id="in-setups" min="1" max="10000" step="1" value="5" inputmode="numeric" aria-labelledby="setups-label">
-              <button type="button" id="setups-inc" aria-label="One more setup">+</button>
-            </div>
-            <p class="note">Every strategy, indicator or rule set you tested and dropped. Be honest: this number matters most.</p>
-          </div>
-          <p class="error" id="calc-error" role="alert" hidden></p>
-        </form>
-      </section>
-
-      <section class="panel" aria-labelledby="verdict-title">
-        <div class="panel-head"><h2 id="verdict-title">Verdict</h2><span class="sub" id="verdict-source"></span></div>
-        <div class="panel-body">
-          <div role="status" class="panel-body" style="padding:0;gap:12px">
-            <div class="state idle" id="out-verdict">Waiting for trades</div>
-            <div class="headline">
-              <div><span class="k">Chance the edge is real</span><span class="big" id="out-prob">–</span><span class="sub" id="out-prob-sub"></span></div>
-              <div><span class="k">Trades needed to prove it</span><span class="big" id="out-need">–</span><span class="sub" id="out-need-sub"></span></div>
-            </div>
-          </div>
-          <table class="stats"><caption hidden>Trade statistics</caption><tbody id="stats-body"></tbody></table>
+          <div class="legend" id="legend"></div>
         </div>
       </section>
     </div>
+  </section>
 
-    <section class="panel chart-panel" aria-labelledby="chart-title">
-      <div class="panel-head">
-        <h2 id="chart-title">Chart</h2>
-        <div class="toggles" role="group" aria-label="Which chart">
-          <button type="button" id="chart-equity" aria-pressed="true">Equity vs luck</button>
-          <button type="button" id="chart-proof" aria-pressed="false">Proof curve</button>
-        </div>
+  <section class="section navy" id="lab" aria-labelledby="lab-title">
+    <div class="wrap">
+      <div class="section-head">
+        <svg class="grid-art" viewBox="0 0 520 90" aria-hidden="true">
+          <g fill="none" stroke="#6fe0c4" stroke-width="1" opacity="0.55">
+            <path d="M20 70 L140 20 L260 70 L140 120 Z M80 45 L200 95 M200 45 L80 95"/>
+            <path d="M260 70 L380 20 L500 70 L380 120 Z M320 45 L440 95 M440 45 L320 95"/>
+          </g>
+          <path d="M40 66 L110 52 L150 60 L210 40 L270 48 L330 26 L400 34 L480 18" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+        </svg>
+        <span class="eyebrow">Stop lab</span>
+        <h2 id="lab-title">Would a different stop <em>have done better?</em></h2>
+        <div class="dots center light" aria-hidden="true"></div>
+        <p>Keeps every entry from your trade file and replays it on your own price bars with each stop size. Trying many stops is itself a search, so each one is counted, and a stop that only looks better by luck is reported as luck.</p>
       </div>
-      <div class="chart-wrap">
-        <p class="chart-cap" id="chart-cap"></p>
-        <div class="chart" id="chart">
-          <svg id="chart-svg" viewBox="0 0 1000 300" role="img" aria-label="Chart of your results"></svg>
-          <div class="tip" id="chart-tip" hidden></div>
-        </div>
-        <div class="legend" id="legend"></div>
-      </div>
-    </section>
 
-    <section class="panel chart-panel lab" id="lab" aria-labelledby="lab-title" style="margin-top:28px;border-top:1px solid var(--line)">
-      <div class="panel-head"><h2 id="lab-title">Stop lab</h2><span class="sub">Replays your entries on price history with different stops</span></div>
-      <div class="lab-grid">
-        <div class="panel-body lab-inputs">
-          <p class="note">Keeps each trade's entry from the file above and replays it on your bar data with a fixed stop and target. Everything runs in your browser; the bar file is not uploaded.</p>
+      <div class="card lab-card">
+        <div class="card-body lab-inputs">
           <label class="drop" id="bars-drop">
             <input type="file" id="in-bars" accept=".csv,.txt,text/csv">
             <span class="drop-main">Drop a bar file (CSV)</span>
@@ -326,65 +481,116 @@ details > :not(summary) { margin-bottom: 12px; }
           </div>
           <div class="row2">
             <label class="field"><span>Target (ticks)</span><input type="number" id="lab-target" min="0" max="2000" step="1" value="24" inputmode="numeric"></label>
-            <label class="field"><span>Breakeven after (ticks, 0 = off)</span><input type="number" id="lab-be" min="0" max="2000" step="1" value="0" inputmode="numeric"></label>
+            <label class="field"><span>Breakeven after (ticks)</span><input type="number" id="lab-be" min="0" max="2000" step="1" value="0" inputmode="numeric"></label>
           </div>
+          <p class="note">Breakeven 0 means the stop never moves. Your bar file is read in your browser and never uploaded.</p>
           <p class="error" id="lab-error" role="alert" hidden></p>
         </div>
-        <div class="panel-body lab-out">
+        <div class="card-body lab-out">
           <div id="lab-findings" class="findings" aria-live="polite"><p class="note">Load a trade file above and a bar file here to see how different stops would have done.</p></div>
           <div class="lab-table-wrap"><table class="stats lab-table" id="lab-table"></table></div>
           <p class="note">Assumes every stop and target fills at its exact price. When one bar reaches both, the stop counts. Real fills can be worse.</p>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <div class="info" id="how">
-      <section class="panel">
-        <div class="panel-head"><h2>Read it right</h2></div>
-        <div class="panel-body">
+  <section class="section" id="how" aria-labelledby="how-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">How it works</span>
+        <h2 id="how-title">Three things <em>the check gets right</em></h2>
+        <div class="dots center" aria-hidden="true"></div>
+      </div>
+      <div class="cards">
+        <article class="info">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="10" width="36" height="28" rx="4"/><path d="M12 30l7-7 6 4 11-11"/></svg>
           <h3>It judges your record, not your future.</h3>
           <p>A high number means your past results are hard to explain by luck. Markets change, and an edge that was real can stop working.</p>
+        </article>
+        <article class="info">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="14" cy="16" r="6"/><circle cx="34" cy="16" r="6"/><circle cx="24" cy="34" r="6"/><path d="M18 20l4 9M30 20l-4 9"/></svg>
           <h3>Every setup you tried counts.</h3>
-          <p>Test five ideas and keep the best, and the best one looks good even if none of them works. Each extra idea raises the bar your results have to clear.</p>
+          <p>Test five ideas and keep the best, and the best looks good even if none of them works. The check asks what the <strong>best of your setups</strong> would have shown with no edge at all, and holds your results to that bar.</p>
+        </article>
+        <article class="info">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 24h32"/><circle cx="24" cy="24" r="14"/><path d="M24 14v4M24 30v4"/></svg>
           <h3>Fees count. A breakeven is a loss.</h3>
-          <p>Commissions turn a breakeven trade into a losing one. Leave <strong>subtract fees</strong> on unless your P&amp;L column already includes them.</p>
-        </div>
-      </section>
-      <section class="panel">
-        <div class="panel-head"><h2>The math</h2></div>
-        <div class="panel-body">
-          <p>The check measures how far your average trade sits above zero relative to how much your trades swing, then asks what the <strong>best of your setups</strong> would have shown with no edge at all, and holds your results to that bar.</p>
-          <p>The dashed line on the equity chart is that bar: what the luckiest of your setups would have made by now, at your trade size, with no edge. Finishing above it is the same as a chance above 50%.</p>
-          <p>The method is the Probabilistic and Deflated Sharpe Ratio of Bailey and López de Prado (2012, 2014). It assumes the setups were independent and tested on a similar number of trades. Tested on simulated traders with <strong>no edge</strong>, it wrongly called an edge proven about 5% of the time for one setup, and about 1% or less for five or more.</p>
-        </div>
-      </section>
-      <section class="panel">
-        <div class="panel-head"><h2>For developers</h2></div>
-        <div class="panel-body">
-          <p>The same checks, plus the Probability of Backtest Overfitting and purged cross-validation, are in an open-source Python library. Every worked example in the source papers reproduces, and this page is tested against the library.</p>
-          <pre><code>pip install git+https://github.com/TheMarketMakerHoldings/algobacktesting</code></pre>
-          <p>Python 3.11 or later, NumPy and Git. <a href="https://github.com/TheMarketMakerHoldings/algobacktesting">Source</a> · <a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/paper/verification-report.md">Verification report</a> · <a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/api.md">API</a></p>
-        </div>
-      </section>
-    </div>
-
-    <section class="panel chart-panel" id="export" aria-labelledby="export-title" style="margin-top:28px;border-top:1px solid var(--line)">
-      <div class="panel-head"><h2 id="export-title">Export help</h2></div>
-      <div class="panel-body" style="gap:0">
-        <p class="note" style="margin-bottom:6px">Export the closed trades of one account, then filter to one strategy above. Menus change between versions: if yours look different, look for <strong>Export</strong> on the trades or history view.</p>
-        <details><summary>TopstepX</summary><p class="note">Open the <strong>Trades</strong> tab at the bottom of the platform (not Orders), choose the date range and click <strong>Export</strong>. If the file has separate fee columns, keep subtract fees on.</p></details>
-        <details><summary>Quantower</summary><p class="note">Open the <strong>Trades</strong> panel, choose <strong>Export data</strong> from its menu, tick all columns, pick comma-separated and export. Fills that share a position ID are combined into one trade, using the Net P/L column.</p></details>
-        <details><summary>NinjaTrader 8</summary><p class="note">Control Center, <strong>New → Trade Performance</strong>, choose the account, strategy and dates, click Generate, open the <strong>Trades</strong> view, then right-click and <strong>Export</strong>. Check whether your Profit column already includes commission, and set subtract fees to match.</p></details>
-        <details><summary>thinkorswim (Schwab)</summary><p class="note"><strong>Monitor → Account Statement</strong>, set the dates, then <strong>Export to File</strong> from the menu at the top right. The page pairs the buys and sells in Account Trade History into round trips (first in, first out). Commissions are not in that section, so results are before fees.</p></details>
+          <p>Commissions turn a flat trade into a losing one. Breakevens are counted apart from wins and losses, with what they cost you, and fees are subtracted unless your P&amp;L already includes them.</p>
+        </article>
       </div>
-    </section>
-  </main>
+      <p class="note" style="max-width:820px;margin:32px auto 0;text-align:center">The method is the Probabilistic and Deflated Sharpe Ratio of Bailey and López de Prado (2012, 2014). It assumes the setups were independent and tested on a similar number of trades. Tested on simulated traders with no edge, it wrongly called an edge proven about 5% of the time for one setup, and about 1% or less for five or more.</p>
+    </div>
+  </section>
 
-  <footer class="bar foot">
-    <span>MIT © 2026 Daniel Heidary · The Market Maker Holdings &amp; Co.</span>
-    <span>Statistics about past results. Not financial advice.</span>
-  </footer>
-</div>
+  <section class="section warm" id="export" aria-labelledby="export-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Export help</span>
+        <h2 id="export-title">Getting your trades <em>out of your platform</em></h2>
+        <div class="dots center" aria-hidden="true"></div>
+        <p>Export the closed trades of one account, then pick one strategy in the check. Menus change between versions: if yours look different, look for Export on the trades or history view.</p>
+      </div>
+      <div class="faq">
+        <details><summary>TopstepX</summary><p>Open the <strong>Trades</strong> tab at the bottom of the platform (not Orders), choose the date range and click <strong>Export</strong>. If the file has separate fee columns, keep subtract fees on.</p></details>
+        <details><summary>Quantower</summary><p>Open the <strong>Trades</strong> panel, choose <strong>Export data</strong> from its menu, tick all columns, pick comma-separated and export. Fills that share a position ID are combined into one trade, using the Net P/L column. For the stop lab, export bars from the History exporter.</p></details>
+        <details><summary>NinjaTrader 8</summary><p>Control Center, <strong>New → Trade Performance</strong>, choose the account, strategy and dates, click Generate, open the <strong>Trades</strong> view, then right-click and <strong>Export</strong>. Check whether your Profit column already includes commission, and set subtract fees to match.</p></details>
+        <details><summary>thinkorswim (Schwab)</summary><p><strong>Monitor → Account Statement</strong>, set the dates, then <strong>Export to File</strong> from the menu at the top right. Buys and sells in Account Trade History are paired into round trips, first in, first out. Commissions are not in that section, so results are before fees. The stop lab does not read thinkorswim files yet.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="section navy" id="developers" aria-labelledby="dev-title">
+    <div class="wrap dev">
+      <div>
+        <span class="eyebrow">For developers</span>
+        <h2 id="dev-title">The same checks, <em>as a Python library</em></h2>
+        <p>The Deflated Sharpe Ratio, the Probability of Backtest Overfitting and purged cross-validation for backtests. Every worked example in the source papers reproduces, and this page is tested against the library.</p>
+        <div class="actions">
+          <a class="pill mint" href="https://github.com/TheMarketMakerHoldings/algobacktesting">View on GitHub</a>
+          <a class="pill on-navy" href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/paper/verification-report.md">Verification report</a>
+        </div>
+      </div>
+      <div>
+        <pre><code>pip install git+https://github.com/TheMarketMakerHoldings/algobacktesting</code></pre>
+        <p class="note" style="color:#c9cddc;margin-top:12px">Python 3.11 or later, NumPy and Git.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap">
+    <div class="cols">
+      <div class="about">
+        <a class="brand" href="#top" aria-label="algobacktesting home">
+          <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="none" stroke="#ffffff" stroke-width="1.5"/><path d="M8 21l5-5 4 3 7-8" fill="none" stroke="#6fe0c4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          algobacktesting
+        </a>
+        <p>Statistical checks that tell a real trading edge apart from luck. Built and maintained by Daniel Heidary.</p>
+      </div>
+      <nav aria-labelledby="f-product"><h2 id="f-product">Product</h2><ul>
+        <li><a href="#check">The check</a></li>
+        <li><a href="#lab">Stop lab</a></li>
+        <li><a href="#export">Export help</a></li>
+      </ul></nav>
+      <nav aria-labelledby="f-research"><h2 id="f-research">Research</h2><ul>
+        <li><a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/paper/verification-report.md">Verification report</a></li>
+        <li><a href="https://github.com/TheMarketMakerHoldings/algobacktesting/tree/main/docs/explainers">Explainers</a></li>
+        <li><a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/api.md">API reference</a></li>
+      </ul></nav>
+      <nav aria-labelledby="f-project"><h2 id="f-project">Project</h2><ul>
+        <li><a href="https://github.com/TheMarketMakerHoldings/algobacktesting">Source code</a></li>
+        <li><a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/CHANGELOG.md">Changelog</a></li>
+        <li><a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/SECURITY.md">Security</a></li>
+      </ul></nav>
+    </div>
+    <div class="legal">
+      <span>MIT © 2026 Daniel Heidary · The Market Maker Holdings &amp; Co.</span>
+      <span>Statistics about past results. Not financial advice.</span>
+    </div>
+  </div>
+</footer>
 
 <script type="text/plain" id="example-csv">
 Trade #,Strategy,Instrument,Side,Qty,Entry price,Exit price,Entry time,Exit time,P&L,Commission
