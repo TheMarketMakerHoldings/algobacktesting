@@ -8,6 +8,7 @@ importer (`tests/test_site_import.py`). None of them is a real account or a real
 | `quantower.csv` | Quantower Trades panel, "Export data" | Column list published by the TradeZella import guide |
 | `topstepx.csv` | TopstepX Trades tab, "Export" | Assumed; not confirmed against a real file |
 | `ninjatrader.csv` | NinjaTrader 8 Trade Performance, Trades view | Assumed; not confirmed against a real file |
+| `tradingview.csv` | TradingView Strategy Tester, List of trades | Column names copied from a real export; values made up |
 | `thinkorswim.csv` | thinkorswim Account Statement, "Export to File" | Section and column names from journal import guides |
 
 Each test lists the expected per-trade results, worked out by hand from the rows. Replace a

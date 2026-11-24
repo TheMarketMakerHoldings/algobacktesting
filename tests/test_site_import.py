@@ -80,6 +80,8 @@ RUNS: list[tuple[str, str, list[str] | None]] = [
     ("ninjatrader", _export("ninjatrader"), None),
     ("ninjatrader orb", _export("ninjatrader"), ["Strategy", "ORB"]),
     ("thinkorswim", _export("thinkorswim"), None),
+    ("tradingview", _export("tradingview"), None),
+    ("tradingview short", _export("tradingview"), ["Type", "Exit short"]),
     *((name, text, None) for name, text in INLINE.items()),
 ]
 
@@ -253,3 +255,13 @@ def test_example_matches_the_library(js: dict[str, Any]) -> None:
     assert r["dsr5"] == pytest.approx(expected, abs=1e-9)
     flat = sum(1 for row in rows if row["Strategy"] == "ORB" and float(row["P&L"]) == 0)
     assert r["summary"]["breakevens"] == flat > 0
+
+
+def test_tradingview_counts_each_trade_once(js: dict[str, Any]) -> None:
+    r = js["by_name"]["tradingview"]
+    assert (r["platform"], r["pnl"]) == ("TradingView", "Net PnL USD")
+    # Each trade has an Entry row and an Exit row with the same result: only exits count.
+    assert r["values"] == pytest.approx([195.5, -104.5, -4.5])
+    assert r["subtractFees"] is False  # net already
+    assert ["Type", ["Exit long", "Exit short"]] in r["filters"]  # entry values are not offered
+    assert js["by_name"]["tradingview short"]["values"] == pytest.approx([-104.5])

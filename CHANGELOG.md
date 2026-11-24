@@ -62,6 +62,13 @@ All notable changes are listed here. The format follows
   synthetic random-walk market (`docs/example-bars.csv`) and two strategies traded on it.
   `tests/test_site_lab.py` checks the replay against a separate Python implementation.
 - The website moved to https://algobacktesting.com/.
+- Compare two strategies on the website: any two groups in a trade file (strategies, long
+  against short, contracts) side by side, with the chance the better one is really better
+  (Welch's two-sample comparison). `tests/test_site_compare.py` checks the formula and that
+  groups with no real difference are called different about 5% of the time.
+- TradingView Strategy Tester exports ("List of trades") are read correctly: each trade's
+  Entry and Exit rows count once, the "Date and time" column is used, and the stop lab
+  pairs entries with exits. Before this, every trade was counted twice.
 - Timing breakdown on the website: results by hour of day or by weekday, with each slice's
   chance of being real scored as one of all the slices looked at (times the setups tried),
   for gains and for losses. `tests/test_site_when.py` checks it against the library.

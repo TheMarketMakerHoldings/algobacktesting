@@ -189,6 +189,21 @@ ALIGN = [
         "expect": {"useUtc": True, "shift": 0, "matched": 2, "entries": 2},
     },
 ]
+TRADINGVIEW = (ROOT / "tests" / "exports" / "tradingview.csv").read_text(encoding="utf-8")
+TV_BARS = (
+    "DateTime,Open,High,Low,Close\n"
+    "3/2/2026 9:40:00 AM,20100,20104,20096,20101\n"
+    "3/3/2026 10:20:00 AM,20145,20149,20140,20146\n"
+    "3/4/2026 9:31:00 AM,20200,20203,20190,20199\n"
+)
+ALIGN.append(
+    # TradingView: entries come from each trade's Entry row, paired with its Exit row.
+    {
+        "bars": TV_BARS,
+        "trades": TRADINGVIEW,
+        "expect": {"useUtc": False, "shift": 0, "matched": 3, "entries": 3},
+    }
+)
 ROOTS = [
     ("ESU6", "ES"),
     ("MESZ25", "MES"),
