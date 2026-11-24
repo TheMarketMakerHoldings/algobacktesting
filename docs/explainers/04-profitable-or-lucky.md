@@ -131,6 +131,16 @@ too. Because each run sees the same trades in the same order under every rule se
 limit can never pass less often than an end-of-day trailing one, which can never pass less
 often than one that trails every trade; the tests check that ordering.
 
+## Timing: when does it work?
+
+The timing section splits the trades by the hour of day or the weekday in the file's time
+column. Finding a "best hour" means looking at every hour, which is a search like trying
+setups, so each slice with at least 5 trades is scored with the Deflated Sharpe Ratio using
+(slices with enough trades) x (setups tried) as the number of tries. The same check on the
+negated results scores whether a losing slice's losses are a real pattern. On the page's
+random-walk example the best hour reaches only "promising, not proven": exactly what should
+happen where no edge exists.
+
 ## How we know it behaves
 
 - **The page's math equals the library's.** A test runs the page's own code and compares it

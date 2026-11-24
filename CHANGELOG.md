@@ -62,6 +62,11 @@ All notable changes are listed here. The format follows
   synthetic random-walk market (`docs/example-bars.csv`) and two strategies traded on it.
   `tests/test_site_lab.py` checks the replay against a separate Python implementation.
 - The website moved to https://algobacktesting.com/.
+- Timing breakdown on the website: results by hour of day or by weekday, with each slice's
+  chance of being real scored as one of all the slices looked at (times the setups tried),
+  for gains and for losses. `tests/test_site_when.py` checks it against the library.
+- Fix: with an empty paste box or an error in the check, the stop lab, simulator and timing
+  sections kept showing the previous trades' results; they now clear.
 - Prop-firm challenge simulator on the website: replays the trader's own results in random
   order 5,000 times under an evaluation's rules (profit target; a loss limit that trails the
   end-of-day balance, trails every trade or stays fixed; an optional daily limit; a day

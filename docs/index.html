@@ -280,6 +280,9 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
 .meter .m-pass { background: var(--gain); }
 .meter .m-fail { background: var(--loss); }
 .meter .m-open { background: var(--line-2); }
+.slice-bar { display: inline-block; height: 8px; border-radius: 4px; margin-right: 8px; vertical-align: middle; }
+.slice-bar.pos { background: var(--gain); }
+.slice-bar.neg { background: var(--loss); }
 
 /* Print and "Save as PDF": the check's results only, on white, with a short header. */
 .print-only { display: none; }
@@ -337,6 +340,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
     <nav class="nav" aria-label="Site">
       <a href="#check">The check</a>
       <a href="#prop">Prop challenge</a>
+      <a href="#timing">Timing</a>
       <a href="#lab">Stop lab</a>
       <a href="#how">How it works</a>
       <a href="#export">Export help</a>
@@ -537,6 +541,31 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
     </div>
   </section>
 
+  <section class="section warm" id="timing" aria-labelledby="timing-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Timing</span>
+        <h2 id="timing-title">When does your strategy <em>actually work?</em></h2>
+        <div class="dots center" aria-hidden="true"></div>
+        <p>Splits the trades from the check above by hour of day or by weekday. Looking at many slices is itself a search, so each slice's chance of being real counts every slice you looked at.</p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Results by time</h3>
+          <div class="toggles" role="group" aria-label="Split the trades by">
+            <button type="button" id="timing-hour" aria-pressed="true">By hour</button>
+            <button type="button" id="timing-day" aria-pressed="false">By weekday</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="findings" id="timing-findings" aria-live="polite"><p class="note">Import a trade file with trade times in the check above to see this.</p></div>
+          <div class="lab-table-wrap"><table class="stats lab-table" id="timing-table"></table></div>
+          <p class="note">Times are as written in your file, from the time column the check uses (usually when each trade closed). Slices with fewer than 5 trades are listed but not scored.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section navy" id="lab" aria-labelledby="lab-title">
     <div class="wrap">
       <div class="section-head">
@@ -664,6 +693,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
       <nav aria-labelledby="f-product"><h2 id="f-product">Product</h2><ul>
         <li><a href="#check">The check</a></li>
         <li><a href="#prop">Prop-firm challenge</a></li>
+        <li><a href="#timing">Timing</a></li>
         <li><a href="#lab">Stop lab</a></li>
         <li><a href="#export">Export help</a></li>
       </ul></nav>
@@ -1820,6 +1850,43 @@ function simulateEvaluation(values, rules, opts) {
 }
 /* prop:end */
 
+/* when:start */
+// Timing breakdown: results by hour of day or by weekday. Pure functions, checked against the
+// Python library in tests/test_site_when.py.
+
+// Trade results grouped by the hour (0-23) or weekday (0 = Monday) of their time stamp. Times
+// are the clock as written in the file; trades without a time are left out.
+function groupByTime(values, times, by) {
+  var groups = {};
+  values.forEach(function (v, i) {
+    var t = times ? times[i] : NaN;
+    if (!Number.isFinite(t)) return;
+    var d = new Date(t), key = by === "hour" ? d.getUTCHours() : (d.getUTCDay() + 6) % 7;
+    (groups[key] = groups[key] || []).push(v);
+  });
+  return groups;
+}
+
+// One row per slice. Picking the best slice is a search over every slice with enough trades,
+// so each slice's chance of a real edge counts all of them as tries, times the setups tried.
+function timeSlices(values, times, by, setups, minTrades) {
+  var groups = groupByTime(values, times, by);
+  var keys = Object.keys(groups).map(Number).sort(function (a, b) { return a - b; });
+  var eligible = keys.filter(function (k) { return groups[k].length >= minTrades; }).length;
+  var trials = Math.max(1, eligible) * Math.max(1, setups);
+  var rows = keys.map(function (k) {
+    var vals = groups[k], sum = tradeSummary(vals), stats = vals.length >= 2 ? statsFromTrades(vals) : null;
+    var scored = vals.length >= minTrades && stats && stats.sd > 0;
+    return {
+      key: k, n: vals.length, total: sum.total, mean: sum.total / vals.length, winRate: sum.wins / vals.length,
+      chance: scored ? edgeProbability(stats, vals.length, trials) : NaN,
+      lossChance: scored ? edgeProbability(statsFromTrades(vals.map(function (v) { return -v; })), vals.length, trials) : NaN
+    };
+  });
+  return { rows: rows, trials: trials, slices: eligible };
+}
+/* when:end */
+
 (function () {
   "use strict";
   function $(id) { return document.getElementById(id); }
@@ -1998,6 +2065,10 @@ function simulateEvaluation(values, rules, opts) {
       svg.innerHTML = "";
       $("legend").innerHTML = "";
       $("chart-cap").textContent = "";
+      // The sections below read the same trades, so they must clear too.
+      if (typeof runLab === "function") runLab();
+      if (typeof runProp === "function") runProp();
+      if (typeof runTiming === "function") runTiming();
       return;
     }
     s.setups = n;
@@ -2043,6 +2114,7 @@ function simulateEvaluation(values, rules, opts) {
     draw();
     if (typeof runLab === "function") runLab();
     if (typeof runProp === "function") runProp();
+    if (typeof runTiming === "function") runTiming();
   }
 
   /* ---------- charts ---------- */
@@ -2315,6 +2387,62 @@ function simulateEvaluation(values, rules, opts) {
     table.innerHTML = html + "</tbody>";
   }
 
+  /* ---------- timing breakdown ---------- */
+  var timingBy = "hour";
+  var WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  function sliceLabel(k) { return timingBy === "hour" ? (k < 10 ? "0" : "") + k + ":00" : WEEKDAYS[k]; }
+  function runTiming() {
+    var out = $("timing-findings"), table = $("timing-table");
+    function para(text, cls) { out.appendChild(Object.assign(document.createElement("p"), { className: cls || "", textContent: text })); }
+    out.textContent = "";
+    table.textContent = "";
+    var withTimes = view && view.values && view.times ? view.times.filter(function (x) { return Number.isFinite(x); }).length : 0;
+    if (!withTimes) { para("Import a trade file with trade times in the check above to see this. Pasted results and the quick check have no times.", "note"); return; }
+    var n = setups(), rep = timeSlices(view.values, view.times, timingBy, n, 5), u = view.unit, d = view.digits;
+    var scored = rep.rows.filter(function (r) { return isFinite(r.chance); });
+    var noun = timingBy === "hour" ? "hours" : "weekdays";
+    if (!scored.length) { para("No " + (timingBy === "hour" ? "hour" : "weekday") + " has 5 or more trades yet, so none can be judged.", "note"); }
+    else {
+      var best = scored.reduce(function (a, b) { return b.mean > a.mean ? b : a; });
+      var worst = scored.reduce(function (a, b) { return b.mean < a.mean ? b : a; });
+      para("Best: " + sliceLabel(best.key) + ", " + money(best.mean, u, d, true) + " a trade over " + whole(best.n) + " trades.", "lead");
+      para("After counting the " + rep.slices + " " + noun + " with enough trades" + (n > 1 ? " and your " + n + " setups" : "") +
+        ", the chance that is a real edge is " + pct(best.chance) + ". " +
+        (best.chance >= 0.95 ? "That holds up." : best.chance >= 0.5 ? "Promising, not proven." : "That could easily be luck: don't trade only then because of this."));
+      if (worst !== best && worst.mean < 0) {
+        para("Worst: " + sliceLabel(worst.key) + ", " + money(worst.mean, u, d, true) + " a trade over " + whole(worst.n) + " trades. The chance those losses are a real pattern is " +
+          pct(worst.lossChance) + (worst.lossChance >= 0.95 ? ": worth avoiding." : ", so cutting it may just remove noise."));
+      }
+    }
+    var maxAbs = rep.rows.reduce(function (m, r) { return Math.max(m, Math.abs(r.mean)); }, 0) || 1;
+    var head = document.createElement("thead"), hr = document.createElement("tr");
+    [timingBy === "hour" ? "Hour" : "Day", "Trades", "Win rate", "Avg / trade", "Net", "Real, not luck"].forEach(function (h) {
+      hr.appendChild(Object.assign(document.createElement("th"), { scope: "col", textContent: h }));
+    });
+    head.appendChild(hr);
+    table.appendChild(head);
+    var body = document.createElement("tbody");
+    rep.rows.forEach(function (r) {
+      var tr = document.createElement("tr"), cells = [];
+      tr.appendChild(Object.assign(document.createElement("th"), { scope: "row", textContent: sliceLabel(r.key) }));
+      cells.push(whole(r.n), Math.round(r.winRate * 100) + "%");
+      cells.forEach(function (c) { tr.appendChild(Object.assign(document.createElement("td"), { textContent: c })); });
+      var avg = document.createElement("td");
+      avg.className = signClass(r.mean);
+      var bar = document.createElement("span");
+      bar.className = "slice-bar " + (r.mean >= 0 ? "pos" : "neg");
+      bar.style.width = Math.max(2, Math.round(Math.abs(r.mean) / maxAbs * 60)) + "px";
+      avg.appendChild(bar);
+      avg.appendChild(document.createTextNode(money(r.mean, u, d, true)));
+      tr.appendChild(avg);
+      tr.appendChild(Object.assign(document.createElement("td"), { className: signClass(r.total), textContent: money(r.total, u, 0, true) }));
+      var real = isFinite(r.chance) ? (r.mean >= 0 ? r.chance : r.lossChance) : NaN;
+      tr.appendChild(Object.assign(document.createElement("td"), { textContent: isFinite(real) ? pct(real) : "too few" }));
+      body.appendChild(tr);
+    });
+    table.appendChild(body);
+  }
+
   /* ---------- prop-firm simulator ---------- */
   var PRESETS = { "50": [3000, 2000], "100": [6000, 3000], "150": [9000, 4500] };
   function propNumber(id, lo, fallback) {
@@ -2448,6 +2576,14 @@ function simulateEvaluation(values, rules, opts) {
       runProp();
     });
   });
+  function setTiming(by) {
+    timingBy = by;
+    $("timing-hour").setAttribute("aria-pressed", String(by === "hour"));
+    $("timing-day").setAttribute("aria-pressed", String(by === "weekday"));
+    runTiming();
+  }
+  $("timing-hour").addEventListener("click", function () { setTiming("hour"); });
+  $("timing-day").addEventListener("click", function () { setTiming("weekday"); });
   $("prop-form").addEventListener("submit", function (ev) { ev.preventDefault(); });
   chartBox.addEventListener("pointermove", hover);
   chartBox.addEventListener("pointerleave", unhover);
