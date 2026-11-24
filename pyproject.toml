@@ -32,7 +32,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://themarketmakerholdings.github.io/algobacktesting/"
+Homepage = "https://algobacktesting.com/"
 Repository = "https://github.com/TheMarketMakerHoldings/algobacktesting"
 Documentation = "https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/api.md"
 Changelog = "https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/CHANGELOG.md"

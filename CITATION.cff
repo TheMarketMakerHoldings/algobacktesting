@@ -9,7 +9,7 @@ authors:
 version: 0.1.0
 license: MIT
 repository-code: "https://github.com/TheMarketMakerHoldings/algobacktesting"
-url: "https://themarketmakerholdings.github.io/algobacktesting/"
+url: "https://algobacktesting.com/"
 abstract: >-
   Verified implementations of the Probabilistic and Deflated Sharpe Ratio, the Probability
   of Backtest Overfitting, and purged cross-validation, with a report that reproduces the

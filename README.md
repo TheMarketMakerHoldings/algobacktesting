@@ -15,7 +15,7 @@ Try enough strategy variations and one of them will look brilliant by luck alone
 `algobacktesting` implements statistical tests from Bailey & López de Prado's research that
 tell a real edge apart from an overfit one.
 
-**Not a programmer?** The [online check](https://themarketmakerholdings.github.io/algobacktesting/)
+**Not a programmer?** The [online check](https://algobacktesting.com/)
 asks one question: are you actually profitable, or just lucky? Import a strategy's trades from
 TopstepX, Quantower, NinjaTrader or thinkorswim, paste them, or enter a win rate. It runs in
 the browser, and nothing is uploaded.
