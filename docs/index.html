@@ -243,6 +243,13 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .saved-list b { display: block; color: var(--navy); font-weight: 600; overflow-wrap: anywhere; }
 .saved-list span { display: block; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 .saved-list .linkbtn { align-self: center; flex: none; }
+
+/* Sharing a result */
+.head-actions { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.share-box { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 16px; border-radius: 12px; background: var(--warm-2); }
+.share-box input { font-family: var(--mono); font-size: 13px; }
+.share-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+.shared-text { font: 400 1.15rem/1.4 var(--serif); color: var(--navy); }
 .lab-table th, .lab-table td { padding: 8px 10px; text-align: right; white-space: nowrap; }
 .lab-table thead th { font: 700 11px/1.3 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); border-bottom: 2px solid var(--line-2); }
 .lab-table tbody th { color: var(--navy); font-weight: 600; text-align: right; }
@@ -304,7 +311,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
   @page { margin: 14mm; }
   body { font-size: 11pt; color: #000; }
   .topbar, .hero, .facts, #prop, #timing, #compare, #lab, #how, #export, #developers, .footer, .skip, noscript,
-  .toggles, .section-head, #pane-import .drop, #load-example, #print-report, .chart-cap, .tip { display: none !important; }
+  .toggles, .section-head, #pane-import .drop, #load-example, .head-actions, .share-box, .chart-cap, .tip { display: none !important; }
   .print-only { display: block; margin-bottom: 10mm; }
   .print-only h1 { font: 400 20pt/1.2 var(--serif); color: #000; }
   .print-only p { font-size: 9.5pt; color: #333; margin-top: 2mm; }
@@ -403,7 +410,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         <span class="eyebrow">The check</span>
         <h2 id="check-title">One strategy, <em>one honest answer</em></h2>
         <div class="dots center" aria-hidden="true"></div>
-        <p>The page opens on a made-up example. Drop your own export to replace it.</p>
+        <p id="check-intro">The page opens on a made-up example. Drop your own export to replace it.</p>
       </div>
       <div class="print-only"><h1>Strategy check · algobacktesting.com</h1><p id="print-meta">Statistics about past results. Not financial advice.</p></div>
       <noscript><p class="error">This page needs JavaScript to work out your result. Nothing you enter leaves your browser.</p></noscript>
@@ -451,6 +458,12 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
               <p class="note">Assumes every trade risks the same amount and ends at its target or its stop. Results are in R, the amount risked per trade.</p>
             </div>
 
+            <div class="card-body" id="pane-shared" style="padding:0" hidden>
+              <p class="shared-text" id="shared-text"></p>
+              <p class="note">The verdict is worked out again here from the numbers in the link. The page cannot check them against real trades, so treat a shared result as a claim. Change the setups below to see how much the verdict depends on them.</p>
+              <button type="button" class="linkbtn" id="shared-leave">Check your own trades</button>
+            </div>
+
             <div class="setups field">
               <span id="setups-label">Setups tried, including this one</span>
               <div class="stepper">
@@ -472,8 +485,17 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         </section>
 
         <section class="card" aria-labelledby="verdict-title">
-          <div class="card-head"><h3 id="verdict-title">Verdict</h3><span class="sub" id="verdict-source"></span><button type="button" class="linkbtn" id="print-report">Save as PDF</button></div>
+          <div class="card-head"><h3 id="verdict-title">Verdict</h3><span class="sub" id="verdict-source"></span><span class="head-actions"><button type="button" class="linkbtn" id="share-open" aria-expanded="false" aria-controls="share-box">Share</button><button type="button" class="linkbtn" id="print-report">Save as PDF</button></span></div>
           <div class="card-body">
+            <div class="share-box" id="share-box" hidden>
+              <label class="field"><span>Link to this result</span><input type="text" id="share-url" readonly spellcheck="false"></label>
+              <div class="share-actions">
+                <button type="button" class="pill teal small" id="share-copy">Copy link</button>
+                <a class="pill line small" id="share-x" href="https://x.com/intent/tweet" target="_blank" rel="noopener noreferrer">Post on X</a>
+                <span class="sub" id="share-copied" aria-live="polite"></span>
+              </div>
+              <p class="note" id="share-note"></p>
+            </div>
             <div role="status" class="card-body" style="padding:0;gap:12px">
               <div class="state idle" id="out-verdict">Waiting for trades</div>
               <div class="headline">
@@ -2112,6 +2134,85 @@ function sameTrades(a, b) {
 }
 /* saved:end */
 
+/* share:start */
+// Shareable result links. A link carries summary numbers only, never a trade: the quick
+// check's four inputs, or for a list of trades the statistics the verdict is computed from
+// plus a few counts to show. They sit after the "#", which browsers never send to a server.
+// The page that opens a link recomputes the verdict from them. Pure functions, checked in
+// tests/test_site_share.py.
+var SHARE_VERSION = "1";
+
+// Ten significant digits: enough that the recomputed verdict matches the sender's.
+function shareNumber(x) { return String(Number(Number(x).toPrecision(10))); }
+
+// The fields of a list of trades that a link carries.
+function shareFromTrades(values, before, unit, setups) {
+  var stats = statsFromTrades(values), sum = tradeSummary(values, before);
+  return {
+    kind: "trades", trades: values.length, setups: setups, unit: unit === "$" ? "$" : "", stats: stats,
+    wins: sum.wins, losses: sum.losses, breakevens: sum.breakevens, maxDrawdown: sum.maxDrawdown
+  };
+}
+
+// The text after "#" for a result: { kind: "quick", winRatePct, rr, trades, setups } or what
+// shareFromTrades returns.
+function encodeShare(r) {
+  var parts = ["share=" + SHARE_VERSION];
+  function add(key, value) { parts.push(key + "=" + encodeURIComponent(value)); }
+  if (r.kind === "quick") {
+    add("k", "q"); add("w", shareNumber(r.winRatePct)); add("rr", shareNumber(r.rr)); add("n", r.trades); add("s", r.setups);
+  } else {
+    add("k", "t"); add("n", r.trades); add("s", r.setups);
+    if (r.unit) add("u", r.unit);
+    add("m", shareNumber(r.stats.mean)); add("sd", shareNumber(r.stats.sd));
+    add("sk", shareNumber(r.stats.skew)); add("ku", shareNumber(r.stats.kurtosis));
+    add("w", r.wins); add("l", r.losses); add("b", r.breakevens); add("dd", shareNumber(r.maxDrawdown));
+  }
+  return parts.join("&");
+}
+
+// Reads a link's text after "#". Returns null when it is not a shared result, { error } when
+// it is one but damaged, else the result. Every field is checked, because anyone can edit a link.
+function decodeShare(fragment) {
+  var fields = Object.create(null), damaged = { error: "This shared link is damaged or incomplete, so it cannot be shown." };
+  String(fragment == null ? "" : fragment).replace(/^#/, "").split("&").forEach(function (part) {
+    var cut = part.indexOf("="), key = cut < 0 ? part : part.slice(0, cut), value = null;
+    try { value = decodeURIComponent(cut < 0 ? "" : part.slice(cut + 1)); } catch (e) { value = null; }
+    if (key && !(key in fields)) fields[key] = value;
+  });
+  if (!("share" in fields)) return null;
+  if (fields.share !== SHARE_VERSION) return { error: "This shared link was made by a different version of the page, so it cannot be shown." };
+  function real(key) {
+    var s = fields[key];
+    return typeof s === "string" && /^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(s) ? Number(s) : NaN;
+  }
+  function whole(key, lo, hi) {
+    var v = real(key);
+    return Number.isInteger(v) && v >= lo && v <= hi ? v : NaN;
+  }
+  if (fields.k === "q") {
+    var q = { kind: "quick", winRatePct: real("w"), rr: real("rr"), trades: whole("n", 10, 100000), setups: whole("s", 1, 10000) };
+    if (!(q.winRatePct >= 1 && q.winRatePct <= 99) || !(q.rr >= 0.1 && q.rr <= 20) || !isFinite(q.trades) || !isFinite(q.setups)) return damaged;
+    return q;
+  }
+  if (fields.k !== "t") return damaged;
+  var r = {
+    kind: "trades", trades: whole("n", 10, 10000000), setups: whole("s", 1, 10000), unit: fields.u === undefined ? "" : fields.u,
+    stats: { mean: real("m"), sd: real("sd"), skew: real("sk"), kurtosis: real("ku") },
+    wins: whole("w", 0, 10000000), losses: whole("l", 0, 10000000), breakevens: whole("b", 0, 10000000), maxDrawdown: real("dd")
+  };
+  var st = r.stats;
+  if (!isFinite(r.trades) || !isFinite(r.setups) || (r.unit !== "" && r.unit !== "$")) return damaged;
+  if (!isFinite(st.mean) || !(st.sd > 0 && isFinite(st.sd)) || !isFinite(st.skew)) return damaged;
+  // Any distribution has kurtosis of at least 1 + skew squared; allow for the rounding to 10 digits.
+  if (!(st.kurtosis >= (1 + st.skew * st.skew) * (1 - 1e-8)) || !isFinite(st.kurtosis)) return damaged;
+  if (!isFinite(r.wins) || !isFinite(r.losses) || !isFinite(r.breakevens) || r.wins + r.losses + r.breakevens > r.trades) return damaged;
+  if (!(r.maxDrawdown >= 0 && isFinite(r.maxDrawdown))) return damaged;
+  st.sharpe = st.mean / st.sd;
+  return r;
+}
+/* share:end */
+
 (function () {
   "use strict";
   function $(id) { return document.getElementById(id); }
@@ -2262,6 +2363,15 @@ function sameTrades(a, b) {
     return { stats: stats, values: parsed.values, before: null, trades: n, unit: "", digits: Math.abs(stats.mean) >= 100 ? 0 : 2, label: "Pasted trades" };
   }
 
+  // A result opened from a shared link: summary numbers only, so no equity curve or trade list.
+  var sharedResult = null;
+  function sharedInput() {
+    if (!sharedResult) return { error: "Open a shared link to see a shared result." };
+    if (sharedResult.error) return { error: sharedResult.error };
+    var r = sharedResult;
+    return { stats: r.stats, values: null, shared: r, trades: r.trades, unit: r.unit, digits: 2, label: "Shared result" };
+  }
+
   function quickInput() {
     var w = +$("in-winrate").value, rr = +$("in-rr").value, n = Math.round(+$("in-trades").value);
     if (!(w >= 1 && w <= 99)) return { error: "Win rate must be between 1% and 99%." };
@@ -2277,16 +2387,18 @@ function sameTrades(a, b) {
   function signClass(v) { return v > 0 ? "pos" : v < 0 ? "neg" : ""; }
 
   function update() {
-    var s = mode === "import" ? importInput() : mode === "paste" ? pasteInput() : quickInput();
-    var n = setups(), err = $("calc-error"), verdict = $("out-verdict");
+    var s = mode === "import" ? importInput() : mode === "paste" ? pasteInput() : mode === "shared" ? sharedInput() : quickInput();
+    var n = setups(), err = $("calc-error"), verdict = $("out-verdict"), noTrades = mode === "quick" || mode === "shared";
     err.textContent = s.error || "";
     err.hidden = !s.error;
-    $("chart-equity").disabled = mode === "quick";
-    if (mode === "quick" && chartMode === "equity") setChart("proof", true);
-    $("save-box").hidden = mode === "quick";
+    $("chart-equity").disabled = noTrades;
+    if (noTrades && chartMode === "equity") setChart("proof", true);
+    $("save-box").hidden = noTrades;
     $("save-btn").disabled = !!s.error;
+    $("share-open").disabled = !!s.error;
     if (s.error) {
       view = null;
+      refreshShare();
       verdict.className = "state idle";
       verdict.textContent = "Waiting for trades";
       ["out-prob", "out-need"].forEach(function (id) { $(id).textContent = "–"; });
@@ -2336,6 +2448,14 @@ function sameTrades(a, b) {
       html += row("Longest losing streak", whole(sum.longestLosingStreak) + (sum.longestLosingStreak === 1 ? " trade" : " trades"));
       html += row("Max drawdown", money(-sum.maxDrawdown, u, d), sum.maxDrawdown > 0 ? "neg" : "");
       if (s.feesOn) html += row("Fees subtracted", money(s.fees, u, d));
+    } else if (s.shared) {
+      var r = s.shared, frac = function (x) { return isFinite(x) ? Math.round(x * 1000) / 10 + "%" : "–"; };
+      html += row("Trades", whole(r.trades));
+      html += row("Win rate", frac(r.wins / r.trades), "", r.wins + " won · " + r.losses + " lost · " + r.breakevens + " breakeven");
+      html += row("Win rate without breakevens", frac(r.wins + r.losses ? r.wins / (r.wins + r.losses) : NaN), "", "wins ÷ (wins + losses)");
+      html += row("Average per trade", money(r.stats.mean, s.unit, s.digits, true), signClass(r.stats.mean));
+      html += row("Net result", money(r.stats.mean * r.trades, s.unit, s.digits, true), signClass(r.stats.mean));
+      html += row("Max drawdown", money(-r.maxDrawdown, s.unit, s.digits), r.maxDrawdown > 0 ? "neg" : "");
     } else {
       html += row("Win rate / win ÷ loss", Math.round(s.winRate * 100) + "% / " + s.rr.toFixed(1));
       html += row("Trades", whole(s.trades));
@@ -2344,6 +2464,7 @@ function sameTrades(a, b) {
     html += row("Luck alone would average", money(luck, s.unit, s.digits, true), "", "per trade, best of " + n + (n === 1 ? " setup" : " setups"));
     $("stats-body").innerHTML = html;
     draw();
+    refreshShare();
     if (typeof runLab === "function") runLab();
     if (typeof runProp === "function") runProp();
     if (typeof runTiming === "function") runTiming();
@@ -2924,8 +3045,83 @@ function sameTrades(a, b) {
       $("mode-" + m).setAttribute("aria-pressed", String(m === next));
       $("pane-" + m).hidden = m !== next;
     });
-    if (next !== "quick" && chartMode === "proof" && !$("chart-proof").dataset.chosen) setChart("equity", true);
+    $("pane-shared").hidden = next !== "shared"; // reached only from a shared link
+    $("check-intro").textContent = next === "shared" ? "Someone shared this result with you. Check your own trades the same way, free."
+      : "The page opens on a made-up example. Drop your own export to replace it.";
+    if (next !== "quick" && next !== "shared" && chartMode === "proof" && !$("chart-proof").dataset.chosen) setChart("equity", true);
     update();
+  }
+
+  /* ---------- shareable links ---------- */
+  function shareResult() {
+    if (!view) return null;
+    if (mode === "quick") return { kind: "quick", winRatePct: +$("in-winrate").value, rr: +$("in-rr").value, trades: view.trades, setups: view.setups };
+    if (mode === "shared" && sharedResult && !sharedResult.error) return Object.assign({}, sharedResult, { setups: view.setups });
+    if (view.values) return shareFromTrades(view.values, view.before, view.unit, view.setups);
+    return null;
+  }
+  // Rebuilds the open share box for the result now shown, or closes it when there is none.
+  function refreshShare() {
+    var box = $("share-box"), r = box.hidden ? null : shareResult();
+    if (!r) { box.hidden = true; $("share-open").setAttribute("aria-expanded", "false"); return; }
+    var link = location.href.split("#")[0].split("?")[0] + "#" + encodeShare(r);
+    var text = "Strategy check: " + whole(r.trades) + " trades, a " + pct(verdictProb) + " chance the edge is real after counting " +
+      r.setups + (r.setups === 1 ? " setup" : " setups") + " tried. Real edge or luck?";
+    $("share-url").value = link;
+    $("share-x").href = "https://x.com/intent/tweet?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(link);
+    $("share-note").textContent = r.kind === "quick"
+      ? "The link holds only the four numbers of this quick check: win rate, win ÷ loss, trades and setups."
+      : "The link holds summary numbers only: trades, setups, wins, losses and breakevens, the average and spread of the results, their skew and tails, and the max drawdown. Never a single trade, and never your file.";
+  }
+  function toggleShare() {
+    var box = $("share-box"), open = box.hidden;
+    box.hidden = !open;
+    $("share-open").setAttribute("aria-expanded", String(open));
+    $("share-copied").textContent = "";
+    refreshShare();
+  }
+  function copyShare() {
+    var input = $("share-url"), say = $("share-copied");
+    function fallback() {
+      input.focus();
+      input.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      say.textContent = ok ? "Copied." : "Select the link and copy it.";
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(input.value).then(function () { say.textContent = "Copied."; }, fallback);
+    } else fallback();
+  }
+  // Opens a shared link's result in the check. Returns false when the address holds none.
+  function openShared(hash) {
+    var r = decodeShare(hash);
+    if (!r) return false;
+    if (r.kind === "quick") {
+      sharedResult = null;
+      $("in-winrate").value = r.winRatePct;
+      $("in-rr").value = r.rr;
+      $("in-trades").value = r.trades;
+      $("in-setups").value = r.setups;
+      setMode("quick");
+    } else {
+      sharedResult = r;
+      if (!r.error) $("in-setups").value = r.setups;
+      $("shared-text").textContent = r.error ? "This link could not be read." : "Someone shared a result of " + whole(r.trades) + " trades: " +
+        whole(r.wins) + " won, " + whole(r.losses) + " lost and " + whole(r.breakevens) + " breakeven, with " + whole(r.setups) +
+        (r.setups === 1 ? " setup" : " setups") + " tried.";
+      setMode("shared");
+    }
+    // Jump (not glide) to the check once the page has loaded; a smooth scroll started while the
+    // page is still loading gets cancelled, leaving the visitor at the top.
+    function show() {
+      var root = document.documentElement, was = root.style.scrollBehavior;
+      root.style.scrollBehavior = "auto";
+      $("check").scrollIntoView();
+      root.style.scrollBehavior = was;
+    }
+    if (document.readyState === "complete") show(); else window.addEventListener("load", show);
+    return true;
   }
   function setChart(next, quiet) {
     chartMode = next;
@@ -2945,7 +3141,7 @@ function sameTrades(a, b) {
     var when = new Date();
     var filter = $("sel-filter"), picked = filter.selectedIndex > 0 ? filter.options[filter.selectedIndex].textContent : "all trades";
     var what = mode === "import" && source ? (source.example ? "the example file" : source.name) + ", " + picked
-      : mode === "paste" ? "pasted trades" : "quick check";
+      : mode === "paste" ? "pasted trades" : mode === "shared" ? "a shared link's summary numbers, not checked against trades" : "quick check";
     $("print-meta").textContent = "Data: " + what + ". Setups tried: " + setups() + ". Printed " +
       when.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) +
       ". Statistics about past results, computed in the browser. Not financial advice.";
@@ -3014,6 +3210,16 @@ function sameTrades(a, b) {
   }
   $("timing-hour").addEventListener("click", function () { setTiming("hour"); });
   ["compare-a", "compare-b"].forEach(function (id) { $(id).addEventListener("change", runCompare); });
+  $("share-open").addEventListener("click", toggleShare);
+  $("share-copy").addEventListener("click", copyShare);
+  $("share-url").addEventListener("focus", function () { this.select(); });
+  $("shared-leave").addEventListener("click", function () {
+    sharedResult = null;
+    if (/^#share=/.test(location.hash) && window.history && history.replaceState) history.replaceState(null, "", location.href.split("#")[0]);
+    setMode("import");
+  });
+  // A shared link pasted into a tab that already shows the page.
+  window.addEventListener("hashchange", function () { openShared(location.hash); });
   $("save-btn").addEventListener("click", saveNow);
   $("save-name").addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); saveNow(); } });
   $("saved-clear").addEventListener("click", deleteAllSaved);
@@ -3031,6 +3237,7 @@ function sameTrades(a, b) {
   loadSaved();
   renderSaved();
   loadText($("example-csv").textContent.trim(), "example-trades.csv", true);
+  openShared(location.hash);
 })();
 </script>
 </body>

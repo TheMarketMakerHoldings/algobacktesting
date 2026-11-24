@@ -82,6 +82,12 @@ All notable changes are listed here. The format follows
   the gambler's ruin formulas and hand-worked cases.
 - "Save as PDF" on the website: a one-page report of the verdict and breakdown, with the
   equity chart, the data used and the date.
+- Shareable result links on the website: "Share" under the verdict gives a link to copy or
+  post on X. It holds summary numbers only (the quick check's inputs, or for a list of
+  trades the statistics the verdict uses and a few counts), after the "#" so no server sees
+  them. The page that opens it works the verdict out again and checks every number.
+  `tests/test_site_share.py` checks that a link reproduces the sender's verdict and that
+  damaged links are refused.
 - Save and name strategies on the website: type a name and save the trades in the check;
   they are kept in the browser's own storage on that device, never uploaded. Compare lists
   saved strategies, so one export can be compared with another, and each can be deleted.

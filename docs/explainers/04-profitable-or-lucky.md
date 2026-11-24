@@ -177,6 +177,26 @@ standard errors). A saved strategy read back gives the same statistics and the s
 comparison as its original trades to within 0.000001. The stored list is checked entry by
 entry, so a damaged or hand-edited list is dropped, never trusted.
 
+## Sharing a result
+
+"Share" under the verdict makes a link to the result. For the quick check the link holds its
+four inputs. For a list of trades it holds the numbers the verdict is computed from, not the
+trades: the number of trades and setups, the average and standard deviation of the results,
+their skew and kurtosis, plus the win, loss and breakeven counts and the max drawdown for
+display. That is enough because the chance the edge is real depends on the trades only
+through those statistics.
+
+The numbers sit after the "#" in the link, which browsers never send to a server. The page
+that opens the link works the verdict out again from them, and the visitor can change the
+setups to see how much the verdict depends on that count. A link can be edited by hand, so
+the page checks every number. It refuses impossible ones, such as a kurtosis below
+1 + skew², and says a shared result is a claim it cannot check against real trades.
+
+Checks: on nine trade lists of very different shapes, from 10 to 5,000 trades, a link read
+back gives the same chance (to 0.000000001), the same trades needed and the same luck line
+as the trades themselves. The link is the same length for 10 trades or 5,000. Damaged or
+edited links are refused with a message.
+
 ## How we know it behaves
 
 - **The page's math equals the library's.** A test runs the page's own code and compares it

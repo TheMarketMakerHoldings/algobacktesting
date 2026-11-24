@@ -21,7 +21,7 @@ TradingView, TopstepX, Quantower, NinjaTrader or thinkorswim, paste them, or ent
 replays your entries on your own price bars to test other stop sizes, and counts every size
 tried so a lucky stop is not mistaken for a better one. A prop-firm simulator estimates your
 chance of passing a funded-account evaluation from your own trades. Save strategies under a name
-and compare any two side by side. It runs in the browser, and nothing is uploaded.
+and compare any two side by side, and share a result with a link that holds no trades. It runs in the browser, and nothing is uploaded.
 
 | Question | Tool |
 | --- | --- |
