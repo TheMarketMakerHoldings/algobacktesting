@@ -82,6 +82,13 @@ All notable changes are listed here. The format follows
   the gambler's ruin formulas and hand-worked cases.
 - "Save as PDF" on the website: a one-page report of the verdict and breakdown, with the
   equity chart, the data used and the date.
+- Strategy builder on the website: write a rule as a sentence with blanks (opening-range
+  breakout, a set time with or against the morning's move, a moving-average cross, or a break
+  of the previous day's high or low; stop, target, move to breakeven, exit time, trades a
+  day) and test it on your own bars. Every version tested counts as a setup. The trades open
+  in the check with all its tools. `tests/test_site_build.py` checks every rule against a
+  separate Python version, on hand-worked cases, and by reproducing the example file's two
+  strategies trade for trade.
 - Shareable result links on the website: "Share" under the verdict gives a link to copy or
   post on X. It holds summary numbers only (the quick check's inputs, or for a list of
   trades the statistics the verdict uses and a few counts), after the "#" so no server sees

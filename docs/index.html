@@ -250,6 +250,21 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .share-box input { font-family: var(--mono); font-size: 13px; }
 .share-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
 .shared-text { font: 400 1.15rem/1.4 var(--serif); color: var(--navy); }
+
+/* Strategy builder: the rule reads as a sentence with fields inside it */
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); border: 0; }
+.linkbtn.inline { display: inline; align-self: auto; font-size: 11.5px; }
+.linkbtn.inline:focus-within { outline: 3px solid var(--teal-bright); outline-offset: 2px; }
+.sentence { font: 400 1.1rem/2.5 var(--serif); color: var(--navy); }
+.sentence select, .sentence input { display: inline-block; vertical-align: baseline; max-width: 100%; min-height: 40px; padding: 5px 10px; margin: 0 2px; border: 1px solid var(--line-2); border-radius: 8px; background: var(--white); font: 600 15px/1.2 var(--sans); color: var(--navy); font-variant-numeric: tabular-nums; }
+.sentence select:hover, .sentence input:hover { border-color: var(--slate); }
+.sentence input[type="number"] { width: 5.2em; }
+.sentence input[type="time"] { width: 9.2em; }
+.sentence [hidden] { display: none; }
+.b-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
+.b-out { border-top: 1px solid var(--line); }
+.b-rule { padding: 12px 16px; border-left: 3px solid var(--teal); background: var(--warm-2); border-radius: 0 10px 10px 0; font: 400 1.05rem/1.45 var(--serif); color: var(--navy); }
+@media (max-width: 640px) { .b-controls { grid-template-columns: minmax(0, 1fr); } }
 .lab-table th, .lab-table td { padding: 8px 10px; text-align: right; white-space: nowrap; }
 .lab-table thead th { font: 700 11px/1.3 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); border-bottom: 2px solid var(--line-2); }
 .lab-table tbody th { color: var(--navy); font-weight: 600; text-align: right; }
@@ -310,7 +325,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
 @media print {
   @page { margin: 14mm; }
   body { font-size: 11pt; color: #000; }
-  .topbar, .hero, .facts, #prop, #timing, #compare, #lab, #how, #export, #developers, .footer, .skip, noscript,
+  .topbar, .hero, .facts, #prop, #timing, #compare, #lab, #builder, #how, #export, #developers, .footer, .skip, noscript,
   .toggles, .section-head, #pane-import .drop, #load-example, .head-actions, .share-box, .chart-cap, .tip { display: none !important; }
   .print-only { display: block; margin-bottom: 10mm; }
   .print-only h1 { font: 400 20pt/1.2 var(--serif); color: #000; }
@@ -364,6 +379,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
       <a href="#timing">Timing</a>
       <a href="#compare">Compare</a>
       <a href="#lab">Stop lab</a>
+      <a href="#builder">Builder</a>
       <a href="#how">How it works</a>
       <a href="#export">Export help</a>
       <a href="#developers">Developers</a>
@@ -462,6 +478,12 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
               <p class="shared-text" id="shared-text"></p>
               <p class="note">The verdict is worked out again here from the numbers in the link. The page cannot check them against real trades, so treat a shared result as a claim. Change the setups below to see how much the verdict depends on them.</p>
               <button type="button" class="linkbtn" id="shared-leave">Check your own trades</button>
+            </div>
+
+            <div class="card-body" id="pane-built" style="padding:0" hidden>
+              <p class="shared-text" id="built-text"></p>
+              <p class="note">Trades from the strategy builder, after fees. The setups count below includes every version you tested there on this visit: add any you tried before.</p>
+              <a class="linkbtn" href="#builder">Change the rule</a>
             </div>
 
             <div class="setups field">
@@ -696,6 +718,58 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
     </div>
   </section>
 
+  <section class="section warm" id="builder" aria-labelledby="builder-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Strategy builder</span>
+        <h2 id="builder-title">Describe a strategy, <em>test it on your bars</em></h2>
+        <div class="dots center" aria-hidden="true"></div>
+        <p>Fill in the blanks to write your rule as a sentence. The page trades it on your own price bars, in your browser. Every version you test is counted, so tuning a rule until the past looks good cannot fool you.</p>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h3>Your rule</h3>
+          <div class="file-line" id="b-bars-line" aria-live="polite"></div>
+        </div>
+        <div class="card-body">
+          <p class="note" id="b-bars-empty">The builder trades on the bar file loaded in the stop lab. <button type="button" class="linkbtn inline" id="b-load-bars">Load the example bars</button> or <label class="linkbtn inline">choose your bar file<input type="file" id="b-in-bars" class="visually-hidden" accept=".csv,.txt,text/csv"></label>.</p>
+          <p class="sentence" id="b-sentence">
+            <select id="b-side" aria-label="Direction"></select>
+            <select id="b-entry" aria-label="How the trade starts">
+              <option value="orb">when a bar closes beyond the opening range</option>
+              <option value="time">at a set time</option>
+              <option value="ma">when the close crosses its moving average</option>
+              <option value="prior">when a bar closes beyond the previous day's high or low</option>
+            </select>
+            <span data-for="orb">of the first <input type="number" id="b-range" min="1" max="600" step="1" value="15" inputmode="numeric" aria-label="Opening range, minutes"> minutes after <input type="time" id="b-start" step="60" value="09:30" aria-label="Opening range starts"></span>
+            <span data-for="time"><input type="time" id="b-at" step="60" value="10:30" aria-label="Entry time"></span>
+            <span data-for="move">, measuring the move since <input type="time" id="b-move-from" step="60" value="09:30" aria-label="Measure the move since"></span>
+            <span data-for="ma">of <input type="number" id="b-ma" min="2" max="1000" step="1" value="20" inputmode="numeric" aria-label="Moving average, bars"> bars</span>
+            <span data-for="ma prior">from <input type="time" id="b-from" step="60" value="09:45" aria-label="First entry time"></span>
+            <span data-for="orb ma prior">until <input type="time" id="b-until" step="60" value="11:00" aria-label="Last entry time"></span>.
+            Stop <input type="number" id="b-stop" min="1" max="100000" step="1" value="12" inputmode="numeric" aria-label="Stop, ticks"> ticks,
+            target <input type="number" id="b-target" min="0" max="100000" step="1" value="24" inputmode="numeric" aria-label="Target, ticks"> ticks,
+            stop to entry after <input type="number" id="b-be" min="0" max="100000" step="1" value="0" inputmode="numeric" aria-label="Move stop to entry after, ticks"> ticks,
+            out by <input type="time" id="b-exit" step="60" value="11:29" aria-label="Exit time">,
+            at most <input type="number" id="b-max" min="1" max="50" step="1" value="1" inputmode="numeric" aria-label="Trades a day"> a day.
+          </p>
+          <div class="b-controls">
+            <label class="field"><span>Instrument</span><select id="b-instrument"></select></label>
+            <label class="field"><span>Fees per contract, round trip ($)</span><input type="number" id="b-fee" min="0" max="1000" step="0.01" value="4.12" inputmode="decimal"></label>
+            <button type="button" class="pill teal" id="b-run">Test this rule</button>
+          </div>
+          <p class="note">Target 0 means no target; 0 for stop to entry means the stop never moves. A signal is a bar's close and the trade enters at the next bar's open; a set time enters at that bar's open. One contract per trade. When one bar reaches both the stop and the target, the stop counts. Times are on your bar file's clock.</p>
+          <p class="error" id="b-error" role="alert" hidden></p>
+        </div>
+        <div class="card-body b-out">
+          <div class="findings" id="b-findings" aria-live="polite"><p class="note">Load bars, write a rule, and press Test this rule.</p></div>
+          <div class="lab-table-wrap"><table class="stats lab-table" id="b-table"></table></div>
+          <div class="share-actions"><button type="button" class="pill teal small" id="b-open" hidden>Open these trades in the check</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section" id="how" aria-labelledby="how-title">
     <div class="wrap">
       <div class="section-head">
@@ -777,6 +851,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         <li><a href="#timing">Timing</a></li>
         <li><a href="#compare">Compare strategies</a></li>
         <li><a href="#lab">Stop lab</a></li>
+        <li><a href="#builder">Strategy builder</a></li>
         <li><a href="#export">Export help</a></li>
       </ul></nav>
       <nav aria-labelledby="f-research"><h2 id="f-research">Research</h2><ul>
@@ -2213,6 +2288,183 @@ function decodeShare(fragment) {
 }
 /* share:end */
 
+/* build:start */
+// Strategy builder: a rule written as a sentence with blanks, traded on the trader's own bars.
+// Pure functions, checked in tests/test_site_build.py against a separate Python version and
+// against the example file's two strategies, which a separate script generated.
+//
+// Shared by every rule: a session is one calendar date of bars; times are minutes after
+// midnight on the bars' own clock (09:30 is 570). A signal is a bar's close, and the trade
+// enters at the next bar's open, so no rule uses a price before it happened. The "set time"
+// rule enters at the open of the bar starting at that time. Exits use the stop lab's bracket
+// (replayBracket): stop first when a bar reaches both, then the time exit at a bar's close.
+// One contract per trade.
+
+function minuteOfDay(clock) {
+  var m = Math.floor(clock / 60000) % 1440;
+  return m < 0 ? m + 1440 : m;
+}
+function dayOf(clock) { return Math.floor(clock / 86400000); }
+
+// "09:30" -> 570, else NaN.
+function parseClock(text) {
+  var m = /^(\d{1,2}):(\d{2})$/.exec(String(text == null ? "" : text).trim());
+  if (!m || +m[1] > 23 || +m[2] > 59) return NaN;
+  return +m[1] * 60 + +m[2];
+}
+function clockText(minute) {
+  var h = Math.floor(minute / 60), m = minute % 60;
+  return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+}
+
+// [start, end) index ranges of bars that share a calendar date. Bars must be sorted by time.
+function sessionsOf(bars) {
+  var out = [], start = 0;
+  for (var i = 1; i <= bars.length; i++) {
+    if (i === bars.length || dayOf(bars[i].clock) !== dayOf(bars[start].clock)) {
+      out.push({ start: start, end: i });
+      start = i;
+    }
+  }
+  return out;
+}
+
+// The reason a rule cannot run, or "". Times are minutes after midnight; sizes are ticks.
+function ruleProblem(rule) {
+  function whole(v, lo, hi) { return Number.isInteger(v) && v >= lo && v <= hi; }
+  if (["orb", "time", "ma", "prior"].indexOf(rule.entry) < 0) return "Pick how the trade starts.";
+  var times = rule.entry === "orb" ? [rule.rangeStart, rule.until] : rule.entry === "time" ? [rule.at] : [rule.from, rule.until];
+  if (rule.entry === "time" && (rule.side === "with" || rule.side === "against")) times.push(rule.from);
+  times.push(rule.exitAt);
+  if (!times.every(function (t) { return whole(t, 0, 1439); })) return "Write each time as hours and minutes, such as 09:30.";
+  var sides = rule.entry === "time" ? ["long", "short", "with", "against"] : ["both", "long", "short"];
+  if (sides.indexOf(rule.side) < 0) return "Pick a direction that fits this kind of entry.";
+  if (rule.entry === "orb" && !whole(rule.rangeMinutes, 1, 600)) return "The opening range must be 1 to 600 minutes.";
+  if (rule.entry === "orb" && rule.until < rule.rangeStart + rule.rangeMinutes) return "The last entry time must be after the opening range ends.";
+  if (rule.entry === "ma" && !whole(rule.maBars, 2, 1000)) return "The moving average must use 2 to 1,000 bars.";
+  if ((rule.entry === "ma" || rule.entry === "prior") && rule.until < rule.from) return "The last entry time must not be before the first.";
+  if (rule.entry === "time" && (rule.side === "with" || rule.side === "against") && rule.from >= rule.at) return "Measure the move from a time before the entry time.";
+  var lastStart = rule.entry === "time" ? rule.at : rule.until;
+  if (rule.exitAt <= lastStart) return "The exit time must be after the last entry time.";
+  if (!whole(rule.stopTicks, 1, 100000)) return "The stop must be at least 1 tick.";
+  if (!whole(rule.targetTicks, 0, 100000) || !whole(rule.breakevenTicks, 0, 100000)) return "Target and breakeven must be 0 or more ticks.";
+  if (!whole(rule.maxPerDay, 1, 50)) return "Trades a day must be 1 to 50.";
+  if (!(rule.tick > 0) || !(rule.point > 0) || !(rule.fee >= 0)) return "Pick the instrument and a fee of 0 or more.";
+  return "";
+}
+
+// The next signal in one session at a bar after index `after`: { side, entryIndex }, or null.
+function nextSignal(bars, s, prev, rule, after) {
+  var k, from = Math.max(s.start, after + 1);
+  function minute(i) { return minuteOfDay(bars[i].clock); }
+  function allows(side) { return rule.side === "both" || (side > 0 ? rule.side === "long" : rule.side === "short"); }
+  function enterNext(k, side) {
+    // Enter at the next bar's open, if that bar is in the session and before the exit time.
+    return k + 1 < s.end && minute(k + 1) <= rule.exitAt ? { side: side, entryIndex: k + 1 } : null;
+  }
+  if (rule.entry === "time") {
+    for (k = from; k < s.end; k++) {
+      if (minute(k) !== rule.at) continue;
+      var side = rule.side === "long" ? 1 : rule.side === "short" ? -1 : 0;
+      if (!side) {
+        var base = -1;
+        for (var j = s.start; j < k; j++) if (minute(j) === rule.from) { base = j; break; }
+        if (base < 0) return null;
+        var drift = bars[k].o - bars[base].o;
+        if (!drift) return null;
+        side = (drift > 0 ? 1 : -1) * (rule.side === "with" ? 1 : -1);
+      }
+      return { side: side, entryIndex: k };
+    }
+    return null;
+  }
+  var hi = -Infinity, lo = Infinity, first = rule.from, i;
+  if (rule.entry === "orb") {
+    first = rule.rangeStart + rule.rangeMinutes;
+    for (i = s.start; i < s.end; i++) {
+      var mm = minute(i);
+      if (mm >= rule.rangeStart && mm < first) { hi = Math.max(hi, bars[i].h); lo = Math.min(lo, bars[i].l); }
+    }
+  } else if (rule.entry === "prior") {
+    if (!prev) return null;
+    for (i = prev.start; i < prev.end; i++) { hi = Math.max(hi, bars[i].h); lo = Math.min(lo, bars[i].l); }
+  }
+  if (rule.entry !== "ma" && !(hi >= lo)) return null;
+  for (k = from; k < s.end; k++) {
+    var t = minute(k), c = bars[k].c;
+    if (t < first) continue;
+    if (t > rule.until) return null;
+    var dir = 0;
+    if (rule.entry === "ma") {
+      // Simple average of this bar's close and the bars before it in the session; a cross
+      // is a close on the other side of its average than the bar before.
+      if (k - s.start < rule.maBars) continue;
+      var now = 0, before = 0;
+      for (i = k - rule.maBars + 1; i <= k; i++) now += bars[i].c;
+      for (i = k - rule.maBars; i < k; i++) before += bars[i].c;
+      now /= rule.maBars; before /= rule.maBars;
+      if (bars[k - 1].c <= before && c > now) dir = 1;
+      else if (bars[k - 1].c >= before && c < now) dir = -1;
+    } else {
+      dir = c > hi ? 1 : c < lo ? -1 : 0;
+    }
+    if (dir && allows(dir)) return enterNext(k, dir);
+  }
+  return null;
+}
+
+// Every trade the rule takes on the bars, in time order.
+function buildTrades(bars, rule) {
+  var sessions = sessionsOf(bars), times = bars.map(function (b) { return b.clock; }), trades = [];
+  var tick = rule.tick, point = rule.point;
+  sessions.forEach(function (s, n) {
+    var after = s.start - 1, count = 0, endTime = dayOf(bars[s.start].clock) * 86400000 + rule.exitAt * 60000;
+    while (count < rule.maxPerDay) {
+      var sig = nextSignal(bars, s, n > 0 ? sessions[n - 1] : null, rule, after);
+      if (!sig) break;
+      var e = sig.entryIndex, entry = bars[e].o;
+      var r = replayBracket(bars, times, e, {
+        side: sig.side, entry: entry, stop: rule.stopTicks * tick, target: rule.targetTicks * tick,
+        breakeven: rule.breakevenTicks * tick, atOpen: true, endTime: endTime, gapMs: Infinity
+      });
+      var gross = Math.round(r.points * point * 1e8) / 1e8;
+      trades.push({
+        entryIndex: e, exitIndex: r.index, side: sig.side, entryPrice: entry, exitPrice: entry + sig.side * r.points,
+        exit: r.exit, before: gross, pnl: Math.round((gross - rule.fee) * 1e8) / 1e8,
+        entryTime: bars[e].clock, exitTime: bars[r.index].clock
+      });
+      count++;
+      after = r.index;
+    }
+  });
+  return trades;
+}
+
+// What makes two rules different versions: only the blanks the chosen entry uses, so editing
+// a blank that is hidden, the instrument or the fee does not count as another version tried.
+function ruleKey(rule) {
+  var keys = { orb: ["rangeStart", "rangeMinutes", "until"], time: ["at"], ma: ["maBars", "from", "until"], prior: ["from", "until"] }[rule.entry] || [];
+  if (rule.entry === "time" && (rule.side === "with" || rule.side === "against")) keys = keys.concat(["from"]);
+  keys = ["entry", "side"].concat(keys, ["exitAt", "stopTicks", "targetTicks", "breakevenTicks", "maxPerDay"]);
+  return keys.map(function (k) { return k + "=" + rule[k]; }).join("&");
+}
+
+// The rule as one plain sentence.
+function describeRule(rule) {
+  var side = { both: "Long or short", long: "Long", short: "Short", with: "With the move", against: "Against the move" }[rule.side] || "";
+  var when = rule.entry === "orb"
+    ? "when a bar closes beyond the range of the first " + rule.rangeMinutes + " minutes after " + clockText(rule.rangeStart) + ", until " + clockText(rule.until)
+    : rule.entry === "time"
+      ? "at " + clockText(rule.at) + (rule.side === "with" || rule.side === "against" ? " (move since " + clockText(rule.from) + ")" : "")
+      : rule.entry === "ma"
+        ? "when the close crosses its " + rule.maBars + "-bar average, " + clockText(rule.from) + " to " + clockText(rule.until)
+        : "when a bar closes beyond the previous day's high or low, " + clockText(rule.from) + " to " + clockText(rule.until);
+  return side + " " + when + "; stop " + rule.stopTicks + ", target " + (rule.targetTicks || "none") +
+    (rule.breakevenTicks ? ", breakeven at " + rule.breakevenTicks : "") + " (ticks); out by " + clockText(rule.exitAt) +
+    (rule.maxPerDay > 1 ? "; up to " + rule.maxPerDay + " trades a day" : "") + ".";
+}
+/* build:end */
+
 (function () {
   "use strict";
   function $(id) { return document.getElementById(id); }
@@ -2230,6 +2482,8 @@ function decodeShare(fragment) {
     return sign + num(v, digits) + (unit ? " " + unit : "");
   }
   function pct(v) { return v > 0.995 ? "99%+" : v < 0.005 ? "<1%" : Math.round(v * 100) + "%"; }
+  // "a 61%" but "an 84%", "an 11%", "an 18%": the article follows how the number is said.
+  function aPct(v) { var p = pct(v); return (/^(8|11%|18%)/.test(p) ? "an " : "a ") + p; }
   function whole(v) { return Math.round(v).toLocaleString("en-US"); }
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
@@ -2363,6 +2617,19 @@ function decodeShare(fragment) {
     return { stats: stats, values: parsed.values, before: null, trades: n, unit: "", digits: Math.abs(stats.mean) >= 100 ? 0 : 2, label: "Pasted trades" };
   }
 
+  // Trades the strategy builder made from the trader's rule and bars.
+  var builtResult = null;
+  function builtInput() {
+    var b = builtResult;
+    if (!b) return { error: "Test a rule in the strategy builder first." };
+    var stats = statsFromTrades(b.values);
+    if (!(stats.sd > 0)) return { error: "Every trade has the same result, so there is nothing to measure." };
+    return {
+      stats: stats, values: b.values, before: b.before, times: b.times, trades: b.values.length, unit: "$", digits: 2,
+      fees: b.fees, feesOn: b.fees > 0, label: "Strategy builder"
+    };
+  }
+
   // A result opened from a shared link: summary numbers only, so no equity curve or trade list.
   var sharedResult = null;
   function sharedInput() {
@@ -2387,7 +2654,8 @@ function decodeShare(fragment) {
   function signClass(v) { return v > 0 ? "pos" : v < 0 ? "neg" : ""; }
 
   function update() {
-    var s = mode === "import" ? importInput() : mode === "paste" ? pasteInput() : mode === "shared" ? sharedInput() : quickInput();
+    var s = mode === "import" ? importInput() : mode === "paste" ? pasteInput() : mode === "shared" ? sharedInput()
+      : mode === "built" ? builtInput() : quickInput();
     var n = setups(), err = $("calc-error"), verdict = $("out-verdict"), noTrades = mode === "quick" || mode === "shared";
     err.textContent = s.error || "";
     err.hidden = !s.error;
@@ -2609,9 +2877,14 @@ function decodeShare(fragment) {
     });
   })();
 
+  // The stop lab and the strategy builder share one bar file.
+  function barsChanged() {
+    runLab();
+    builderBars();
+  }
   function loadBars(text, name, isExample) {
     var parsed = parseBars(text);
-    if (!parsed) { lab = { name: name, error: "No bars found in " + name + ". It needs a time column and open, high, low and close columns." }; runLab(); return; }
+    if (!parsed) { lab = { name: name, error: "No bars found in " + name + ". It needs a time column and open, high, low and close columns." }; barsChanged(); return; }
     var symbols = Object.keys(parsed.symbols).filter(function (s) { return s && s.indexOf("-") < 0; });
     if (symbols.length > 1) {
       var top = symbols.sort(function (a, b) { return parsed.symbols[b] - parsed.symbols[a]; })[0];
@@ -2620,26 +2893,26 @@ function decodeShare(fragment) {
     }
     lab = { name: name, parsed: parsed, example: !!isExample };
     if (isExample) { $("lab-be").value = 12; $("lab-target").value = 24; labTargetEdited = true; labFromExample = true; }
-    runLab();
+    barsChanged();
   }
 
   function readBarsFile(file) {
     if (!file) return;
-    if (file.size > 200 * 1024 * 1024) { lab = { name: file.name, error: "That bar file is over 200 MB. Export a shorter range." }; runLab(); return; }
-    $("bars-line").textContent = "Reading " + file.name + "…";
+    if (file.size > 200 * 1024 * 1024) { lab = { name: file.name, error: "That bar file is over 200 MB. Export a shorter range." }; barsChanged(); return; }
+    $("bars-line").textContent = $("b-bars-line").textContent = "Reading " + file.name + "…";
     var reader = new FileReader();
     reader.onload = function () { loadBars(String(reader.result), file.name, false); };
-    reader.onerror = function () { lab = { name: file.name, error: "The bar file could not be read." }; runLab(); };
+    reader.onerror = function () { lab = { name: file.name, error: "The bar file could not be read." }; barsChanged(); };
     reader.readAsText(file);
   }
 
   function loadExampleBars() {
-    $("bars-line").textContent = "Loading the example bars…";
+    $("bars-line").textContent = $("b-bars-line").textContent = "Loading the example bars…";
     fetch("example-bars.csv").then(function (r) {
       if (!r.ok) throw new Error(r.status);
       return r.text();
     }).then(function (text) { loadBars(text, "example-bars.csv", true); })
-      .catch(function () { lab = { name: "example-bars.csv", error: "The example bars could not be loaded." }; runLab(); });
+      .catch(function () { lab = { name: "example-bars.csv", error: "The example bars could not be loaded." }; barsChanged(); });
   }
 
   function labInt(id, lo, hi, fallback) {
@@ -2711,7 +2984,7 @@ function decodeShare(fragment) {
     }
     var verdict;
     if (best.chance >= 0.95) {
-      verdict = "A <strong>" + best.ticks + "-tick</strong> stop did best (" + money(best.mean, unit, 2, true) + " per trade), and it holds up: a " + pct(best.chance) +
+      verdict = "A <strong>" + best.ticks + "-tick</strong> stop did best (" + money(best.mean, unit, 2, true) + " per trade), and it holds up: " + aPct(best.chance) +
         " chance the edge is real even after counting all " + stops.length + " stop sizes tried.";
     } else if (best.chance >= 0.5) {
       verdict = "A <strong>" + best.ticks + "-tick</strong> stop did best (" + money(best.mean, unit, 2, true) + " per trade). After counting the " + stops.length +
@@ -2740,6 +3013,131 @@ function decodeShare(fragment) {
         "<td>" + (isFinite(r.chance) ? pct(r.chance) : "–") + "</td></tr>";
     });
     table.innerHTML = html + "</tbody>";
+  }
+
+  /* ---------- strategy builder ---------- */
+  var builderTried = {}, builderLast = null;
+  var B_SIDES = {
+    signal: [["both", "Go long or short"], ["long", "Go long"], ["short", "Go short"]],
+    time: [["long", "Go long"], ["short", "Go short"], ["with", "Trade with the move"], ["against", "Trade against the move"]]
+  };
+  var B_EMPTY = '<p class="note">Load bars, write a rule, and press Test this rule.</p>';
+  (function () {
+    var sel = $("b-instrument");
+    addOption(sel, "auto", "From the bar file");
+    Object.keys(INSTRUMENTS).sort().forEach(function (k) {
+      addOption(sel, k, k + " · tick " + INSTRUMENTS[k].tick + " · $" + INSTRUMENTS[k].point + "/pt");
+    });
+  })();
+
+  // Shows only the blanks the chosen entry uses, and the directions that fit it.
+  function builderShape() {
+    var entry = $("b-entry").value, side = $("b-side"), keep = side.value, list = B_SIDES[entry === "time" ? "time" : "signal"];
+    side.textContent = "";
+    list.forEach(function (o) { addOption(side, o[0], o[1]); });
+    side.value = list.some(function (o) { return o[0] === keep; }) ? keep : list[0][0];
+    var move = entry === "time" && (side.value === "with" || side.value === "against");
+    Array.prototype.forEach.call(document.querySelectorAll("#b-sentence [data-for]"), function (el) {
+      var tags = el.getAttribute("data-for").split(" ");
+      el.hidden = !(tags.indexOf(entry) >= 0 || (tags.indexOf("move") >= 0 && move));
+    });
+  }
+
+  function builderRule() {
+    var entry = $("b-entry").value, pick = $("b-instrument").value, root = pick;
+    if (pick === "auto") root = lab && lab.parsed ? instrumentRoot(lab.parsed.bars[0].symbol) : "";
+    var spec = INSTRUMENTS[root] || {};
+    function int(id) { var v = $(id).value; return v === "" ? NaN : Math.round(+v); }
+    return {
+      entry: entry, side: $("b-side").value,
+      rangeStart: parseClock($("b-start").value), rangeMinutes: int("b-range"), at: parseClock($("b-at").value),
+      from: parseClock($(entry === "time" ? "b-move-from" : "b-from").value), until: parseClock($("b-until").value),
+      maBars: int("b-ma"), exitAt: parseClock($("b-exit").value), stopTicks: int("b-stop"), targetTicks: int("b-target"),
+      breakevenTicks: int("b-be"), maxPerDay: int("b-max"), tick: spec.tick, point: spec.point,
+      fee: $("b-fee").value === "" ? NaN : +$("b-fee").value
+    };
+  }
+
+  // New bars: show them, and drop results made on the old ones.
+  function builderBars() {
+    var line = $("b-bars-line");
+    if (lab && lab.parsed) {
+      var bars = lab.parsed.bars;
+      line.innerHTML = "<b>" + esc(lab.name) + "</b><span>" + whole(bars.length) + " bars · " + date(bars[0].clock) + " to " +
+        date(bars[bars.length - 1].clock) + "</span>" + (lab.example ? "<span>synthetic random walk, not real prices</span>" : "");
+      if (lab.example && $("b-instrument").value === "auto") $("b-instrument").value = "ES";
+    } else line.textContent = "";
+    $("b-error").textContent = lab && lab.error ? lab.error : "";
+    $("b-error").hidden = !(lab && lab.error);
+    $("b-findings").innerHTML = B_EMPTY;
+    $("b-table").textContent = "";
+    $("b-open").hidden = true;
+    builderLast = null;
+  }
+
+  function testRule() {
+    var err = $("b-error"), out = $("b-findings"), table = $("b-table"), open = $("b-open");
+    function fail(msg) {
+      err.textContent = msg;
+      err.hidden = false;
+      out.innerHTML = B_EMPTY;
+      table.textContent = "";
+      open.hidden = true;
+      builderLast = null;
+    }
+    if (!lab || !lab.parsed) return fail(lab && lab.error ? lab.error : "Load a bar file first: the example bars, or your own one-minute bars.");
+    var rule = builderRule(), problem = ruleProblem(rule);
+    if (problem) return fail(problem);
+    err.hidden = true;
+    var bars = lab.parsed.bars, trades = buildTrades(bars, rule), n = trades.length;
+    builderTried[ruleKey(rule)] = true;
+    var tried = Object.keys(builderTried).length, sentence = describeRule(rule), days = sessionsOf(bars).length, traded = {};
+    trades.forEach(function (t) { traded[dayOf(t.entryTime)] = 1; });
+    var lines = ['<p class="b-rule">' + esc(sentence) + "</p>"];
+    if (n < 10) {
+      lines.push("<p>This rule took " + n + (n === 1 ? " trade" : " trades") + " on " + whole(days) + " days of bars. At least 10 are needed to judge it: widen the rule or load more bars.</p>");
+    } else {
+      var values = trades.map(function (t) { return t.pnl; }), before = trades.map(function (t) { return t.before; });
+      var stats = statsFromTrades(values), sum = tradeSummary(values, before);
+      var chance = stats.sd > 0 ? edgeProbability(stats, n, tried) : NaN;
+      lines.push("<p>On " + esc(lab.name) + " it took <strong>" + whole(n) + " trades</strong> on " + whole(Object.keys(traded).length) + " of " +
+        whole(days) + " days. Net <strong>" + money(sum.total, "$", 2, true) + "</strong> after fees, " + money(stats.mean, "$", 2, true) +
+        " a trade; " + sum.wins + " won, " + sum.losses + " lost, " + sum.breakevens + " breakeven.</p>");
+      var counted = "after counting the " + tried + (tried === 1 ? " version" : " versions") + " you tested";
+      lines.push("<p>" + (!(stats.mean > 0) ? "<strong>It lost money</strong>, so there is no edge to prove."
+        : chance >= 0.95 ? "<strong>Hard to explain by luck:</strong> " + aPct(chance) + " chance the edge is real, " + counted + "."
+        : chance >= 0.5 ? "<strong>Promising, not proven:</strong> " + aPct(chance) + " chance the edge is real, " + counted + "."
+        : "<strong>Could easily be luck:</strong> only " + aPct(chance) + " chance the edge is real, " + counted + ".") + "</p>");
+      if (lab.example) lines.push('<p class="note">These are the made-up example bars, a random walk: any edge here is luck by construction.</p>');
+    }
+    lines.push('<p class="note">Versions tested on this visit: ' + tried + ". Each one counts as a setup, so testing many and keeping the best is held to a higher bar.</p>");
+    out.innerHTML = lines.join("");
+    table.textContent = "";
+    if (n) {
+      var html = '<caption class="sub">' + (n > 10 ? "The last 10 of " + whole(n) + " trades" : "All " + n + " trades") + '</caption><thead><tr><th scope="col">Entry</th><th scope="col">Side</th><th scope="col">Price</th><th scope="col">Exit</th><th scope="col">Closed by</th><th scope="col">P&amp;L</th></tr></thead><tbody>';
+      trades.slice(-10).forEach(function (t) {
+        html += '<tr><th scope="row">' + date(t.entryTime) + " " + clockText(minuteOfDay(t.entryTime)) + "</th><td>" + (t.side > 0 ? "Long" : "Short") + "</td>" +
+          "<td>" + (Math.round(t.entryPrice * 1e6) / 1e6) + "</td><td>" + (Math.round(t.exitPrice * 1e6) / 1e6) + "</td>" +
+          "<td>" + { stop: "Stop", target: "Target", time: "Exit time" }[t.exit] + "</td>" +
+          '<td class="' + signClass(t.pnl) + '">' + money(t.pnl, "$", 2, true) + "</td></tr>";
+      });
+      table.innerHTML = html + "</tbody>";
+    }
+    open.hidden = n < 10;
+    builderLast = { trades: trades, sentence: sentence, tried: tried, fee: rule.fee };
+  }
+
+  function openBuilt() {
+    var b = builderLast;
+    if (!b || b.trades.length < 10) return;
+    builtResult = {
+      values: b.trades.map(function (t) { return t.pnl; }), before: b.trades.map(function (t) { return t.before; }),
+      times: b.trades.map(function (t) { return t.entryTime; }), fees: b.fee * b.trades.length, sentence: b.sentence
+    };
+    $("built-text").textContent = b.sentence;
+    $("in-setups").value = Math.max(setups(), b.tried);
+    setMode("built");
+    jumpTo("check");
   }
 
   /* ---------- strategy comparison ---------- */
@@ -3046,7 +3444,9 @@ function decodeShare(fragment) {
       $("pane-" + m).hidden = m !== next;
     });
     $("pane-shared").hidden = next !== "shared"; // reached only from a shared link
+    $("pane-built").hidden = next !== "built"; // reached only from the strategy builder
     $("check-intro").textContent = next === "shared" ? "Someone shared this result with you. Check your own trades the same way, free."
+      : next === "built" ? "These trades come from the rule you wrote in the strategy builder."
       : "The page opens on a made-up example. Drop your own export to replace it.";
     if (next !== "quick" && next !== "shared" && chartMode === "proof" && !$("chart-proof").dataset.chosen) setChart("equity", true);
     update();
@@ -3065,7 +3465,7 @@ function decodeShare(fragment) {
     var box = $("share-box"), r = box.hidden ? null : shareResult();
     if (!r) { box.hidden = true; $("share-open").setAttribute("aria-expanded", "false"); return; }
     var link = location.href.split("#")[0].split("?")[0] + "#" + encodeShare(r);
-    var text = "Strategy check: " + whole(r.trades) + " trades, a " + pct(verdictProb) + " chance the edge is real after counting " +
+    var text = "Strategy check: " + whole(r.trades) + " trades, " + aPct(verdictProb) + " chance the edge is real after counting " +
       r.setups + (r.setups === 1 ? " setup" : " setups") + " tried. Real edge or luck?";
     $("share-url").value = link;
     $("share-x").href = "https://x.com/intent/tweet?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(link);
@@ -3112,16 +3512,19 @@ function decodeShare(fragment) {
         (r.setups === 1 ? " setup" : " setups") + " tried.";
       setMode("shared");
     }
-    // Jump (not glide) to the check once the page has loaded; a smooth scroll started while the
-    // page is still loading gets cancelled, leaving the visitor at the top.
+    jumpTo("check");
+    return true;
+  }
+  // Jump (not glide) to a section once the page has loaded; a smooth scroll started while the
+  // page is still loading gets cancelled, leaving the visitor at the top.
+  function jumpTo(id) {
     function show() {
       var root = document.documentElement, was = root.style.scrollBehavior;
       root.style.scrollBehavior = "auto";
-      $("check").scrollIntoView();
+      $(id).scrollIntoView();
       root.style.scrollBehavior = was;
     }
     if (document.readyState === "complete") show(); else window.addEventListener("load", show);
-    return true;
   }
   function setChart(next, quiet) {
     chartMode = next;
@@ -3141,7 +3544,8 @@ function decodeShare(fragment) {
     var when = new Date();
     var filter = $("sel-filter"), picked = filter.selectedIndex > 0 ? filter.options[filter.selectedIndex].textContent : "all trades";
     var what = mode === "import" && source ? (source.example ? "the example file" : source.name) + ", " + picked
-      : mode === "paste" ? "pasted trades" : mode === "shared" ? "a shared link's summary numbers, not checked against trades" : "quick check";
+      : mode === "paste" ? "pasted trades" : mode === "shared" ? "a shared link's summary numbers, not checked against trades"
+      : mode === "built" && builtResult ? "strategy builder, " + builtResult.sentence : "quick check";
     $("print-meta").textContent = "Data: " + what + ". Setups tried: " + setups() + ". Printed " +
       when.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) +
       ". Statistics about past results, computed in the browser. Not financial advice.";
@@ -3210,6 +3614,16 @@ function decodeShare(fragment) {
   }
   $("timing-hour").addEventListener("click", function () { setTiming("hour"); });
   ["compare-a", "compare-b"].forEach(function (id) { $(id).addEventListener("change", runCompare); });
+  $("b-entry").addEventListener("change", builderShape);
+  $("b-side").addEventListener("change", builderShape);
+  $("b-run").addEventListener("click", testRule);
+  $("b-open").addEventListener("click", openBuilt);
+  $("b-load-bars").addEventListener("click", loadExampleBars);
+  $("b-in-bars").addEventListener("change", function () { readBarsFile(this.files && this.files[0]); this.value = ""; });
+  $("b-sentence").addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter" && ev.target.tagName === "INPUT") { ev.preventDefault(); testRule(); }
+  });
+  builderShape();
   $("share-open").addEventListener("click", toggleShare);
   $("share-copy").addEventListener("click", copyShare);
   $("share-url").addEventListener("focus", function () { this.select(); });

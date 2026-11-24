@@ -177,6 +177,42 @@ standard errors). A saved strategy read back gives the same statistics and the s
 comparison as its original trades to within 0.000001. The stored list is checked entry by
 entry, so a damaged or hand-edited list is dropped, never trusted.
 
+## The strategy builder
+
+"Would this idea have worked?" The builder lets a trader write a rule as a sentence with
+blanks, then trades it on their own bar file. There are four ways in:
+
+- **Opening-range breakout:** a bar closes above the high or below the low of the first N
+  minutes after a start time.
+- **A set time:** enter at a clock time, long, short, or with or against the move since an
+  earlier time.
+- **Moving-average cross:** the close crosses its N-bar simple average, from one side to the
+  other.
+- **The previous day's range:** a bar closes beyond the previous day's high or low.
+
+Each has a window for entries, a stop, an optional target, an optional move of the stop to the
+entry price, an exit time and a number of trades a day.
+
+The rules that keep it honest:
+
+- **No price before it happened.** A signal is a bar's close; the trade enters at the next
+  bar's open. A set-time entry fills at that bar's open.
+- **The stop lab's exits.** When one bar reaches both the stop and the target, the stop
+  counts; otherwise the trade closes at the exit time's bar close.
+- **Every version counts.** Each different rule tested on a visit is one setup. Ten versions
+  tried and the best one kept is judged as the best of ten, so tuning a rule to the past
+  shows up as luck. Only the blanks a rule uses count: editing a hidden blank, the
+  instrument or the fee is not a new version.
+
+The trades can then go into the check, with fees, breakevens, the equity curve, the
+simulator and timing, and the check's setups count starts at the versions tested.
+
+Checks: a separate Python version of every rule takes exactly the same trades as the page on
+a random market with missing bars, short days and late starts (14 rules, over 400 trades).
+Small cases are worked out by hand. On the example bars the builder takes all 151 of the
+example's opening-range trades and all its 10:30 fade trades at the same prices for the
+same results. Those trades were made by `docs/build_example.py`, written separately.
+
 ## Sharing a result
 
 "Share" under the verdict makes a link to the result. For the quick check the link holds its

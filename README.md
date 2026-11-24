@@ -20,8 +20,9 @@ asks one question: are you actually profitable, or just lucky? Import a strategy
 TradingView, TopstepX, Quantower, NinjaTrader or thinkorswim, paste them, or enter a win rate. Its stop lab
 replays your entries on your own price bars to test other stop sizes, and counts every size
 tried so a lucky stop is not mistaken for a better one. A prop-firm simulator estimates your
-chance of passing a funded-account evaluation from your own trades. Save strategies under a name
-and compare any two side by side, and share a result with a link that holds no trades. It runs in the browser, and nothing is uploaded.
+chance of passing a funded-account evaluation from your own trades. A strategy builder tests a rule you
+write as a sentence on your own bars, counting every version you try. Save strategies under a
+name and compare any two side by side, and share a result with a link that holds no trades. It runs in the browser, and nothing is uploaded.
 
 | Question | Tool |
 | --- | --- |
