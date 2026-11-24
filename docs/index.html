@@ -2119,7 +2119,9 @@ function excursionSummary(aligned, bars, tick) {
     var from = labInt("lab-from", 1, 400, 4), to = labInt("lab-to", from, 400, Math.max(from, 40)), step = labInt("lab-step", 1, 100, 2);
     var stops = [];
     for (var s = from; s <= to && stops.length < 60; s += step) stops.push(s);
-    var feePerContract = view && view.feesOn && view.trades ? view.fees / view.trades : 0;
+    // Fees in the file are per trade; a trade of 2 contracts paid twice. Spread them per contract.
+    var contracts = entries.reduce(function (sum, e) { return sum + e.qty; }, 0);
+    var feePerContract = view && view.feesOn && contracts > 0 ? view.fees / contracts : 0;
     var scan = stopScan(aligned, bars, {
       spec: spec, stops: stops, targetTicks: labInt("lab-target", 0, 2000, 24), breakevenTicks: labInt("lab-be", 0, 2000, 0),
       maxHoldMs: labInt("lab-hold", 1, 1440, 240) * 60000, gapMs: Math.max(30 * p.barMs, 30 * 60000), setups: setups(), feePerContract: feePerContract
