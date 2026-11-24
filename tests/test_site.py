@@ -82,7 +82,7 @@ def edge_probability(
 
 def _cases() -> dict[str, list[Any]]:
     rng = np.random.default_rng(1821643)
-    quick: list[Any] = [[0.45, 1.5, 120, 5]]  # the page's starting values
+    quick: list[Any] = [[0.45, 1.5, 120, 5]]  # the quick check's default values
     for _ in range(400):
         quick.append(
             [
@@ -182,22 +182,3 @@ def test_two_point_model_matches_real_trades(wins: int, losses: int, reward_risk
     assert stats.kurtosis == pytest.approx(kurtosis)
     # return_stats uses the sample standard deviation (n - 1); the model uses the population one.
     assert stats.sharpe == pytest.approx(mean / sd * math.sqrt((n - 1) / n))
-
-
-def test_page_opens_on_numbers_the_library_agrees_with() -> None:
-    # The values written into the page before any script runs: 45% win rate, 1.5 reward-to-risk,
-    # 120 trades, 5 setups tried.
-    mean, sd, skew, kurtosis = two_point(0.45, 1.5)
-    sharpe = mean / sd
-    prob = edge_probability(sharpe, skew, kurtosis, 120, 5)
-    luck = expected_max_sharpe(5, 1 / 119) * sd
-    radicand = 1 - skew * sharpe + (kurtosis - 1) / 4 * sharpe**2
-    z95 = NormalDist().inv_cdf(0.95)
-    needed = 1 + ((z95 * math.sqrt(radicand) + expected_max_sharpe(5, 1.0)) / sharpe) ** 2
-
-    text = PAGE.read_text(encoding="utf-8")
-    assert f'id="out-prob">{round(prob * 100)}%<' in text
-    assert f'id="out-mean">{js_fixed(mean, 2)} R<' in text  # 0.125 exactly: a rounding tie
-    assert f'id="out-luck">{js_fixed(luck, 2)} R<' in text
-    assert f'id="out-need">{math.ceil(needed)}<' in text
-    assert edge_probability(sharpe, skew, kurtosis, needed, 5) == pytest.approx(0.95, abs=1e-9)

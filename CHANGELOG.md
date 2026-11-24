@@ -47,6 +47,14 @@ All notable changes are listed here. The format follows
 - Website: screen-reader support (slider values, announced result, described chart),
   text contrast that meets WCAG AA in both themes, a link-preview image and a
   not-found page.
+- Website redesigned as a trading terminal, with a trade importer: drop a CSV exported
+  from TopstepX, Quantower, NinjaTrader or thinkorswim (or any file with a P&L column),
+  pick one strategy, and get the verdict, an equity curve against what luck alone would
+  have made, and a full breakdown: win rate with and without breakevens, what breakevens
+  cost in fees, payoff, profit factor, largest win and loss, longest losing streak and
+  maximum drawdown. Fees are subtracted unless the P&L column is already net.
+  `tests/test_site_import.py` checks the importer on sample exports from all four
+  platforms and on the built-in example.
 - `RELEASING.md` (release checklist), `CODE_OF_CONDUCT.md`, and an issue template for
   suggesting a new check. The release workflow validates the package description and
   opens a GitHub release.

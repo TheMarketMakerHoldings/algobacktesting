@@ -4,307 +4,577 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Are you actually profitable, or just lucky? · algobacktesting</title>
-<meta name="description" content="Are you actually profitable, or just lucky? Enter your trading results and see how likely it is that your edge is real.">
+<meta name="description" content="Import your trades from TopstepX, Quantower, NinjaTrader or thinkorswim and see whether a strategy's edge is real or luck. Free, open source, runs in your browser.">
 <link rel="canonical" href="https://themarketmakerholdings.github.io/algobacktesting/">
-<meta name="theme-color" content="#f3f5f8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0c0f15" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#07090c">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="algobacktesting">
 <meta property="og:url" content="https://themarketmakerholdings.github.io/algobacktesting/">
 <meta property="og:title" content="Are you actually profitable, or just lucky?">
-<meta property="og:description" content="Enter your win rate and number of trades. See how likely it is that your edge is real, and how many more trades it would take to prove it.">
+<meta property="og:description" content="Import a strategy's trades and see how likely it is that its edge is real, and how many more trades it would take to prove it.">
 <meta property="og:image" content="https://themarketmakerholdings.github.io/algobacktesting/social-card.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Are you actually profitable, or just lucky? A free check for traders.">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1422'/%3E%3Cpath d='M6 23c8 0 8-13 20-13' fill='none' stroke='%233987e5' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='15' cy='17' r='3.2' fill='%233987e5'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2307090c'/%3E%3Cpath d='M5 24h6v-7h5v-5h5V6h6' fill='none' stroke='%23f2a93b' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
-/* Layout: one 1040px column. The hero is the instrument itself: your results on the left,
-   the verdict and its chart on the right. Everything below supports that one reading. */
+/* A trading terminal: one dark desk of square panels. Inputs on the left, the verdict on the
+   right, the chart underneath. Amber marks what you can act on; green and red only ever mean
+   gain and loss. Every number is monospaced so columns line up. */
 :root {
-  --bg: #f3f5f8;
-  --surface: #ffffff;
-  --ink: #0f1422;
-  --ink-2: #4b5466;
-  --muted: #687080;
-  --field: #858d9c;
-  --rule: #dde2ea;
-  --accent: #2a78d6;
-  --link: #1f6bc7;
-  --accent-soft: #e6effb;
-  --good: #0ca30c;
-  --good-ink: #006300;
-  --crit: #d03b3b;
-  --crit-ink: #a52222;
-  --code-bg: #0f1422;
-  --code-ink: #e8ecf3;
-  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-data: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --bg: #07090c;
+  --panel: #0d1117;
+  --panel-2: #121821;
+  --line: #1f2731;
+  --line-2: #2c3644;
+  --text: #dbe2ea;
+  --dim: #95a1b1;
+  --amber: #f2a93b;
+  --amber-ink: #0b0d10;
+  --gain: #3fcf8e;
+  --loss: #f26b6b;
+  --grid: #18202a;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --cond: "IBM Plex Sans Condensed", "Arial Narrow", system-ui, sans-serif;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0c0f15; --surface: #141922; --ink: #eef1f6; --ink-2: #b7bfcc; --muted: #8891a0;
-    --rule: #262e3b; --field: #687182; --accent: #3987e5; --link: #3987e5; --accent-soft: #16263d; --good: #0ca30c;
-    --good-ink: #57cf57; --crit: #d03b3b; --crit-ink: #f29393; --code-bg: #06080c;
-    --code-ink: #e8ecf3; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0c0f15; --surface: #141922; --ink: #eef1f6; --ink-2: #b7bfcc; --muted: #8891a0;
-  --rule: #262e3b; --field: #687182; --accent: #3987e5; --link: #3987e5; --accent-soft: #16263d; --good: #0ca30c;
-  --good-ink: #57cf57; --crit: #d03b3b; --crit-ink: #f29393; --code-bg: #06080c;
-  --code-ink: #e8ecf3; color-scheme: dark;
-}
-
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font: 400 1rem/1.55 var(--font-body);
-  -webkit-text-size-adjust: 100%;
-}
-.wrap {
-  max-width: 1040px;
-  margin-inline: auto;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
-a { color: var(--link); text-underline-offset: 0.18em; }
-a:focus-visible, input:focus-visible, button:focus-visible, textarea:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-h1, h2, h3 { margin: 0; font-weight: 600; text-wrap: balance; }
-p { margin: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 400 15px/1.5 var(--sans); }
+a { color: var(--amber); text-underline-offset: 0.2em; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+h1, h2, h3, p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+.shell { max-width: 1180px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-left, 0px)) 24px max(16px, env(safe-area-inset-right, 0px)); }
 
 /* Top bar */
-.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; padding-block: 20px; }
-.wordmark { font: 500 1.05rem var(--font-data); letter-spacing: -0.01em; }
-.top-note { font-size: 0.85rem; color: var(--ink-2); }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; padding: 12px 0; border-bottom: 1px solid var(--line); font: 500 12px/1.4 var(--mono); letter-spacing: 0.04em; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: 0.12em; }
+.brand-mark { width: 12px; height: 12px; background: var(--amber); }
+.brand .ver { color: var(--dim); font-weight: 400; letter-spacing: 0.04em; }
+.bar-links { display: flex; gap: 18px; margin-left: auto; }
+.bar-links a { color: var(--dim); text-decoration: none; text-transform: uppercase; }
+.bar-links a:hover { color: var(--text); }
+.bar-status { display: flex; align-items: center; gap: 8px; color: var(--dim); }
+.live { width: 7px; height: 7px; border-radius: 50%; background: var(--gain); }
 
-/* Hero */
-.hero { display: flex; flex-direction: column; gap: 14px; padding-block: 28px 24px; }
-.hero h1 { font-size: clamp(2rem, 5.2vw, 3.2rem); line-height: 1.08; letter-spacing: -0.025em; }
-.lede { max-width: 62ch; font-size: 1.1rem; color: var(--ink-2); }
+/* Intro */
+.intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 12px 40px; align-items: end; padding: 34px 0 22px; }
+.intro h1 { font: 600 clamp(2rem, 5vw, 3.3rem)/1.02 var(--cond); letter-spacing: -0.01em; }
+.intro h1 em { font-style: normal; color: var(--amber); }
+.intro p { color: var(--dim); max-width: 52ch; }
 
-/* The instrument */
-.instrument {
-  display: grid;
-  grid-template-columns: minmax(0, 330px) minmax(0, 1fr);
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 10px;
-}
-.controls { display: flex; flex-direction: column; gap: 18px; padding: 22px; border-right: 1px solid var(--rule); min-width: 0; }
-.modes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 8px; background: var(--bg); }
-.mode {
-  padding: 7px 8px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-2);
-  font: 500 0.88rem var(--font-body); cursor: pointer;
-}
-.mode[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--rule); }
-.panel { display: flex; flex-direction: column; gap: 18px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.field label { font-size: 0.9rem; font-weight: 500; }
-.field output { font: 500 0.95rem var(--font-data); font-variant-numeric: tabular-nums; }
-input[type="range"] { width: 100%; margin: 0; accent-color: var(--accent); }
-textarea {
-  width: 100%; min-height: 150px; resize: vertical; padding: 10px 12px; border: 1px solid var(--field);
-  border-radius: 8px; background: var(--bg); color: var(--ink); font: 400 0.9rem/1.45 var(--font-data);
-}
-.link-button { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--link); font: 500 0.88rem var(--font-body); text-decoration: underline; text-underline-offset: 0.18em; cursor: pointer; }
-.divider { border-top: 1px solid var(--rule); padding-top: 16px; }
-.hint { font-size: 0.8rem; color: var(--ink-2); }
-.error { font-size: 0.85rem; color: var(--crit-ink); }
+/* Panels */
+.desk { display: grid; grid-template-columns: minmax(0, 390px) minmax(0, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.panel { background: var(--panel); min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 9px 14px; border-bottom: 1px solid var(--line); background: var(--panel-2); }
+.panel-head h2 { font: 700 11px/1.2 var(--mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); }
+.panel-body { padding: 16px 14px; display: flex; flex-direction: column; gap: 14px; }
+.toggles { display: flex; gap: 2px; }
+.toggles button { padding: 5px 10px; border: 1px solid var(--line-2); background: transparent; color: var(--dim); font: 500 11px/1.2 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+.toggles button[aria-pressed="true"] { background: var(--amber); border-color: var(--amber); color: var(--amber-ink); }
+.toggles button:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.readout { display: flex; flex-direction: column; gap: 16px; padding: 22px; min-width: 0; }
-.verdict-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; }
-.eyebrow { font-size: 0.78rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); }
-.big { font: 500 clamp(2.6rem, 7vw, 3.6rem)/1 var(--font-data); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
-.pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 0.88rem; font-weight: 500; }
-.pill.pass { background: color-mix(in srgb, var(--good) 14%, var(--surface)); color: var(--good-ink); }
-.pill.wait { background: var(--accent-soft); color: var(--ink); }
-.pill.fail { background: color-mix(in srgb, var(--crit) 13%, var(--surface)); color: var(--crit-ink); }
-.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 18px; margin: 0; }
-.facts div { min-width: 0; }
-.facts dt { font-size: 0.8rem; color: var(--ink-2); }
-.facts dd { margin: 2px 0 0; font: 500 0.98rem var(--font-data); font-variant-numeric: tabular-nums; }
-.facts small { display: block; font: 400 0.78rem var(--font-body); color: var(--ink-2); }
+/* Inputs */
+.drop { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 22px 16px; border: 1px dashed var(--line-2); background: var(--bg); cursor: pointer; text-align: center; }
+.drop:hover, .drop.over { border-color: var(--amber); }
+.drop:focus-within { outline: 2px solid var(--amber); outline-offset: 2px; }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.drop-main { font: 700 13px/1.3 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.drop-sub { font-size: 12.5px; color: var(--dim); }
+.file-line { display: flex; flex-wrap: wrap; gap: 4px 12px; font: 400 12px/1.4 var(--mono); color: var(--dim); }
+.file-line b { color: var(--text); font-weight: 500; overflow-wrap: anywhere; }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field > span { font: 500 11px/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.field input, .field select, .field textarea { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: 0; background: var(--bg); font: 400 13.5px/1.3 var(--mono); }
+.field select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--dim) 50%), linear-gradient(135deg, var(--dim) 50%, transparent 50%); background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 26px; }
+.field textarea { min-height: 150px; resize: vertical; line-height: 1.45; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.check { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; cursor: pointer; }
+.check input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: var(--amber); flex: none; }
+.note { font-size: 12.5px; color: var(--dim); }
+.error { font: 400 12.5px/1.45 var(--mono); color: var(--loss); }
+.linkbtn { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--amber); font: 500 12px/1.4 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 0.25em; cursor: pointer; }
+.setups { border-top: 1px solid var(--line); padding-top: 14px; }
+.stepper { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; }
+.stepper button { border: 1px solid var(--line-2); background: var(--panel-2); font: 500 16px/1 var(--mono); cursor: pointer; }
+.stepper input { text-align: center; border-left: 0; border-right: 0; font-weight: 700; font-size: 15px; -moz-appearance: textfield; }
+.stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-figure { margin: 0; }
+/* Verdict */
+.state { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-left: 4px solid currentColor; background: color-mix(in srgb, currentColor 11%, var(--panel)); font: 700 15px/1.2 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.state.pass { color: var(--gain); }
+.state.wait { color: var(--amber); }
+.state.fail { color: var(--loss); }
+.state.idle { color: var(--dim); }
+.headline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.headline > div { background: var(--panel); padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.k { font: 500 11px/1.3 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.big { font: 700 clamp(2rem, 5vw, 2.8rem)/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.sub { font: 400 12px/1.3 var(--mono); color: var(--dim); }
+.stats { width: 100%; border-collapse: collapse; font: 400 13px/1.35 var(--mono); font-variant-numeric: tabular-nums; }
+.stats th, .stats td { padding: 7px 0; border-bottom: 1px solid var(--grid); text-align: left; vertical-align: baseline; }
+.stats th { font-weight: 400; color: var(--dim); padding-right: 12px; }
+.stats td { text-align: right; white-space: nowrap; }
+.stats td small { display: block; font-size: 11px; color: var(--dim); }
+.pos { color: var(--gain); }
+.neg { color: var(--loss); }
+
+/* Chart */
+.chart-panel { margin-top: 1px; border: 1px solid var(--line); border-top: 0; }
+.chart-wrap { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.chart-cap { font-size: 13px; color: var(--dim); max-width: 80ch; }
 .chart { position: relative; }
-.chart svg { display: block; width: 100%; height: auto; }
-figcaption { font-size: 0.85rem; color: var(--ink-2); margin-bottom: 6px; }
-.grid-line { stroke: var(--rule); stroke-width: 1; }
-.axis-line { stroke: var(--muted); stroke-width: 1; }
-.tick { fill: var(--muted); font: 400 11px var(--font-data); }
-.axis-title { fill: var(--ink-2); font: 400 11px var(--font-body); }
-.series { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
-.threshold { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 4 4; }
-.threshold-label { fill: var(--ink-2); font: 500 11px var(--font-data); }
-.marker { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
-.cross { stroke: var(--muted); stroke-width: 1; }
-.tip {
-  position: absolute; top: 0; left: 0; pointer-events: none; white-space: nowrap;
-  padding: 5px 9px; border-radius: 6px; background: var(--ink); color: var(--bg);
-  font: 400 0.8rem var(--font-data); transform: translate(-50%, -130%);
+.chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 20px; font: 400 12px/1.3 var(--mono); color: var(--dim); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.swatch { width: 18px; height: 0; border-top: 2px solid var(--amber); }
+.swatch.luck { border-top: 2px dashed var(--dim); }
+.swatch.zero { border-top: 1px solid var(--line-2); }
+.gridline { stroke: var(--grid); stroke-width: 1; }
+.axis { stroke: var(--line-2); stroke-width: 1; }
+.tick { fill: var(--dim); font: 400 11px var(--mono); }
+.you { fill: none; stroke: var(--amber); stroke-width: 2; stroke-linejoin: round; }
+.luck { fill: none; stroke: var(--dim); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.thresh { stroke: var(--dim); stroke-width: 1; stroke-dasharray: 3 4; }
+.thresh-label { fill: var(--dim); font: 500 11px var(--mono); }
+.dot { fill: var(--amber); stroke: var(--panel); stroke-width: 2; }
+.cross { stroke: var(--line-2); stroke-width: 1; }
+.tip { position: absolute; top: 0; left: 0; pointer-events: none; white-space: nowrap; padding: 6px 9px; border: 1px solid var(--line-2); background: var(--bg); font: 400 12px/1.4 var(--mono); transform: translate(-50%, calc(-100% - 10px)); }
+
+/* Reference sections */
+.info { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-top: 28px; background: var(--line); border: 1px solid var(--line); }
+.info .panel-body { gap: 10px; }
+.info h3 { font: 600 17px/1.25 var(--cond); }
+.info p, .info li { font-size: 14px; color: var(--dim); }
+.info p strong, .info li strong { color: var(--text); font-weight: 500; }
+.info ol, .info ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
+pre { margin: 0; padding: 10px 12px; overflow-x: auto; background: var(--bg); border: 1px solid var(--line); font: 400 12.5px/1.5 var(--mono); }
+details { border-top: 1px solid var(--line); }
+details:first-of-type { border-top: 0; }
+summary { padding: 10px 0; cursor: pointer; font: 500 13px/1.3 var(--mono); letter-spacing: 0.04em; }
+details[open] summary { color: var(--amber); }
+details > :not(summary) { margin-bottom: 12px; }
+
+.foot { margin-top: 28px; border-top: 1px solid var(--line); border-bottom: 0; color: var(--dim); font-weight: 400; justify-content: space-between; }
+
+@media (max-width: 900px) {
+  .intro, .desk, .info { grid-template-columns: minmax(0, 1fr); }
+  .intro { padding-top: 24px; }
+  .bar-links { margin-left: 0; }
 }
-
-/* Sections */
-section { padding-block: 44px 8px; }
-section h2 { font-size: 1.5rem; letter-spacing: -0.015em; margin-bottom: 14px; }
-.split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 28px 44px; align-items: start; }
-.points { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 32px; }
-.point { display: flex; flex-direction: column; gap: 8px; padding-top: 14px; border-top: 2px solid var(--ink); min-width: 0; }
-.point h3 { font-size: 1.02rem; }
-.point p { color: var(--ink-2); font-size: 0.94rem; }
-.point code { font: 400 0.82rem var(--font-data); color: var(--ink); overflow-wrap: anywhere; }
-.prose { display: flex; flex-direction: column; gap: 10px; color: var(--ink-2); max-width: 62ch; }
-.prose strong { color: var(--ink); font-weight: 600; }
-pre {
-  margin: 0; padding: 14px 16px; overflow-x: auto; border-radius: 8px;
-  background: var(--code-bg); color: var(--code-ink); font: 400 0.9rem/1.5 var(--font-data);
-}
-
-footer { margin-top: 48px; border-top: 1px solid var(--rule); padding-block: 22px 36px; font-size: 0.85rem; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 6px 24px; justify-content: space-between; }
-
-@media (max-width: 780px) {
-  .instrument, .split, .points { grid-template-columns: minmax(0, 1fr); }
-  .controls { border-right: 0; border-bottom: 1px solid var(--rule); }
-  .facts { grid-template-columns: minmax(0, 1fr); }
+@media (max-width: 480px) {
+  .row2, .row3, .headline { grid-template-columns: minmax(0, 1fr); }
+  .bar-status { display: none; }
 }
 </style>
 </head>
 <body>
-<div class="wrap">
-
-  <header class="top">
-    <span class="wordmark">algobacktesting</span>
-    <span class="top-note">Free and open source · runs in your browser</span>
+<div class="shell">
+  <header class="bar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>ALGOBACKTESTING <span class="ver">v0.1</span></div>
+    <nav class="bar-links" aria-label="Site">
+      <a href="#how">How it works</a>
+      <a href="#export">Export help</a>
+      <a href="https://github.com/TheMarketMakerHoldings/algobacktesting">GitHub</a>
+    </nav>
+    <div class="bar-status"><span class="live" aria-hidden="true"></span>Runs in your browser. Nothing is uploaded.</div>
   </header>
 
   <main>
-    <div class="hero">
-      <h1>Are you actually profitable, or just lucky?</h1>
-      <p class="lede">A winning record can be luck, especially if you tried a few setups before this one. Enter your results to see how likely it is that your edge is real, and how many more trades it would take to prove it.</p>
-    </div>
+    <section class="intro">
+      <h1>Are you profitable, <em>or just lucky?</em></h1>
+      <p>Load the trade history of one strategy. The check asks whether its results beat what luck alone produces once every setup you tried is counted, and how many more trades it would take to know.</p>
+    </section>
 
     <noscript><p class="error">This page needs JavaScript to work out your result. Nothing you enter leaves your browser.</p></noscript>
 
-    <div class="instrument">
-      <form class="controls" id="calc" autocomplete="off">
-        <div class="modes" role="group" aria-label="How to enter your results">
-          <button type="button" class="mode" id="mode-quick" aria-pressed="true">Quick check</button>
-          <button type="button" class="mode" id="mode-paste" aria-pressed="false">Paste my trades</button>
+    <div class="desk">
+      <section class="panel" aria-labelledby="input-title">
+        <div class="panel-head">
+          <h2 id="input-title">Input</h2>
+          <div class="toggles" role="group" aria-label="How to enter your results">
+            <button type="button" id="mode-import" aria-pressed="true">Import CSV</button>
+            <button type="button" id="mode-paste" aria-pressed="false">Paste</button>
+            <button type="button" id="mode-quick" aria-pressed="false">Quick</button>
+          </div>
         </div>
+        <form class="panel-body" id="calc" autocomplete="off">
+          <div class="panel-body" id="pane-import" style="padding:0">
+            <label class="drop" id="drop">
+              <input type="file" id="in-file" accept=".csv,.txt,text/csv">
+              <span class="drop-main">Drop your trades CSV</span>
+              <span class="drop-sub">or click to choose a file. TopstepX, Quantower, NinjaTrader, thinkorswim, or any CSV with a profit/loss column.</span>
+            </label>
+            <div class="file-line" id="file-line" aria-live="polite"></div>
+            <div class="row2">
+              <label class="field"><span>P&amp;L column</span><select id="sel-pnl"></select></label>
+              <label class="field"><span>Strategy / filter</span><select id="sel-filter"></select></label>
+            </div>
+            <label class="check" id="fees-row" hidden><input type="checkbox" id="chk-fees"><span id="fees-text">Subtract fees</span></label>
+            <p class="note" id="import-note"></p>
+            <button type="button" class="linkbtn" id="load-example">Load the example file</button>
+          </div>
 
-        <div class="panel" id="panel-quick">
-          <div class="field">
-            <div class="field-head"><label for="in-winrate">Win rate</label><output id="out-winrate" for="in-winrate">45%</output></div>
-            <input type="range" id="in-winrate" min="5" max="95" step="1" value="45">
+          <div class="panel-body" id="pane-paste" style="padding:0" hidden>
+            <label class="field"><span>Profit or loss of each trade, one per line</span>
+              <textarea id="in-pasted" spellcheck="false" placeholder="312.50&#10;-141.62&#10;-129.12&#10;..."></textarea>
+            </label>
+            <p class="note" id="paste-note">Any unit works, as long as every trade uses the same one.</p>
           </div>
-          <div class="field">
-            <div class="field-head"><label for="in-rr">Average win ÷ average loss</label><output id="out-rr" for="in-rr">1.5</output></div>
-            <input type="range" id="in-rr" min="0.2" max="5" step="0.1" value="1.5">
-          </div>
-          <div class="field">
-            <div class="field-head"><label for="in-trades">Trades taken</label><output id="out-trades" for="in-trades">120</output></div>
-            <input type="range" id="in-trades" min="130" max="370" step="1" value="208">
-          </div>
-          <p class="hint">Quick check assumes every trade risks the same amount and ends at its target or its stop. If your results vary more than that, paste your trades.</p>
-        </div>
 
-        <div class="panel" id="panel-paste" hidden>
-          <div class="field">
-            <label for="in-pasted">Profit or loss of each trade, one per line</label>
-            <textarea id="in-pasted" spellcheck="false" placeholder="125&#10;-80&#10;210&#10;-80&#10;..."></textarea>
+          <div class="panel-body" id="pane-quick" style="padding:0" hidden>
+            <div class="row3">
+              <label class="field"><span>Win rate %</span><input type="number" id="in-winrate" min="1" max="99" step="1" value="45" inputmode="decimal"></label>
+              <label class="field"><span>Win ÷ loss</span><input type="number" id="in-rr" min="0.1" max="20" step="0.1" value="1.5" inputmode="decimal"></label>
+              <label class="field"><span>Trades</span><input type="number" id="in-trades" min="10" max="100000" step="1" value="120" inputmode="numeric"></label>
+            </div>
+            <p class="note">Assumes every trade risks the same amount and ends at its target or its stop. Results are in R, the amount risked per trade.</p>
           </div>
-          <button type="button" class="link-button" id="load-example">Fill in example trades</button>
-          <p class="hint" id="paste-note">Use any unit, as long as it is the same for every trade. Your trades stay in your browser and are not uploaded.</p>
-        </div>
 
-        <div class="field divider">
-          <div class="field-head"><label for="in-setups">Setups you tried before this one</label><output id="out-setups" for="in-setups">5</output></div>
-          <input type="range" id="in-setups" min="0" max="230" step="1" value="70">
-          <p class="hint">Count every strategy, indicator or rule set you tested, including this one. Be honest: this matters most.</p>
-        </div>
-        <p class="error" id="calc-error" role="status" hidden></p>
-      </form>
+          <div class="setups field">
+            <span id="setups-label">Setups tried, including this one</span>
+            <div class="stepper">
+              <button type="button" id="setups-dec" aria-label="One fewer setup">−</button>
+              <input type="number" id="in-setups" min="1" max="10000" step="1" value="5" inputmode="numeric" aria-labelledby="setups-label">
+              <button type="button" id="setups-inc" aria-label="One more setup">+</button>
+            </div>
+            <p class="note">Every strategy, indicator or rule set you tested and dropped. Be honest: this number matters most.</p>
+          </div>
+          <p class="error" id="calc-error" role="alert" hidden></p>
+        </form>
+      </section>
 
-      <div class="readout">
-        <div role="status">
-          <div class="eyebrow">Chance your edge is real</div>
-          <div class="verdict-row">
-            <span class="big" id="out-prob">46%</span>
-            <span class="pill fail" id="out-verdict"><span aria-hidden="true">✕</span> Could easily be luck</span>
+      <section class="panel" aria-labelledby="verdict-title">
+        <div class="panel-head"><h2 id="verdict-title">Verdict</h2><span class="sub" id="verdict-source"></span></div>
+        <div class="panel-body">
+          <div role="status" class="panel-body" style="padding:0;gap:12px">
+            <div class="state idle" id="out-verdict">Waiting for trades</div>
+            <div class="headline">
+              <div><span class="k">Chance the edge is real</span><span class="big" id="out-prob">–</span><span class="sub" id="out-prob-sub"></span></div>
+              <div><span class="k">Trades needed to prove it</span><span class="big" id="out-need">–</span><span class="sub" id="out-need-sub"></span></div>
+            </div>
           </div>
+          <table class="stats"><caption hidden>Trade statistics</caption><tbody id="stats-body"></tbody></table>
         </div>
-        <dl class="facts">
-          <div><dt>Your average per trade</dt><dd id="out-mean">+0.13 R</dd></div>
-          <div><dt>Luck alone would average</dt><dd id="out-luck">+0.14 R</dd></div>
-          <div><dt>Trades needed to prove it</dt><dd id="out-need">789</dd></div>
-        </dl>
-        <figure>
-          <figcaption>How the answer changes as you log more trades at the same results</figcaption>
-          <div class="chart" id="chart">
-            <svg id="chart-svg" viewBox="0 0 640 250" role="img" aria-label="Chance your edge is real as more trades are logged at the same results"></svg>
-            <div class="tip" id="chart-tip" hidden></div>
-          </div>
-        </figure>
-      </div>
+      </section>
     </div>
 
-    <section>
-      <h2>How to read your result</h2>
-      <div class="points">
-        <div class="point">
-          <h3>It judges your record, not your future</h3>
-          <p>A high number means your past results are hard to explain by luck. Markets change, and an edge that was real can stop working.</p>
+    <section class="panel chart-panel" aria-labelledby="chart-title">
+      <div class="panel-head">
+        <h2 id="chart-title">Chart</h2>
+        <div class="toggles" role="group" aria-label="Which chart">
+          <button type="button" id="chart-equity" aria-pressed="true">Equity vs luck</button>
+          <button type="button" id="chart-proof" aria-pressed="false">Proof curve</button>
         </div>
-        <div class="point">
-          <h3>Every setup you tried counts</h3>
-          <p>Test five ideas and keep the best, and the best one looks good even if none of them works. Each extra idea raises the bar your results have to clear.</p>
+      </div>
+      <div class="chart-wrap">
+        <p class="chart-cap" id="chart-cap"></p>
+        <div class="chart" id="chart">
+          <svg id="chart-svg" viewBox="0 0 1000 300" role="img" aria-label="Chart of your results"></svg>
+          <div class="tip" id="chart-tip" hidden></div>
         </div>
-        <div class="point">
-          <h3>More trades prove more than a better month</h3>
-          <p>Thirty good trades prove very little. The chart shows how many trades at your current results would settle the question.</p>
-        </div>
+        <div class="legend" id="legend"></div>
       </div>
     </section>
 
-    <section class="split">
-      <div>
-        <h2>The math behind it</h2>
-        <div class="prose">
-          <p>The check measures how far your average result stands above zero, relative to how much your trades swing, and how unusual that would be for someone with no edge.</p>
-          <p>Then it asks what the <strong>best of several no-edge setups</strong> would look like, and holds your results to that standard instead.</p>
-          <p>The method is the Probabilistic and Deflated Sharpe Ratio of Bailey and López de Prado (2012, 2014). This page assumes the setups you tried were independent and tested on a similar number of trades. Treat results from fewer than 30 trades as rough.</p>
-          <p>We tested it on simulated traders with <strong>no edge at all</strong>. With one setup it wrongly called the edge proven about 5% of the time, as intended. With five or more setups it did so about 1% of the time or less.</p>
+    <div class="info" id="how">
+      <section class="panel">
+        <div class="panel-head"><h2>Read it right</h2></div>
+        <div class="panel-body">
+          <h3>It judges your record, not your future.</h3>
+          <p>A high number means your past results are hard to explain by luck. Markets change, and an edge that was real can stop working.</p>
+          <h3>Every setup you tried counts.</h3>
+          <p>Test five ideas and keep the best, and the best one looks good even if none of them works. Each extra idea raises the bar your results have to clear.</p>
+          <h3>Fees count. A breakeven is a loss.</h3>
+          <p>Commissions turn a breakeven trade into a losing one. Leave <strong>subtract fees</strong> on unless your P&amp;L column already includes them.</p>
         </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
-        <h2>For developers</h2>
-        <div class="prose">
-          <p>The same checks, plus overfitting and cross-validation tools for backtests, are in an open-source Python library. Every worked example in the source papers reproduces, and this page's calculator is tested against the library.</p>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>The math</h2></div>
+        <div class="panel-body">
+          <p>The check measures how far your average trade sits above zero relative to how much your trades swing, then asks what the <strong>best of your setups</strong> would have shown with no edge at all, and holds your results to that bar.</p>
+          <p>The dashed line on the equity chart is that bar: what the luckiest of your setups would have made by now, at your trade size, with no edge. Finishing above it is the same as a chance above 50%.</p>
+          <p>The method is the Probabilistic and Deflated Sharpe Ratio of Bailey and López de Prado (2012, 2014). It assumes the setups were independent and tested on a similar number of trades. Tested on simulated traders with <strong>no edge</strong>, it wrongly called an edge proven about 5% of the time for one setup, and about 1% or less for five or more.</p>
         </div>
-        <pre><code>pip install git+https://github.com/TheMarketMakerHoldings/algobacktesting</code></pre>
-        <p class="hint">Requires Python 3.11 or later, NumPy and Git. A plain pip install algobacktesting works once version 0.1.0 is on PyPI.</p>
-        <p><a href="https://github.com/TheMarketMakerHoldings/algobacktesting">Source on GitHub</a> · <a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/paper/verification-report.md">Verification report</a></p>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>For developers</h2></div>
+        <div class="panel-body">
+          <p>The same checks, plus the Probability of Backtest Overfitting and purged cross-validation, are in an open-source Python library. Every worked example in the source papers reproduces, and this page is tested against the library.</p>
+          <pre><code>pip install git+https://github.com/TheMarketMakerHoldings/algobacktesting</code></pre>
+          <p>Python 3.11 or later, NumPy and Git. <a href="https://github.com/TheMarketMakerHoldings/algobacktesting">Source</a> · <a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/paper/verification-report.md">Verification report</a> · <a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/api.md">API</a></p>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel chart-panel" id="export" aria-labelledby="export-title" style="margin-top:28px;border-top:1px solid var(--line)">
+      <div class="panel-head"><h2 id="export-title">Export help</h2></div>
+      <div class="panel-body" style="gap:0">
+        <p class="note" style="margin-bottom:6px">Export the closed trades of one account, then filter to one strategy above. Menus change between versions: if yours look different, look for <strong>Export</strong> on the trades or history view.</p>
+        <details><summary>TopstepX</summary><p class="note">Open the <strong>Trades</strong> tab at the bottom of the platform (not Orders), choose the date range and click <strong>Export</strong>. If the file has separate fee columns, keep subtract fees on.</p></details>
+        <details><summary>Quantower</summary><p class="note">Open the <strong>Trades</strong> panel, choose <strong>Export data</strong> from its menu, tick all columns, pick comma-separated and export. Fills that share a position ID are combined into one trade, using the Net P/L column.</p></details>
+        <details><summary>NinjaTrader 8</summary><p class="note">Control Center, <strong>New → Trade Performance</strong>, choose the account, strategy and dates, click Generate, open the <strong>Trades</strong> view, then right-click and <strong>Export</strong>. Check whether your Profit column already includes commission, and set subtract fees to match.</p></details>
+        <details><summary>thinkorswim (Schwab)</summary><p class="note"><strong>Monitor → Account Statement</strong>, set the dates, then <strong>Export to File</strong> from the menu at the top right. The page pairs the buys and sells in Account Trade History into round trips (first in, first out). Commissions are not in that section, so results are before fees.</p></details>
       </div>
     </section>
   </main>
 
-  <footer>
+  <footer class="bar foot">
     <span>MIT © 2026 Daniel Heidary · The Market Maker Holdings &amp; Co.</span>
     <span>Statistics about past results. Not financial advice.</span>
   </footer>
 </div>
+
+<script type="text/plain" id="example-csv">
+Trade #,Strategy,Instrument,Side,Qty,Entry price,Exit price,Entry time,Exit time,P&L,Commission
+1,ORB,ESU6,Short,1,5917.25,5913.75,2026-06-01 09:47:46,2026-06-01 10:24:28,175.00,4.12
+2,VWAP fade,ESU6,Long,1,6001.00,6002.50,2026-06-01 11:22:29,2026-06-01 12:11:32,75.00,4.12
+3,ORB,ESU6,Long,1,5907.50,5904.50,2026-06-02 09:38:58,2026-06-02 09:57:28,-150.00,4.12
+4,VWAP fade,ESU6,Short,1,5864.25,5866.75,2026-06-02 10:25:52,2026-06-02 11:14:46,-125.00,4.12
+5,ORB,ESU6,Short,1,5841.50,5834.75,2026-06-03 09:49:36,2026-06-03 10:23:04,337.50,4.12
+6,VWAP fade,ESU6,Short,1,5869.50,5867.75,2026-06-04 10:15:22,2026-06-04 10:27:59,87.50,4.12
+7,ORB,ESU6,Long,1,5926.00,5923.00,2026-06-05 09:39:00,2026-06-05 10:12:13,-150.00,4.12
+8,VWAP fade,ESU6,Short,1,5861.00,5863.25,2026-06-05 10:18:48,2026-06-05 11:00:01,-112.50,4.12
+9,ORB,ESU6,Short,1,5889.50,5892.25,2026-06-09 09:46:13,2026-06-09 10:22:30,-137.50,4.12
+10,VWAP fade,ESU6,Short,1,5859.75,5857.75,2026-06-09 10:44:15,2026-06-09 11:34:33,100.00,4.12
+11,ORB,ESU6,Short,1,5855.50,5858.25,2026-06-10 09:32:30,2026-06-10 10:22:03,-137.50,4.12
+12,VWAP fade,ESU6,Short,1,5918.25,5916.50,2026-06-10 11:26:29,2026-06-10 12:02:13,87.50,4.12
+13,ORB,ESU6,Long,1,5853.50,5851.00,2026-06-11 09:39:02,2026-06-11 10:25:20,-125.00,4.12
+14,VWAP fade,ESU6,Long,1,5938.25,5941.25,2026-06-11 10:59:29,2026-06-11 11:42:03,150.00,4.12
+15,VWAP fade,ESU6,Long,1,5976.00,5978.00,2026-06-12 11:01:00,2026-06-12 11:21:38,100.00,4.12
+16,ORB,ESU6,Short,1,5900.00,5902.75,2026-06-15 09:50:44,2026-06-15 10:21:13,-137.50,4.12
+17,VWAP fade,ESU6,Short,1,5955.25,5953.75,2026-06-15 10:35:50,2026-06-15 10:40:26,75.00,4.12
+18,ORB,ESU6,Long,1,5947.50,5944.75,2026-06-16 09:36:38,2026-06-16 09:48:12,-137.50,4.12
+19,VWAP fade,ESU6,Long,1,5931.25,5933.75,2026-06-16 10:26:34,2026-06-16 10:59:11,125.00,4.12
+20,ORB,ESU6,Long,1,5903.75,5906.75,2026-06-17 09:32:16,2026-06-17 09:58:32,150.00,4.12
+21,VWAP fade,ESU6,Short,1,5870.50,5869.25,2026-06-17 11:36:09,2026-06-17 11:45:54,62.50,4.12
+22,ORB,ESU6,Short,1,5921.25,5924.00,2026-06-18 09:46:19,2026-06-18 10:01:42,-137.50,4.12
+23,VWAP fade,ESU6,Short,1,5954.50,5956.50,2026-06-18 10:40:43,2026-06-18 11:00:04,-100.00,4.12
+24,ORB,ESU6,Long,1,5841.00,5841.00,2026-06-19 09:50:15,2026-06-19 10:12:02,0.00,4.12
+25,VWAP fade,ESU6,Short,1,5793.25,5795.50,2026-06-19 10:43:48,2026-06-19 11:13:25,-112.50,4.12
+26,ORB,ESU6,Short,1,5947.75,5950.50,2026-06-22 09:39:25,2026-06-22 10:17:58,-137.50,4.12
+27,VWAP fade,ESU6,Short,1,5912.00,5914.00,2026-06-22 11:43:08,2026-06-22 12:30:41,-100.00,4.12
+28,ORB,ESU6,Short,1,5919.25,5922.00,2026-06-24 09:43:43,2026-06-24 10:02:58,-137.50,4.12
+29,VWAP fade,ESU6,Long,1,5920.50,5918.50,2026-06-24 11:42:42,2026-06-24 12:21:21,-100.00,4.12
+30,ORB,ESU6,Long,1,5910.75,5918.00,2026-06-25 09:48:18,2026-06-25 10:07:51,362.50,4.12
+31,ORB,ESU6,Long,1,5895.50,5893.00,2026-06-29 09:47:22,2026-06-29 10:13:21,-125.00,4.12
+32,VWAP fade,ESU6,Short,1,5924.00,5922.00,2026-06-29 10:47:26,2026-06-29 10:56:16,100.00,4.12
+33,ORB,ESU6,Short,1,5892.25,5887.75,2026-06-30 09:41:40,2026-06-30 09:44:47,225.00,4.12
+34,VWAP fade,ESU6,Long,1,5934.75,5936.75,2026-06-30 11:44:18,2026-06-30 12:12:04,100.00,4.12
+35,ORB,ESU6,Long,1,5955.75,5953.25,2026-07-01 09:53:59,2026-07-01 10:09:15,-125.00,4.12
+36,VWAP fade,ESU6,Long,1,5961.00,5963.00,2026-07-01 11:39:34,2026-07-01 12:16:19,100.00,4.12
+37,ORB,ESU6,Long,1,5884.50,5882.00,2026-07-02 09:31:03,2026-07-02 09:59:33,-125.00,4.12
+38,VWAP fade,ESU6,Long,1,5886.75,5888.50,2026-07-03 10:58:39,2026-07-03 11:12:45,87.50,4.12
+39,ORB,ESU6,Long,1,5807.25,5812.25,2026-07-06 09:42:44,2026-07-06 10:21:19,250.00,4.12
+40,VWAP fade,ESU6,Short,1,5864.75,5863.25,2026-07-06 10:58:54,2026-07-06 11:10:55,75.00,4.12
+41,VWAP fade,ESU6,Short,1,5903.75,5906.00,2026-07-07 11:00:18,2026-07-07 11:44:35,-112.50,4.12
+42,ORB,ESU6,Short,1,5933.75,5927.75,2026-07-08 09:44:38,2026-07-08 09:57:48,300.00,4.12
+43,ORB,ESU6,Short,1,5900.75,5894.75,2026-07-09 09:48:17,2026-07-09 10:17:11,300.00,4.12
+44,VWAP fade,ESU6,Short,1,5966.25,5968.25,2026-07-09 10:39:22,2026-07-09 11:24:34,-100.00,4.12
+45,ORB,ESU6,Long,1,5912.00,5919.25,2026-07-10 09:33:42,2026-07-10 10:25:48,362.50,4.12
+46,VWAP fade,ESU6,Long,1,5955.75,5953.50,2026-07-10 11:29:47,2026-07-10 12:09:23,-112.50,4.12
+47,VWAP fade,ESU6,Long,1,5894.00,5891.50,2026-07-15 10:46:30,2026-07-15 11:15:39,-125.00,4.12
+48,ORB,ESU6,Short,1,5853.75,5853.75,2026-07-17 09:45:56,2026-07-17 10:01:10,0.00,4.12
+49,VWAP fade,ESU6,Short,1,5934.25,5932.75,2026-07-17 11:18:17,2026-07-17 11:54:02,75.00,4.12
+50,ORB,ESU6,Long,1,5938.00,5935.25,2026-07-21 09:46:00,2026-07-21 10:02:32,-137.50,4.12
+51,ORB,ESU6,Long,1,5901.75,5908.00,2026-07-22 09:36:13,2026-07-22 10:21:06,312.50,4.12
+52,ORB,ESU6,Long,1,5970.50,5967.50,2026-07-23 09:47:33,2026-07-23 10:27:12,-150.00,4.12
+53,VWAP fade,ESU6,Short,1,5911.00,5908.75,2026-07-23 11:16:13,2026-07-23 11:42:36,112.50,4.12
+54,ORB,ESU6,Short,1,5942.75,5934.50,2026-07-27 09:52:12,2026-07-27 09:57:45,412.50,4.12
+55,VWAP fade,ESU6,Long,1,6008.25,6009.75,2026-07-27 10:31:29,2026-07-27 11:12:07,75.00,4.12
+56,VWAP fade,ESU6,Short,1,5880.50,5878.00,2026-07-29 11:12:57,2026-07-29 11:43:49,125.00,4.12
+57,ORB,ESU6,Long,1,5947.00,5950.50,2026-07-30 09:48:51,2026-07-30 09:55:49,175.00,4.12
+58,ORB,ESU6,Long,1,5877.25,5874.50,2026-07-31 09:55:16,2026-07-31 10:28:07,-137.50,4.12
+59,VWAP fade,ESU6,Short,1,5927.50,5926.25,2026-07-31 11:37:43,2026-07-31 12:21:58,62.50,4.12
+60,VWAP fade,ESU6,Long,1,5978.50,5976.25,2026-08-03 11:03:43,2026-08-03 11:47:56,-112.50,4.12
+61,ORB,ESU6,Short,1,5900.00,5902.50,2026-08-05 09:53:13,2026-08-05 10:40:39,-125.00,4.12
+62,VWAP fade,ESU6,Long,1,5871.75,5869.25,2026-08-05 11:25:58,2026-08-05 11:32:10,-125.00,4.12
+63,VWAP fade,ESU6,Short,1,5833.00,5831.50,2026-08-06 11:25:05,2026-08-06 11:59:14,75.00,4.12
+64,ORB,ESU6,Short,1,5923.75,5926.25,2026-08-07 09:35:48,2026-08-07 09:41:16,-125.00,4.12
+65,VWAP fade,ESU6,Long,1,5959.00,5956.75,2026-08-07 10:33:42,2026-08-07 11:21:35,-112.50,4.12
+66,ORB,ESU6,Long,1,5938.00,5944.25,2026-08-10 09:48:08,2026-08-10 10:16:58,312.50,4.12
+67,ORB,ESU6,Long,1,5850.50,5859.50,2026-08-12 09:36:54,2026-08-12 10:00:38,450.00,4.12
+68,VWAP fade,ESU6,Short,1,5913.75,5916.25,2026-08-12 11:26:40,2026-08-12 11:44:17,-125.00,4.12
+69,ORB,ESU6,Long,1,5905.00,5911.75,2026-08-13 09:45:24,2026-08-13 10:36:46,337.50,4.12
+70,VWAP fade,ESU6,Long,1,5942.25,5940.00,2026-08-13 11:01:00,2026-08-13 11:27:51,-112.50,4.12
+71,ORB,ESU6,Long,1,5903.25,5900.75,2026-08-14 09:44:00,2026-08-14 09:58:14,-125.00,4.12
+72,VWAP fade,ESU6,Short,1,5909.00,5906.00,2026-08-14 11:14:48,2026-08-14 11:47:31,150.00,4.12
+73,ORB,ESU6,Short,1,5911.75,5914.50,2026-08-17 09:47:00,2026-08-17 10:10:15,-137.50,4.12
+74,VWAP fade,ESU6,Short,1,5946.00,5943.75,2026-08-17 11:19:59,2026-08-17 12:05:45,112.50,4.12
+75,VWAP fade,ESU6,Short,1,5882.00,5880.25,2026-08-18 10:15:29,2026-08-18 10:58:17,87.50,4.12
+76,ORB,ESU6,Long,1,5938.00,5935.00,2026-08-19 09:55:17,2026-08-19 10:40:18,-150.00,4.12
+77,VWAP fade,ESU6,Long,1,5922.00,5919.75,2026-08-19 11:27:01,2026-08-19 12:05:14,-112.50,4.12
+78,ORB,ESU6,Short,1,5865.25,5867.75,2026-08-20 09:31:05,2026-08-20 09:47:00,-125.00,4.12
+79,ORB,ESU6,Short,1,5884.50,5887.00,2026-08-24 09:42:32,2026-08-24 10:31:48,-125.00,4.12
+80,VWAP fade,ESU6,Short,1,5937.50,5939.50,2026-08-24 11:38:02,2026-08-24 11:53:14,-100.00,4.12
+81,ORB,ESU6,Long,1,5946.75,5944.00,2026-08-25 09:54:42,2026-08-25 10:31:18,-137.50,4.12
+82,ORB,ESU6,Long,1,5928.50,5926.00,2026-08-26 09:55:23,2026-08-26 10:41:15,-125.00,4.12
+83,ORB,ESU6,Long,1,5876.75,5873.75,2026-08-27 09:39:37,2026-08-27 09:59:16,-150.00,4.12
+84,VWAP fade,ESU6,Long,1,5905.00,5907.50,2026-08-27 10:35:48,2026-08-27 10:53:43,125.00,4.12
+85,VWAP fade,ESU6,Short,1,5814.00,5812.00,2026-09-02 10:37:38,2026-09-02 11:01:15,100.00,4.12
+86,ORB,ESU6,Long,1,5883.25,5890.00,2026-09-03 09:43:34,2026-09-03 10:32:33,337.50,4.12
+87,ORB,ESU6,Short,1,5897.50,5900.25,2026-09-04 09:46:29,2026-09-04 10:10:50,-137.50,4.12
+88,VWAP fade,ESU6,Long,1,5869.50,5871.50,2026-09-04 11:41:19,2026-09-04 12:12:53,100.00,4.12
+89,ORB,ESU6,Short,1,5896.25,5899.25,2026-09-08 09:47:58,2026-09-08 09:52:22,-150.00,4.12
+90,ORB,ESU6,Short,1,5886.75,5889.25,2026-09-14 09:46:27,2026-09-14 10:33:54,-125.00,4.12
+91,ORB,ESU6,Short,1,5873.00,5875.75,2026-09-15 09:44:22,2026-09-15 10:27:23,-137.50,4.12
+92,VWAP fade,ESU6,Short,1,5957.75,5960.25,2026-09-15 10:54:40,2026-09-15 11:49:24,-125.00,4.12
+93,ORB,ESU6,Long,1,5968.00,5965.50,2026-09-16 09:52:44,2026-09-16 10:21:26,-125.00,4.12
+94,VWAP fade,ESU6,Long,1,5880.25,5882.50,2026-09-16 10:39:02,2026-09-16 11:02:19,112.50,4.12
+95,ORB,ESU6,Long,1,5907.00,5904.25,2026-09-17 09:50:44,2026-09-17 10:38:02,-137.50,4.12
+96,ORB,ESU6,Long,1,5917.25,5922.00,2026-09-21 09:45:16,2026-09-21 10:22:55,237.50,4.12
+97,VWAP fade,ESU6,Long,1,5880.25,5882.00,2026-09-21 11:36:46,2026-09-21 12:27:32,87.50,4.12
+98,ORB,ESU6,Short,1,5890.75,5884.75,2026-09-22 09:54:15,2026-09-22 10:13:23,300.00,4.12
+99,VWAP fade,ESU6,Long,1,5888.50,5890.00,2026-09-22 11:33:24,2026-09-22 11:45:42,75.00,4.12
+100,VWAP fade,ESU6,Long,1,5819.00,5821.25,2026-09-23 10:51:40,2026-09-23 11:20:20,112.50,4.12
+101,ORB,ESU6,Short,1,5856.50,5856.50,2026-09-24 09:47:21,2026-09-24 10:16:20,0.00,4.12
+102,VWAP fade,ESU6,Short,1,5912.25,5910.25,2026-09-24 11:31:40,2026-09-24 11:47:10,100.00,4.12
+103,VWAP fade,ESU6,Long,1,5935.00,5936.50,2026-09-25 11:34:22,2026-09-25 11:45:06,75.00,4.12
+104,ORB,ESU6,Short,1,5907.00,5902.25,2026-09-28 09:43:05,2026-09-28 09:57:59,237.50,4.12
+105,ORB,ESU6,Short,1,5880.75,5874.00,2026-09-29 09:44:01,2026-09-29 10:24:56,337.50,4.12
+106,VWAP fade,ESU6,Long,1,5949.50,5951.75,2026-09-29 11:40:06,2026-09-29 12:28:30,112.50,4.12
+107,VWAP fade,ESU6,Long,1,5886.00,5888.50,2026-09-30 10:26:04,2026-09-30 11:19:08,125.00,4.12
+108,VWAP fade,ESU6,Long,1,5912.00,5910.00,2026-10-01 10:59:25,2026-10-01 11:27:09,-100.00,4.12
+109,ORB,ESU6,Short,1,5868.25,5871.25,2026-10-02 09:47:49,2026-10-02 10:23:10,-150.00,4.12
+110,VWAP fade,ESU6,Long,1,5869.75,5872.00,2026-10-02 11:17:01,2026-10-02 11:49:33,112.50,4.12
+111,ORB,ESU6,Short,1,5943.00,5945.75,2026-10-05 09:55:53,2026-10-05 10:47:24,-137.50,4.12
+112,ORB,ESU6,Long,1,5936.50,5936.50,2026-10-06 09:55:28,2026-10-06 10:49:09,0.00,4.12
+113,VWAP fade,ESU6,Long,1,5939.25,5941.75,2026-10-06 10:47:09,2026-10-06 11:10:18,125.00,4.12
+114,ORB,ESU6,Long,1,5883.50,5887.00,2026-10-07 09:43:36,2026-10-07 10:16:17,175.00,4.12
+115,ORB,ESU6,Short,1,5925.25,5927.75,2026-10-08 09:40:33,2026-10-08 10:25:16,-125.00,4.12
+116,ORB,ESU6,Long,1,5933.75,5931.00,2026-10-12 09:54:09,2026-10-12 10:42:45,-137.50,4.12
+117,VWAP fade,ESU6,Long,1,5930.00,5931.75,2026-10-12 11:24:19,2026-10-12 11:28:21,87.50,4.12
+118,ORB,ESU6,Short,1,5889.00,5891.75,2026-10-13 09:34:07,2026-10-13 09:48:09,-137.50,4.12
+119,VWAP fade,ESU6,Long,1,5947.00,5948.75,2026-10-13 11:09:38,2026-10-13 11:34:13,87.50,4.12
+120,ORB,ESU6,Long,1,5936.50,5934.00,2026-10-14 09:53:54,2026-10-14 10:03:01,-125.00,4.12
+121,VWAP fade,ESU6,Long,1,6000.25,6002.25,2026-10-14 10:41:42,2026-10-14 11:12:21,100.00,4.12
+122,ORB,ESU6,Long,1,5864.00,5871.00,2026-10-15 09:46:35,2026-10-15 10:24:27,350.00,4.12
+123,VWAP fade,ESU6,Long,1,5908.50,5906.25,2026-10-15 10:17:53,2026-10-15 10:58:05,-112.50,4.12
+124,ORB,ESU6,Long,1,5889.50,5896.50,2026-10-16 09:33:07,2026-10-16 09:40:18,350.00,4.12
+125,ORB,ESU6,Short,1,5850.50,5853.50,2026-10-19 09:46:22,2026-10-19 10:03:29,-150.00,4.12
+126,VWAP fade,ESU6,Short,1,5948.75,5951.25,2026-10-19 11:41:39,2026-10-19 12:23:07,-125.00,4.12
+127,ORB,ESU6,Long,1,5789.25,5786.50,2026-10-20 09:36:12,2026-10-20 09:53:26,-137.50,4.12
+128,ORB,ESU6,Short,1,5899.00,5901.50,2026-10-21 09:43:13,2026-10-21 10:17:28,-125.00,4.12
+129,ORB,ESU6,Long,1,5884.75,5881.75,2026-10-22 09:38:38,2026-10-22 10:08:10,-150.00,4.12
+130,VWAP fade,ESU6,Long,1,5872.75,5875.50,2026-10-22 10:34:37,2026-10-22 11:25:13,137.50,4.12
+131,ORB,ESU6,Long,1,5976.25,5985.50,2026-10-23 09:32:51,2026-10-23 10:02:31,462.50,4.12
+132,VWAP fade,ESU6,Long,1,5907.75,5905.50,2026-10-23 10:31:42,2026-10-23 10:53:20,-112.50,4.12
+133,VWAP fade,ESU6,Long,1,5874.50,5872.00,2026-10-26 10:56:22,2026-10-26 11:17:52,-125.00,4.12
+134,ORB,ESU6,Short,1,5966.00,5958.50,2026-10-27 09:36:41,2026-10-27 09:52:14,375.00,4.12
+135,VWAP fade,ESU6,Short,1,5774.00,5776.00,2026-10-27 10:57:11,2026-10-27 11:39:35,-100.00,4.12
+136,VWAP fade,ESU6,Short,1,5821.75,5820.25,2026-10-28 10:16:51,2026-10-28 11:02:12,75.00,4.12
+137,ORB,ESU6,Long,1,5907.50,5904.75,2026-10-30 09:31:37,2026-10-30 10:21:27,-137.50,4.12
+138,ORB,ESU6,Short,1,5840.00,5835.75,2026-11-02 09:54:43,2026-11-02 10:34:51,212.50,4.12
+139,VWAP fade,ESU6,Short,1,5983.00,5980.50,2026-11-04 11:31:40,2026-11-04 11:51:30,125.00,4.12
+140,ORB,ESU6,Short,1,5890.25,5893.00,2026-11-05 09:34:05,2026-11-05 09:45:10,-137.50,4.12
+141,VWAP fade,ESU6,Long,1,5874.25,5875.75,2026-11-05 11:43:18,2026-11-05 12:03:22,75.00,4.12
+142,ORB,ESU6,Short,1,5838.00,5841.00,2026-11-06 09:52:23,2026-11-06 10:09:24,-150.00,4.12
+143,ORB,ESU6,Long,1,5898.50,5906.00,2026-11-09 09:40:52,2026-11-09 10:21:52,375.00,4.12
+144,ORB,ESU6,Short,1,5854.75,5848.25,2026-11-10 09:38:38,2026-11-10 10:02:07,325.00,4.12
+145,VWAP fade,ESU6,Long,1,5883.75,5886.00,2026-11-10 10:29:16,2026-11-10 11:15:17,112.50,4.12
+146,VWAP fade,ESU6,Long,1,5878.50,5876.25,2026-11-11 10:53:46,2026-11-11 11:44:52,-112.50,4.12
+147,ORB,ESU6,Short,1,5907.00,5910.00,2026-11-12 09:41:51,2026-11-12 09:56:45,-150.00,4.12
+148,VWAP fade,ESU6,Short,1,5879.50,5877.00,2026-11-12 11:15:20,2026-11-12 11:22:24,125.00,4.12
+149,VWAP fade,ESU6,Long,1,5800.50,5802.75,2026-11-13 10:19:49,2026-11-13 10:58:51,112.50,4.12
+150,ORB,ESU6,Short,1,5927.25,5922.25,2026-11-16 09:54:07,2026-11-16 10:28:13,250.00,4.12
+151,VWAP fade,ESU6,Long,1,5969.25,5967.00,2026-11-16 10:51:51,2026-11-16 11:02:59,-112.50,4.12
+152,ORB,ESU6,Short,1,5856.25,5856.25,2026-11-18 09:48:11,2026-11-18 10:42:05,0.00,4.12
+153,VWAP fade,ESU6,Short,1,5886.00,5884.50,2026-11-18 10:18:40,2026-11-18 10:40:28,75.00,4.12
+154,ORB,ESU6,Long,1,5863.75,5863.75,2026-11-19 09:50:40,2026-11-19 10:41:05,0.00,4.12
+155,VWAP fade,ESU6,Short,1,5891.00,5889.00,2026-11-19 11:05:54,2026-11-19 11:51:07,100.00,4.12
+156,VWAP fade,ESU6,Short,1,5985.00,5982.75,2026-11-20 10:41:16,2026-11-20 11:26:24,112.50,4.12
+157,ORB,ESU6,Short,1,5913.75,5916.50,2026-11-23 09:44:45,2026-11-23 10:32:45,-137.50,4.12
+158,VWAP fade,ESU6,Long,1,5911.50,5913.00,2026-11-23 11:17:51,2026-11-23 11:22:23,75.00,4.12
+159,VWAP fade,ESU6,Long,1,5905.50,5907.50,2026-11-24 11:25:03,2026-11-24 12:14:12,100.00,4.12
+160,ORB,ESU6,Long,1,5951.00,5951.00,2026-11-25 09:38:44,2026-11-25 10:33:10,0.00,4.12
+161,VWAP fade,ESU6,Short,1,5891.75,5889.75,2026-11-25 11:44:35,2026-11-25 12:10:28,100.00,4.12
+162,ORB,ESU6,Long,1,5904.25,5901.25,2026-11-26 09:36:45,2026-11-26 09:40:04,-150.00,4.12
+163,VWAP fade,ESU6,Short,1,5903.25,5901.75,2026-11-26 11:09:38,2026-11-26 12:01:49,75.00,4.12
+164,ORB,ESU6,Long,1,5951.00,5951.00,2026-11-30 09:40:19,2026-11-30 09:53:55,0.00,4.12
+165,ORB,ESU6,Short,1,5936.25,5939.25,2026-12-01 09:45:18,2026-12-01 10:28:19,-150.00,4.12
+166,VWAP fade,ESU6,Long,1,5880.00,5881.50,2026-12-01 11:23:50,2026-12-01 11:29:38,75.00,4.12
+167,ORB,ESU6,Long,1,5964.25,5971.00,2026-12-02 09:38:44,2026-12-02 09:58:32,337.50,4.12
+168,ORB,ESU6,Short,1,5886.50,5879.00,2026-12-03 09:46:04,2026-12-03 09:59:28,375.00,4.12
+169,VWAP fade,ESU6,Long,1,5970.75,5968.25,2026-12-03 10:18:49,2026-12-03 10:44:40,-125.00,4.12
+170,ORB,ESU6,Long,1,5947.25,5944.25,2026-12-04 09:44:15,2026-12-04 10:01:52,-150.00,4.12
+171,VWAP fade,ESU6,Long,1,5847.00,5849.00,2026-12-04 10:55:04,2026-12-04 11:49:43,100.00,4.12
+172,ORB,ESU6,Short,1,5991.00,5985.25,2026-12-07 09:51:35,2026-12-07 10:15:20,287.50,4.12
+173,VWAP fade,ESU6,Long,1,5902.75,5905.25,2026-12-07 11:43:20,2026-12-07 11:46:32,125.00,4.12
+174,ORB,ESU6,Short,1,5954.25,5947.75,2026-12-08 09:46:54,2026-12-08 10:23:50,325.00,4.12
+175,VWAP fade,ESU6,Long,1,5917.25,5919.50,2026-12-08 11:22:47,2026-12-08 11:45:57,112.50,4.12
+176,VWAP fade,ESU6,Long,1,5885.00,5887.50,2026-12-10 11:22:09,2026-12-10 11:53:36,125.00,4.12
+177,ORB,ESU6,Long,1,5915.00,5912.00,2026-12-11 09:52:20,2026-12-11 09:58:28,-150.00,4.12
+178,VWAP fade,ESU6,Long,1,5875.75,5873.25,2026-12-11 10:50:29,2026-12-11 11:28:49,-125.00,4.12
+179,ORB,ESU6,Long,1,5883.00,5880.00,2026-12-14 09:32:44,2026-12-14 09:58:26,-150.00,4.12
+180,VWAP fade,ESU6,Long,1,5874.50,5872.50,2026-12-14 10:19:10,2026-12-14 10:48:50,-100.00,4.12
+181,ORB,ESU6,Long,1,5910.75,5918.50,2026-12-16 09:54:10,2026-12-16 10:24:31,387.50,4.12
+182,ORB,ESU6,Short,1,5838.00,5840.75,2026-12-17 09:47:02,2026-12-17 10:04:00,-137.50,4.12
+183,VWAP fade,ESU6,Long,1,5894.75,5892.75,2026-12-17 11:19:07,2026-12-17 11:46:31,-100.00,4.12
+184,ORB,ESU6,Long,1,5919.25,5925.50,2026-12-18 09:45:13,2026-12-18 10:22:06,312.50,4.12
+185,VWAP fade,ESU6,Long,1,5889.25,5887.25,2026-12-21 10:35:11,2026-12-21 11:23:15,-100.00,4.12
+186,ORB,ESU6,Short,1,5900.25,5896.25,2026-12-23 09:51:23,2026-12-23 10:03:01,200.00,4.12
+187,VWAP fade,ESU6,Long,1,5821.50,5819.00,2026-12-23 11:09:47,2026-12-23 11:23:43,-125.00,4.12
+188,ORB,ESU6,Short,1,5878.00,5878.00,2026-12-24 09:45:24,2026-12-24 09:51:38,0.00,4.12
+189,VWAP fade,ESU6,Short,1,5917.25,5919.50,2026-12-25 10:49:10,2026-12-25 11:25:48,-112.50,4.12
+190,ORB,ESU6,Long,1,5973.75,5971.25,2026-12-28 09:47:54,2026-12-28 10:38:10,-125.00,4.12
+191,VWAP fade,ESU6,Short,1,5996.25,5993.75,2026-12-28 11:12:58,2026-12-28 11:24:10,125.00,4.12
+192,ORB,ESU6,Long,1,5837.75,5835.25,2026-12-29 09:51:25,2026-12-29 10:40:04,-125.00,4.12
+193,VWAP fade,ESU6,Short,1,5901.25,5903.50,2026-12-29 11:22:44,2026-12-29 12:00:42,-112.50,4.12
+194,ORB,ESU6,Long,1,5942.75,5940.25,2026-12-31 09:43:13,2026-12-31 10:25:39,-125.00,4.12
+195,VWAP fade,ESU6,Short,1,5868.00,5866.50,2026-12-31 10:18:17,2026-12-31 10:50:08,75.00,4.12
+196,ORB,ESU6,Long,1,5848.00,5853.00,2027-01-01 09:46:29,2027-01-01 10:07:55,250.00,4.12
+197,VWAP fade,ESU6,Long,1,5886.50,5888.00,2027-01-01 10:22:39,2027-01-01 10:53:05,75.00,4.12
+198,ORB,ESU6,Long,1,5810.75,5808.00,2027-01-04 09:37:53,2027-01-04 10:27:22,-137.50,4.12
+199,ORB,ESU6,Long,1,5767.25,5764.75,2027-01-05 09:44:44,2027-01-05 09:48:07,-125.00,4.12
+200,ORB,ESU6,Long,1,5937.50,5934.75,2027-01-06 09:40:15,2027-01-06 10:02:50,-137.50,4.12
+201,VWAP fade,ESU6,Long,1,5897.75,5900.00,2027-01-06 10:16:05,2027-01-06 10:23:42,112.50,4.12
+202,ORB,ESU6,Long,1,5883.00,5880.50,2027-01-08 09:44:40,2027-01-08 09:57:20,-125.00,4.12
+203,ORB,ESU6,Short,1,5943.50,5936.00,2027-01-11 09:55:49,2027-01-11 10:35:48,375.00,4.12
+204,ORB,ESU6,Short,1,5906.25,5902.25,2027-01-15 09:35:06,2027-01-15 10:15:53,200.00,4.12
+205,ORB,ESU6,Long,1,5833.75,5830.75,2027-01-18 09:32:21,2027-01-18 09:37:17,-150.00,4.12
+206,ORB,ESU6,Long,1,5927.25,5924.50,2027-01-20 09:32:33,2027-01-20 10:10:30,-137.50,4.12
+207,ORB,ESU6,Long,1,5894.75,5892.25,2027-01-22 09:44:09,2027-01-22 10:33:52,-125.00,4.12
+208,ORB,ESU6,Short,1,5884.75,5879.75,2027-01-26 09:31:48,2027-01-26 10:00:02,250.00,4.12
+209,ORB,ESU6,Long,1,5909.25,5906.75,2027-01-27 09:42:00,2027-01-27 10:18:46,-125.00,4.12
+210,ORB,ESU6,Short,1,5869.00,5871.75,2027-01-28 09:48:00,2027-01-28 10:36:26,-137.50,4.12
+211,ORB,ESU6,Long,1,5864.25,5870.50,2027-01-29 09:32:24,2027-01-29 10:15:17,312.50,4.12
+212,ORB,ESU6,Long,1,5937.50,5935.00,2027-02-08 09:53:58,2027-02-08 10:20:29,-125.00,4.12
+213,ORB,ESU6,Short,1,5948.75,5940.50,2027-02-09 09:55:06,2027-02-09 10:33:17,412.50,4.12
+214,ORB,ESU6,Long,1,5913.25,5915.50,2027-02-11 09:46:01,2027-02-11 09:55:55,112.50,4.12
+215,ORB,ESU6,Short,1,5854.25,5857.00,2027-02-12 09:45:29,2027-02-12 10:23:17,-137.50,4.12
+216,ORB,ESU6,Short,1,5963.50,5966.00,2027-02-15 09:32:17,2027-02-15 09:43:15,-125.00,4.12
+217,ORB,ESU6,Long,1,5855.25,5852.50,2027-02-16 09:38:32,2027-02-16 09:58:48,-137.50,4.12
+218,ORB,ESU6,Short,1,5884.50,5887.25,2027-02-17 09:41:20,2027-02-17 10:10:29,-137.50,4.12
+219,ORB,ESU6,Short,1,5833.75,5829.75,2027-02-18 09:46:41,2027-02-18 10:29:36,200.00,4.12
+220,ORB,ESU6,Short,1,5967.25,5967.25,2027-02-24 09:51:24,2027-02-24 10:04:20,0.00,4.12
+221,ORB,ESU6,Long,1,5942.50,5939.50,2027-02-25 09:47:47,2027-02-25 10:15:23,-150.00,4.12
+222,ORB,ESU6,Short,1,5921.75,5924.75,2027-02-26 09:54:26,2027-02-26 10:42:27,-150.00,4.12
+223,ORB,ESU6,Short,1,5803.75,5806.25,2027-03-01 09:48:43,2027-03-01 10:20:27,-125.00,4.12
+224,ORB,ESU6,Long,1,5914.50,5911.50,2027-03-03 09:53:22,2027-03-03 09:57:50,-150.00,4.12
+225,ORB,ESU6,Long,1,5922.00,5929.25,2027-03-08 09:50:02,2027-03-08 10:05:23,362.50,4.12
+226,ORB,ESU6,Short,1,5910.25,5913.25,2027-03-09 09:47:46,2027-03-09 10:09:52,-150.00,4.12
+227,ORB,ESU6,Short,1,5951.00,5954.00,2027-03-11 09:48:40,2027-03-11 10:11:31,-150.00,4.12
+228,ORB,ESU6,Long,1,5916.25,5913.75,2027-03-12 09:45:35,2027-03-12 10:17:05,-125.00,4.12
+229,ORB,ESU6,Short,1,5937.00,5937.00,2027-03-15 09:48:29,2027-03-15 10:35:32,0.00,4.12
+230,ORB,ESU6,Short,1,5826.25,5828.75,2027-03-16 09:34:18,2027-03-16 09:59:31,-125.00,4.12
+231,ORB,ESU6,Short,1,5825.50,5828.50,2027-03-17 09:43:10,2027-03-17 09:56:25,-150.00,4.12
+232,ORB,ESU6,Short,1,5835.75,5838.25,2027-03-18 09:34:46,2027-03-18 09:49:38,-125.00,4.12
+233,ORB,ESU6,Short,1,5938.75,5941.25,2027-03-19 09:49:18,2027-03-19 10:26:35,-125.00,4.12
+234,ORB,ESU6,Short,1,5930.75,5926.25,2027-03-22 09:34:49,2027-03-22 09:41:10,225.00,4.12
+235,ORB,ESU6,Short,1,5895.50,5895.50,2027-03-23 09:37:21,2027-03-23 10:27:41,0.00,4.12
+236,ORB,ESU6,Short,1,5936.50,5936.50,2027-03-24 09:31:39,2027-03-24 10:21:03,0.00,4.12
+237,ORB,ESU6,Short,1,5861.00,5864.00,2027-03-30 09:49:28,2027-03-30 10:37:34,-150.00,4.12
+238,ORB,ESU6,Short,1,5935.00,5928.75,2027-03-31 09:55:55,2027-03-31 10:22:49,312.50,4.12
+</script>
 
 <script>
 /* stats:start */
@@ -434,189 +704,754 @@ function tradesNeeded(stats, nTrials, confidence) {
 }
 /* stats:end */
 
+/* csv:start */
+// Reading trade exports. Pure functions with no page access, so the tests run them in Node.
+
+// The delimiter is whichever of comma, semicolon or tab appears most often outside quotes.
+function detectDelimiter(text) {
+  var sample = text.slice(0, 20000), counts = { ",": 0, ";": 0, "\t": 0 }, inQuotes = false, i, ch;
+  for (i = 0; i < sample.length; i++) {
+    ch = sample[i];
+    if (ch === '"') inQuotes = !inQuotes;
+    else if (!inQuotes && Object.prototype.hasOwnProperty.call(counts, ch)) counts[ch]++;
+  }
+  var best = ",";
+  if (counts[";"] > counts[best]) best = ";";
+  if (counts["\t"] > counts[best]) best = "\t";
+  return best;
+}
+
+// Rows of trimmed cells. Handles quoted cells, doubled quotes, CRLF and a byte-order mark.
+function parseCsv(text) {
+  text = String(text).replace(/^\uFEFF/, "");
+  var delimiter = detectDelimiter(text), rows = [], row = [], cell = "", inQuotes = false, i, ch;
+  for (i = 0; i < text.length; i++) {
+    ch = text[i];
+    if (inQuotes) {
+      if (ch !== '"') cell += ch;
+      else if (text[i + 1] === '"') { cell += '"'; i++; }
+      else inQuotes = false;
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === delimiter) {
+      row.push(cell); cell = "";
+    } else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); rows.push(row); row = []; cell = "";
+    } else {
+      cell += ch;
+    }
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return {
+    delimiter: delimiter,
+    rows: rows.map(function (r) { return r.map(function (c) { return c.trim(); }); })
+  };
+}
+
+// A number from a money cell: "$1,234.50", "(25.00)", "-$12.50", "$-12.50", "1.234,56", "12.50-".
+function parseNumber(raw, delimiter) {
+  var s = String(raw == null ? "" : raw).trim(), negative = false;
+  if (!s) return NaN;
+  if (/^\(.*\)$/.test(s)) { negative = true; s = s.slice(1, -1); }
+  s = s.replace(/[\u2212\u2012\u2013\u2014]/g, "-").replace(/[$\u20ac\u00a3\u00a5\s]|USD|EUR|GBP/gi, "");
+  if (/^\+/.test(s)) s = s.slice(1);
+  if (/^-/.test(s)) { negative = !negative; s = s.slice(1); }
+  if (/-$/.test(s)) { negative = !negative; s = s.slice(0, -1); }
+  var lastDot = s.lastIndexOf("."), lastComma = s.lastIndexOf(",");
+  if (lastDot >= 0 && lastComma >= 0) {
+    s = lastComma > lastDot ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
+  } else if (lastComma >= 0) {
+    if (/^\d{1,3}(,\d{3})+$/.test(s)) s = s.replace(/,/g, "");
+    else if (delimiter !== "," && /^\d+,\d+$/.test(s)) s = s.replace(",", ".");
+    else return NaN;
+  }
+  if (!/^(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(s)) return NaN;
+  var value = Number(s);
+  return negative ? -value : value;
+}
+
+// Milliseconds for ordering trades: "6/1/26 09:31:05", "06/01/2026 9:31 AM", ISO dates.
+function parseTime(raw) {
+  var s = String(raw == null ? "" : raw).trim(), m;
+  if (!s) return NaN;
+  m = /^(\d{1,2})\/(\d{1,2})\/(\d{4}|\d{2})(?:[ T,]+(\d{1,2}):(\d{2})(?::(\d{2}))?(?:\.\d+)?\s*([AaPp][Mm])?)?/.exec(s);
+  if (m) {
+    var year = +m[3] < 100 ? +m[3] + 2000 : +m[3], hour = +(m[4] || 0);
+    if (m[7]) hour = (hour % 12) + (/p/i.test(m[7]) ? 12 : 0);
+    return Date.UTC(year, +m[1] - 1, +m[2], hour, +(m[5] || 0), +(m[6] || 0));
+  }
+  m = /^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/.exec(s);
+  if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0));
+  var t = Date.parse(s);
+  return isFinite(t) ? t : NaN;
+}
+
+function headerKey(h) {
+  return String(h == null ? "" : h).replace(/^\uFEFF/, "").toLowerCase().replace(/[^a-z0-9&/%#]/g, "");
+}
+
+// How likely a header names one trade's profit or loss: 3 after fees, 2 unclear, 1 before fees.
+// Running totals, percentages, daily or open P&L, prices and fees are never a trade's result.
+var NOT_A_TRADE_RESULT = /cum|total|running|%|percent|max|min|avg|average|mae|mfe|etd|day|open|unreal|ytd|mtd|diff|factor|ratio|pertrade|percontract|price|qty|value|commission|fee|stop|target|limit|slip/;
+function pnlRank(key) {
+  if (!key || NOT_A_TRADE_RESULT.test(key)) return 0;
+  if (!/(p\/?l|pnl|p&l|profit|gainloss|gain\/loss|realized)/.test(key)) return 0;
+  if (/net/.test(key)) return 3;
+  if (/gross/.test(key)) return 1;
+  return 2;
+}
+
+function isTotalRow(row) {
+  return row.some(function (c) { return /^(total|totals|grand total|overall|summary)$/i.test(c); });
+}
+
+// Blocks separated by blank lines; in each, the first row of mostly text cells is the header.
+function splitTables(rows, delimiter) {
+  var tables = [], block = [];
+  function filled(r) { return r.filter(function (c) { return c !== ""; }).length; }
+  function flush() {
+    var title = "", h = -1, i;
+    for (i = 0; i < block.length; i++) {
+      var cells = block[i].filter(function (c) { return c !== ""; });
+      if (cells.length === 1 && h < 0) { title = cells[0]; continue; }
+      var texty = cells.filter(function (c) { return !isFinite(parseNumber(c, delimiter)); }).length;
+      if (cells.length >= 2 && texty >= Math.max(2, cells.length * 0.6)) { h = i; break; }
+    }
+    if (h >= 0) {
+      var data = block.slice(h + 1).filter(function (r) { return filled(r) >= 2 && !isTotalRow(r); });
+      if (data.length) tables.push({ title: title, header: block[h], rows: data, delimiter: delimiter });
+    }
+    block = [];
+  }
+  rows.forEach(function (r) { if (filled(r) === 0) flush(); else block.push(r); });
+  flush();
+  return tables;
+}
+
+function findColumn(keys, pattern) {
+  for (var i = 0; i < keys.length; i++) if (pattern.test(keys[i])) return i;
+  return -1;
+}
+
+function distinctValues(rows, col) {
+  var seen = {}, list = [];
+  rows.forEach(function (r) {
+    var v = r[col];
+    if (v !== undefined && v !== "" && !Object.prototype.hasOwnProperty.call(seen, v)) { seen[v] = 1; list.push(v); }
+  });
+  return list;
+}
+
+// Which column holds what. Every choice is shown to the user, who can change the P&L column.
+function detectColumns(header, rows, delimiter) {
+  var keys = header.map(headerKey), cols = { keys: keys }, i, best = 0;
+  cols.numeric = [];
+  for (i = 0; i < keys.length; i++) {
+    var numbers = rows.filter(function (r) { return isFinite(parseNumber(r[i], delimiter)); }).length;
+    if (keys[i] && numbers >= Math.max(1, rows.length * 0.5)) cols.numeric.push(i);
+  }
+  cols.pnl = -1;
+  cols.numeric.forEach(function (c) {
+    var rank = pnlRank(keys[c]);
+    if (rank > best) { best = rank; cols.pnl = c; }
+  });
+  cols.pnlRank = best;
+  var exactFees = [], anyFees = [];
+  keys.forEach(function (k, c) {
+    if (cols.numeric.indexOf(c) < 0 || pnlRank(k) > 0) return;
+    if (/^(total)?(fees?|commissions?|comm|commissions?&fees|commissionsandfees)$/.test(k)) exactFees.push(c);
+    else if (/fee|commission|clearing|nfa|brokerage/.test(k) && !/currency|type|rate/.test(k)) anyFees.push(c);
+  });
+  cols.fees = exactFees.length ? exactFees : anyFees;
+  cols.group = findColumn(keys, /^(positionid|position#|positionno|positionnumber)$/);
+  cols.time = findColumn(keys, /^(exit|exited|close|closed)(time|at|date|datetime)?$|^(exittime|exitedat|closetime|closedat|exitdate|closedate)$/);
+  if (cols.time < 0) cols.time = findColumn(keys, /datetime|date\/time|exectime|^time$|^date$|enteredat|entrytime|tradeday|^opened|filledat|^timestamp$/);
+  cols.side = findColumn(keys, /^(side|action|b\/s|buy\/sell|buysell|direction)$/);
+  cols.qty = findColumn(keys, /^(qty|quantity|size|filledqty|filled|shares|contracts)$/);
+  cols.price = findColumn(keys, /^(price|fillprice|execprice|executionprice|avgprice|averageprice|avgfillprice)$/);
+  cols.symbol = findColumn(keys, /^(symbol|instrument|contract|contractname|ticker)$/);
+  cols.exp = findColumn(keys, /^(exp|expiration|expirationdate|expiry)$/);
+  cols.strike = findColumn(keys, /^strike(price)?$/);
+  cols.type = findColumn(keys, /^(type|symboltype|assettype|securitytype)$/);
+  cols.fills = cols.pnl < 0 && cols.qty >= 0 && cols.price >= 0 && cols.symbol >= 0;
+  var groups = [
+    /strategy|setup|entryname|signal|tag|comment|label/,
+    /^(symbol|instrument|contract|contractname|ticker|market|description)$/,
+    /account/,
+    /^(side|direction|marketpos|type)$/
+  ];
+  cols.filters = [];
+  groups.forEach(function (pattern) {
+    keys.forEach(function (k, c) {
+      if (!pattern.test(k) || cols.numeric.indexOf(c) >= 0) return;
+      if (cols.filters.some(function (f) { return f.col === c; })) return;
+      var values = distinctValues(rows, c);
+      if (values.length >= 2 && values.length <= 60) cols.filters.push({ col: c, name: header[c], values: values });
+    });
+  });
+  return cols;
+}
+
+function guessPlatform(keys) {
+  function has(k) { return keys.indexOf(k) >= 0; }
+  if (has("contractname") && has("enteredat")) return "TopstepX";
+  if (has("positionid") && (has("grossp/l") || has("netp/l"))) return "Quantower";
+  if (has("marketpos") || (has("entryname") && has("exitname"))) return "NinjaTrader";
+  if (has("exectime") && has("poseffect")) return "thinkorswim";
+  return "";
+}
+
+// The table to use: one with a trade P&L column, else one with fills to pair, most rows first.
+function readExport(text) {
+  var parsed = parseCsv(text), tables = splitTables(parsed.rows, parsed.delimiter), best = null;
+  tables.forEach(function (t) {
+    t.cols = detectColumns(t.header, t.rows, parsed.delimiter);
+    t.kind = t.cols.pnl >= 0 ? "pnl" : t.cols.fills ? "fills" : "none";
+    t.score = (t.kind === "pnl" ? 2e6 : t.kind === "fills" ? 1e6 : 0) + t.rows.length;
+    if (t.kind !== "none" && (!best || t.score > best.score)) best = t;
+  });
+  return {
+    table: best,
+    platform: best ? guessPlatform(best.cols.keys) : "",
+    subtractFees: !!best && best.kind === "pnl" && best.cols.fees.length > 0 && best.cols.pnlRank < 3
+  };
+}
+
+function matchesFilter(row, filter) {
+  return !filter || filter.col < 0 || row[filter.col] === filter.value;
+}
+
+function orderByTime(trades) {
+  if (trades.length && trades.every(function (t) { return isFinite(t.time); })) {
+    trades.sort(function (a, b) { return a.time - b.time || a.first - b.first; });
+  }
+  return trades;
+}
+
+// One result per trade. Rows sharing a position ID are one trade (Quantower lists each fill).
+function tradesFromTable(table, opt) {
+  var byKey = {}, order = [], skipped = 0, dollars = false, feeTotal = 0;
+  table.rows.forEach(function (r, i) {
+    if (!matchesFilter(r, opt.filter)) return;
+    var raw = r[opt.pnl], value = parseNumber(raw, table.delimiter);
+    if (!isFinite(value)) { skipped++; return; }
+    if (/\$/.test(raw)) dollars = true;
+    var fee = 0;
+    (opt.fees || []).forEach(function (c) {
+      var f = parseNumber(r[c], table.delimiter);
+      if (isFinite(f)) fee += Math.abs(f);
+    });
+    var key = opt.group >= 0 && r[opt.group] ? "p" + r[opt.group] : "r" + i;
+    if (!byKey[key]) { byKey[key] = { pnl: 0, fee: 0, time: NaN, first: i }; order.push(key); }
+    var t = byKey[key], when = opt.time >= 0 ? parseTime(r[opt.time]) : NaN;
+    t.pnl += value;
+    t.fee += fee;
+    if (isFinite(when)) t.time = isFinite(t.time) ? Math.max(t.time, when) : when;
+  });
+  var trades = orderByTime(order.map(function (k) { return byKey[k]; }));
+  trades.forEach(function (t) { feeTotal += t.fee; });
+  return {
+    values: trades.map(function (t) { return Math.round((opt.subtractFees ? t.pnl - t.fee : t.pnl) * 1e8) / 1e8; }),
+    // Each trade before fees: a net P&L column gets its fees added back. Breakevens are judged on this.
+    before: trades.map(function (t) { return Math.round((opt.pnlIsNet ? t.pnl + t.fee : t.pnl) * 1e8) / 1e8; }),
+    fees: feeTotal,
+    skipped: skipped,
+    unit: dollars ? "$" : "",
+    open: 0,
+    unknownMultiplier: false
+  };
+}
+
+// Dollars per point for common futures; options are 100 shares; anything else counts as shares.
+var FUTURES_MULTIPLIER = {
+  ES: 50, MES: 5, NQ: 20, MNQ: 2, YM: 5, MYM: 0.5, RTY: 50, M2K: 5, CL: 1000, MCL: 100,
+  GC: 100, MGC: 10, SI: 5000, SIL: 1000, NG: 10000, HG: 25000, ZB: 1000, ZN: 1000, ZF: 1000, ZT: 2000,
+  "6E": 125000, "6B": 62500, "6J": 12500000
+};
+function contractMultiplier(symbol, type) {
+  var t = String(type || "").toUpperCase();
+  if (t === "CALL" || t === "PUT") return { mult: 100, known: true };
+  var m = /^\/([A-Z0-9]{1,4}?)[FGHJKMNQUVXZ]\d{1,2}(?::.*)?$/.exec(String(symbol || "").toUpperCase().trim());
+  if (!m) return { mult: 1, known: true };
+  return FUTURES_MULTIPLIER[m[1]] ? { mult: FUTURES_MULTIPLIER[m[1]], known: true } : { mult: 1, known: false };
+}
+
+// Pair buys and sells first in, first out. A trade ends each time a position returns to flat.
+function fifoTrades(table, cols, filter) {
+  var fills = [], skipped = 0, unknown = false, delimiter = table.delimiter;
+  table.rows.forEach(function (r, i) {
+    if (!matchesFilter(r, filter)) return;
+    var rawQty = String(r[cols.qty] || "").trim(), q = parseNumber(rawQty, delimiter), p = parseNumber(r[cols.price], delimiter);
+    if (!isFinite(q) || !isFinite(p) || q === 0) { skipped++; return; }
+    if (!/^[+-]/.test(rawQty)) {
+      var side = cols.side >= 0 ? String(r[cols.side]).toUpperCase() : "";
+      if (/^(S|SELL|SLD|SHORT|SS|STC|STO)\b/.test(side)) q = -Math.abs(q);
+      else if (/^(B|BUY|BOT|LONG|BTO|BTC)\b/.test(side)) q = Math.abs(q);
+      else { skipped++; return; }
+    }
+    var type = cols.type >= 0 ? r[cols.type] : "", symbol = r[cols.symbol] || "";
+    var mm = contractMultiplier(symbol, type);
+    if (!mm.known) unknown = true;
+    fills.push({
+      id: [symbol, cols.exp >= 0 ? r[cols.exp] : "", cols.strike >= 0 ? r[cols.strike] : "", type].join("|"),
+      q: q, p: p, mult: mm.mult, time: cols.time >= 0 ? parseTime(r[cols.time]) : NaN, first: i
+    });
+  });
+  orderByTime(fills);
+  var books = {}, trades = [];
+  fills.forEach(function (f) {
+    var b = books[f.id] || (books[f.id] = { lots: [], pos: 0, pnl: 0 }), q = f.q;
+    while (Math.abs(q) > 1e-12) {
+      if (Math.abs(b.pos) < 1e-12 || (b.pos > 0) === (q > 0)) {
+        b.lots.push({ q: q, p: f.p });
+        b.pos += q;
+        break;
+      }
+      var lot = b.lots[0], dir = lot.q > 0 ? 1 : -1, m = Math.min(Math.abs(q), Math.abs(lot.q));
+      b.pnl += m * (f.p - lot.p) * dir * f.mult;
+      lot.q -= m * dir;
+      q += m * dir;
+      b.pos -= m * dir;
+      if (Math.abs(lot.q) < 1e-12) b.lots.shift();
+      if (Math.abs(b.pos) < 1e-12) {
+        trades.push({ pnl: b.pnl, time: f.time });
+        b.pos = 0; b.pnl = 0; b.lots = [];
+      }
+    }
+  });
+  var open = 0;
+  Object.keys(books).forEach(function (k) { if (Math.abs(books[k].pos) > 1e-12) open++; });
+  return {
+    values: trades.map(function (t) { return Math.round(t.pnl * 1e8) / 1e8; }),
+    before: trades.map(function (t) { return Math.round(t.pnl * 1e8) / 1e8; }),
+    fees: 0,
+    skipped: skipped,
+    unit: "$",
+    open: open,
+    unknownMultiplier: unknown
+  };
+}
+
+// Wins, losses and breakevens, averages, streaks and the deepest fall from a peak (from zero).
+// A breakeven is a trade that was flat before fees, so after fees it usually lost a little: it is
+// counted apart from real losses, and what the breakevens cost in fees is reported.
+function tradeSummary(values, before) {
+  var s = {
+    n: values.length, wins: 0, losses: 0, breakevens: 0, total: 0, grossWin: 0, grossLoss: 0, lossSum: 0,
+    breakevenCost: 0, largestWin: 0, largestLoss: 0, longestLosingStreak: 0, maxDrawdown: 0
+  };
+  var equity = 0, peak = 0, streak = 0;
+  values.forEach(function (v, i) {
+    var flat = Math.abs(before ? before[i] : v) < 0.005;
+    s.total += v;
+    if (v > 0) { s.grossWin += v; if (v > s.largestWin) s.largestWin = v; }
+    if (v < 0) { s.grossLoss += v; if (v < s.largestLoss) s.largestLoss = v; }
+    if (flat) { s.breakevens++; s.breakevenCost += v; }
+    else if (v > 0) s.wins++;
+    else if (v < 0) { s.losses++; s.lossSum += v; }
+    streak = v < 0 ? streak + 1 : 0;
+    if (streak > s.longestLosingStreak) s.longestLosingStreak = streak;
+    equity += v;
+    if (equity > peak) peak = equity;
+    if (peak - equity > s.maxDrawdown) s.maxDrawdown = peak - equity;
+  });
+  s.winRate = s.n ? s.wins / s.n : NaN;
+  s.winRateDecided = s.wins + s.losses ? s.wins / (s.wins + s.losses) : NaN;
+  s.avgWin = s.wins ? s.grossWin / s.wins : NaN;
+  s.avgLoss = s.losses ? s.lossSum / s.losses : NaN;
+  s.payoff = s.wins && s.losses ? s.avgWin / -s.avgLoss : NaN;
+  s.profitFactor = s.grossLoss < 0 ? s.grossWin / -s.grossLoss : s.grossWin > 0 ? Infinity : NaN;
+  return s;
+}
+/* csv:end */
+
 (function () {
-  var W = 640, H = 250, M = { l: 46, r: 18, t: 14, b: 36 };
-  var PW = W - M.l - M.r, PH = H - M.t - M.b;
-  // Phones get a narrower drawing so the axis labels stay readable instead of shrinking.
-  function layout() {
-    var narrow = chart.clientWidth > 0 && chart.clientWidth < 480;
-    W = narrow ? 360 : 640;
-    H = narrow ? 240 : 250;
-    PW = W - M.l - M.r;
-    PH = H - M.t - M.b;
-    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-  }
-  var EXAMPLE = [140, -80, 95, -80, -80, 210, -75, 160, -80, 120, -80, -80, 185, 90, -80, -70, 230, -80, 110, -80,
-                 -80, 150, -80, 175, 60, -80, -80, 205, -80, 130, -80, 95, -80, -80, 190, -80, 145, -75, -80, 220];
+  "use strict";
   function $(id) { return document.getElementById(id); }
-  var svg = $("chart-svg"), tip = $("chart-tip"), chart = $("chart");
-  var mode = "quick", view = null;
-  var CHART_LABEL = svg.getAttribute("aria-label");
+  var svg = $("chart-svg"), tip = $("chart-tip"), chartBox = $("chart");
+  var mode = "import", chartMode = "equity", source = null, view = null, plot = null;
+  var MINUS = "−";
 
-  function fromLog(v) { return Math.max(1, Math.round(Math.pow(10, v / 100))); }
-  function signed(v, digits) { return (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(digits); }
-  function whole(v) { return Math.round(v).toLocaleString("en-US"); }
-  // The mark is decoration: the words carry the verdict, so screen readers skip the mark.
-  function setVerdict(kind, mark, words) {
-    var verdict = $("out-verdict");
-    verdict.className = "pill " + kind;
-    verdict.innerHTML = (mark ? '<span aria-hidden="true">' + mark + "</span> " : "") + words;
+  function num(v, digits) {
+    return Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
   }
-  function pct(v) { return v > 0.995 ? "99%+" : v < 0.005 ? "under 1%" : Math.round(v * 100) + "%"; }
+  function money(v, unit, digits, signed) {
+    if (!isFinite(v)) return "–";
+    var sign = v < 0 ? MINUS : signed && v > 0 ? "+" : "";
+    if (unit === "$") return sign + "$" + num(v, digits);
+    return sign + num(v, digits) + (unit ? " " + unit : "");
+  }
+  function pct(v) { return v > 0.995 ? "99%+" : v < 0.005 ? "<1%" : Math.round(v * 100) + "%"; }
+  function whole(v) { return Math.round(v).toLocaleString("en-US"); }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; });
+  }
+  function setups() {
+    var v = Math.round(+$("in-setups").value);
+    return v >= 1 ? Math.min(v, 10000) : 1;
+  }
 
-  function parseTrades(text) {
+  /* ---------- importing a file ---------- */
+  function addOption(select, value, label) {
+    var o = document.createElement("option");
+    o.value = value;
+    o.textContent = label;
+    select.appendChild(o);
+    return o;
+  }
+
+  function loadText(text, name, isExample) {
+    var result = readExport(text), t = result.table;
+    source = { name: name, example: !!isExample, table: t, platform: result.platform };
+    var pnlSel = $("sel-pnl"), filterSel = $("sel-filter");
+    pnlSel.innerHTML = "";
+    filterSel.innerHTML = "";
+    addOption(filterSel, "", "All trades");
+    if (t) {
+      if (t.kind === "fills") addOption(pnlSel, "fifo", "Paired from buys and sells");
+      t.cols.numeric.forEach(function (c) { addOption(pnlSel, String(c), t.header[c]); });
+      pnlSel.value = t.kind === "fills" ? "fifo" : String(t.cols.pnl);
+      t.cols.filters.forEach(function (f) {
+        var group = document.createElement("optgroup");
+        group.label = f.name;
+        f.values.forEach(function (v) {
+          var o = document.createElement("option");
+          o.value = f.col + "|" + v;
+          o.textContent = v;
+          group.appendChild(o);
+        });
+        filterSel.appendChild(group);
+      });
+      $("chk-fees").checked = result.subtractFees;
+      $("fees-row").hidden = !t.cols.fees.length || t.kind !== "pnl";
+      $("fees-text").textContent = "Subtract fees (" + t.cols.fees.map(function (c) { return t.header[c]; }).join(" + ") + ")";
+    }
+    if (isExample) {
+      var orb = Array.prototype.filter.call(filterSel.options, function (o) { return /\|ORB$/.test(o.value); })[0];
+      if (orb) filterSel.value = orb.value;
+    }
+    update();
+  }
+
+  function readFile(file) {
+    if (!file) return;
+    if (file.size > 25 * 1024 * 1024) {
+      source = { name: file.name, error: "That file is over 25 MB. Export a shorter date range." };
+      update();
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function () { loadText(String(reader.result), file.name, false); };
+    reader.onerror = function () { source = { name: file.name, error: "The file could not be read." }; update(); };
+    reader.readAsText(file);
+  }
+
+  function importInput() {
+    if (!source) return { error: "Drop a CSV file, or load the example." };
+    if (source.error) return { error: source.error };
+    var t = source.table;
+    if (!t) return { error: "No profit/loss column or buy and sell fills were found in " + source.name + ". Export your closed trades and try again." };
+    var f = $("sel-filter").value, bar = f.indexOf("|");
+    var filter = f ? { col: +f.slice(0, bar), value: f.slice(bar + 1) } : null;
+    var pick = $("sel-pnl").value, res = pick === "fifo"
+      ? fifoTrades(t, t.cols, filter)
+      : tradesFromTable(t, {
+        pnl: +pick, fees: t.cols.fees, subtractFees: $("chk-fees").checked, pnlIsNet: pnlRank(t.cols.keys[+pick]) === 3,
+        filter: filter, group: t.cols.group, time: t.cols.time
+      });
+    var notes = [];
+    if (source.platform) notes.push("Read as a " + source.platform + " export.");
+    if (t.cols.group >= 0 && pick !== "fifo") notes.push("Fills with the same position ID count as one trade.");
+    if (res.skipped) notes.push(res.skipped + (res.skipped === 1 ? " row was" : " rows were") + " skipped (no number in the P&L column).");
+    if (pick === "fifo") notes.push("Buys and sells paired first in, first out. Fees are not in this file, so results are before fees.");
+    if (res.open) notes.push(res.open + (res.open === 1 ? " position is" : " positions are") + " still open and not counted.");
+    if (res.unknownMultiplier) notes.push("Some futures contracts were not recognised, so their results are in points.");
+    if (!filter && t.cols.filters.some(function (x) { return /strategy|setup|entryname|signal/.test(t.cols.keys[x.col]); })) {
+      notes.push("This file has several strategies. Pick one under Strategy / filter to judge it alone.");
+    }
+    var fileLine = "<b>" + esc(source.name) + "</b><span>" + whole(t.rows.length) + " rows</span>";
+    if (source.example) fileLine += "<span>synthetic example, not real trades</span>";
+    $("file-line").innerHTML = fileLine;
+    $("import-note").textContent = notes.join(" ");
+    var n = res.values.length;
+    if (n < 10) return { error: n ? "Only " + n + (n === 1 ? " trade" : " trades") + " match. At least 10 are needed." : "No trades match this filter." };
+    var stats = statsFromTrades(res.values);
+    if (!(stats.sd > 0)) return { error: "Every trade has the same result, so there is nothing to measure." };
+    return { stats: stats, values: res.values, before: res.before, trades: n, unit: res.unit, digits: 2, fees: res.fees, feesOn: pick !== "fifo" && $("chk-fees").checked && t.cols.fees.length > 0, label: source.example ? "Example file" : source.name };
+  }
+
+  function parsePasted(text) {
     var values = [], skipped = 0;
     text.split(/[\s;]+/).forEach(function (token) {
       if (!token) return;
-      var negative = /^\(.*\)$/.test(token);
-      var clean = token.replace(/[()$%]/g, "").replace(/R(?=,|$)/gi, "").replace(/,+$/, "");
-      var pieces = isFinite(Number(clean.replace(/,/g, ""))) && clean.replace(/,/g, "") !== ""
-        ? [clean.replace(/,/g, "")] : clean.split(",");
-      pieces.forEach(function (piece) {
-        if (piece === "") return;
-        var value = Number(piece);
-        if (isFinite(value)) values.push(negative ? -Math.abs(value) : value); else skipped++;
-      });
+      var clean = token.replace(/R(?=,|$)/gi, "").replace(/,+$/, "");
+      var v = parseNumber(clean, ";");
+      if (!isFinite(v)) v = parseNumber(clean, ",");
+      if (isFinite(v)) values.push(v); else skipped++;
     });
     return { values: values, skipped: skipped };
   }
 
-  function read() {
-    var setups = fromLog(+$("in-setups").value);
-    if (mode === "quick") {
-      var winRate = +$("in-winrate").value / 100, rr = +$("in-rr").value;
-      return { stats: statsFromWinRate(winRate, rr), trades: fromLog(+$("in-trades").value), setups: setups, unit: " R", digits: 2, error: "" };
-    }
-    var parsed = parseTrades($("in-pasted").value), n = parsed.values.length;
-    var note = n + (n === 1 ? " trade read." : " trades read.") + (parsed.skipped === 1 ? " Skipped 1 entry that is not a number."
-        : parsed.skipped ? " Skipped " + parsed.skipped + " entries that are not numbers." : "");
-    $("paste-note").textContent = n ? note + " Your trades stay in your browser." : "Use any unit, as long as it is the same for every trade. Your trades stay in your browser and are not uploaded.";
-    if (n < 10) return { error: n ? "Paste at least 10 trades. You have " + n + "." : "Paste your trades, or fill in the example, to see a result." };
+  function pasteInput() {
+    var parsed = parsePasted($("in-pasted").value), n = parsed.values.length;
+    $("paste-note").textContent = n
+      ? n + (n === 1 ? " trade read." : " trades read.") + (parsed.skipped ? " Skipped " + parsed.skipped + (parsed.skipped === 1 ? " entry that is not a number." : " entries that are not numbers.") : "")
+      : "Any unit works, as long as every trade uses the same one.";
+    if (n < 10) return { error: n ? "Paste at least 10 trades. You have " + n + "." : "Paste one result per line to see a verdict." };
     var stats = statsFromTrades(parsed.values);
     if (!(stats.sd > 0)) return { error: "Every trade has the same result, so there is nothing to measure." };
-    var size = Math.abs(stats.mean) >= 100 ? 0 : 2;
-    return { stats: stats, trades: n, setups: setups, unit: "", digits: size, error: "" };
+    return { stats: stats, values: parsed.values, before: null, trades: n, unit: "", digits: Math.abs(stats.mean) >= 100 ? 0 : 2, label: "Pasted trades" };
   }
 
-  function x(n) { return M.l + (Math.log(n) / Math.LN10 - 1) / 3 * PW; }
-  function y(v) { return M.t + (1 - v) * PH; }
+  function quickInput() {
+    var w = +$("in-winrate").value, rr = +$("in-rr").value, n = Math.round(+$("in-trades").value);
+    if (!(w >= 1 && w <= 99)) return { error: "Win rate must be between 1% and 99%." };
+    if (!(rr > 0)) return { error: "Average win ÷ average loss must be above zero." };
+    if (!(n >= 10)) return { error: "Enter at least 10 trades." };
+    return { stats: statsFromWinRate(w / 100, rr), values: null, trades: n, unit: "R", digits: 2, winRate: w / 100, rr: rr, label: "Quick check" };
+  }
 
-  function draw(s) {
-    layout();
-    var parts = [], i;
-    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
-      parts.push('<line class="grid-line" x1="' + M.l + '" x2="' + (W - M.r) + '" y1="' + y(v) + '" y2="' + y(v) + '"/>');
+  /* ---------- verdict and table ---------- */
+  function row(label, value, cls, small) {
+    return "<tr><th scope=\"row\">" + label + "</th><td" + (cls ? " class=\"" + cls + "\"" : "") + ">" + value + (small ? "<small>" + small + "</small>" : "") + "</td></tr>";
+  }
+  function signClass(v) { return v > 0 ? "pos" : v < 0 ? "neg" : ""; }
+
+  function update() {
+    var s = mode === "import" ? importInput() : mode === "paste" ? pasteInput() : quickInput();
+    var n = setups(), err = $("calc-error"), verdict = $("out-verdict");
+    err.textContent = s.error || "";
+    err.hidden = !s.error;
+    $("chart-equity").disabled = mode === "quick";
+    if (mode === "quick" && chartMode === "equity") setChart("proof", true);
+    if (s.error) {
+      view = null;
+      verdict.className = "state idle";
+      verdict.textContent = "Waiting for trades";
+      ["out-prob", "out-need"].forEach(function (id) { $(id).textContent = "–"; });
+      ["out-prob-sub", "out-need-sub", "verdict-source"].forEach(function (id) { $(id).textContent = ""; });
+      $("stats-body").innerHTML = "";
+      svg.innerHTML = "";
+      $("legend").innerHTML = "";
+      $("chart-cap").textContent = "";
+      return;
+    }
+    s.setups = n;
+    view = s;
+    var prob = edgeProbability(s.stats, s.trades, n), need = Math.ceil(tradesNeeded(s.stats, n, 0.95));
+    var luck = luckPerTrade(s.stats, s.trades, n);
+    if (!(s.stats.mean > 0)) { verdict.className = "state fail"; verdict.textContent = "Losing money"; }
+    else if (prob >= 0.95) { verdict.className = "state pass"; verdict.textContent = "Hard to explain by luck"; }
+    else if (prob >= 0.5) { verdict.className = "state wait"; verdict.textContent = "Promising, not proven"; }
+    else { verdict.className = "state fail"; verdict.textContent = "Could be luck"; }
+    $("verdict-source").textContent = s.label + " · " + n + (n === 1 ? " setup" : " setups");
+    $("out-prob").textContent = pct(prob);
+    $("out-prob-sub").textContent = "after counting " + n + (n === 1 ? " setup" : " setups");
+    $("out-need").textContent = isFinite(need) ? whole(need) : "never";
+    $("out-need-sub").textContent = !isFinite(need) ? "the average trade is not positive"
+      : s.trades >= need ? "you have " + whole(s.trades) + ": enough" : "you have " + whole(s.trades);
+
+    var html = "";
+    if (s.values) {
+      var sum = tradeSummary(s.values, s.before), u = s.unit, d = s.digits;
+      function share(x) { return isFinite(x) ? Math.round(x * 1000) / 10 + "%" : "–"; }
+      html += row("Trades", whole(sum.n));
+      html += row("Win rate", share(sum.winRate), "", sum.wins + " won · " + sum.losses + " lost · " + sum.breakevens + " breakeven");
+      html += row("Win rate without breakevens", share(sum.winRateDecided), "", "wins ÷ (wins + losses)");
+      html += row("Breakevens", whole(sum.breakevens) + " (" + share(sum.breakevens / sum.n) + ")", sum.breakevenCost < 0 ? "neg" : "",
+        sum.breakevenCost < 0 ? "flat before fees, cost " + money(sum.breakevenCost, u, d) + " after" : "flat trades");
+      html += row("Average win / loss", money(sum.avgWin, u, d) + " / " + money(sum.avgLoss, u, d), "", "payoff " + (isFinite(sum.payoff) ? sum.payoff.toFixed(2) : "–") + " to 1");
+      html += row("Average per trade", money(s.stats.mean, u, d, true), signClass(s.stats.mean));
+      html += row("Net result", money(sum.total, u, d, true), signClass(sum.total));
+      html += row("Profit factor", isFinite(sum.profitFactor) ? sum.profitFactor.toFixed(2) : sum.profitFactor > 0 ? "no losses" : "–");
+      html += row("Largest win / loss", money(sum.largestWin, u, d) + " / " + money(sum.largestLoss, u, d));
+      html += row("Longest losing streak", whole(sum.longestLosingStreak) + (sum.longestLosingStreak === 1 ? " trade" : " trades"));
+      html += row("Max drawdown", money(-sum.maxDrawdown, u, d), sum.maxDrawdown > 0 ? "neg" : "");
+      if (s.feesOn) html += row("Fees subtracted", money(s.fees, u, d));
+    } else {
+      html += row("Win rate / win ÷ loss", Math.round(s.winRate * 100) + "% / " + s.rr.toFixed(1));
+      html += row("Trades", whole(s.trades));
+      html += row("Average per trade", money(s.stats.mean, "R", 2, true), signClass(s.stats.mean));
+    }
+    html += row("Luck alone would average", money(luck, s.unit, s.digits, true), "", "per trade, best of " + n + (n === 1 ? " setup" : " setups"));
+    $("stats-body").innerHTML = html;
+    draw();
+  }
+
+  /* ---------- charts ---------- */
+  function niceStep(range, target) {
+    var raw = range / target, mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10)), r = raw / mag;
+    return (r <= 1 ? 1 : r <= 2 ? 2 : r <= 2.5 ? 2.5 : r <= 5 ? 5 : 10) * mag;
+  }
+  function compactMoney(v, unit) {
+    var a = Math.abs(v), s = a >= 1e6 ? num(a / 1e6, 1) + "M" : a >= 1e4 ? num(a / 1e3, 0) + "k" : a >= 1e3 ? num(a / 1e3, 1) + "k" : num(a, a < 10 && a % 1 ? 1 : 0);
+    var sign = v < 0 ? MINUS : "";
+    return unit === "$" ? sign + "$" + s : sign + s;
+  }
+
+  function frame() {
+    var narrow = chartBox.clientWidth > 0 && chartBox.clientWidth < 560;
+    var W = narrow ? 400 : 1000, H = narrow ? 260 : 300;
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    return { W: W, H: H, l: narrow ? 50 : 64, r: 14, t: 14, b: 34 };
+  }
+
+  function draw() {
+    if (!view) return;
+    if (chartMode === "equity" && view.values) drawEquity(); else drawProof();
+  }
+
+  function drawEquity() {
+    var v = view, f = frame(), values = v.values, n = values.length, eq = [0], i;
+    for (i = 0; i < n; i++) eq.push(eq[i] + values[i]);
+    // The luck line needs at least two trades to define a spread, so it starts at trade 2.
+    var luck = [0, NaN], lo = 0, hi = 0;
+    for (i = 2; i <= n; i++) luck.push(i * luckPerTrade(v.stats, i, v.setups));
+    eq.concat(luck).forEach(function (val) {
+      if (val < lo) lo = val;
+      if (val > hi) hi = val;
     });
-    [0, 0.5, 1].forEach(function (v) {
-      parts.push('<text class="tick" text-anchor="end" x="' + (M.l - 8) + '" y="' + (y(v) + 4) + '">' + (v * 100) + '%</text>');
+    if (hi === lo) hi = lo + 1;
+    var pad = (hi - lo) * 0.06;
+    lo -= pad; hi += pad;
+    var PW = f.W - f.l - f.r, PH = f.H - f.t - f.b;
+    function x(k) { return f.l + k / n * PW; }
+    function y(val) { return f.t + (hi - val) / (hi - lo) * PH; }
+    var parts = [], step = niceStep(hi - lo, 4), t;
+    for (t = Math.ceil(lo / step) * step; t <= hi; t += step) {
+      parts.push('<line class="gridline" x1="' + f.l + '" x2="' + (f.W - f.r) + '" y1="' + y(t).toFixed(1) + '" y2="' + y(t).toFixed(1) + '"/>');
+      parts.push('<text class="tick" text-anchor="end" x="' + (f.l - 8) + '" y="' + (y(t) + 4).toFixed(1) + '">' + compactMoney(t, v.unit) + "</text>");
+    }
+    parts.push('<line class="axis" x1="' + f.l + '" x2="' + (f.W - f.r) + '" y1="' + y(0).toFixed(1) + '" y2="' + y(0).toFixed(1) + '"/>');
+    var xs = niceStep(n, f.W < 600 ? 3 : 6);
+    for (t = 0; t <= n; t += xs) {
+      parts.push('<text class="tick" text-anchor="' + (t === 0 ? "start" : "middle") + '" x="' + x(t).toFixed(1) + '" y="' + (f.H - 12) + '">' + whole(t) + "</text>");
+    }
+    var dl = "", de = "";
+    for (i = 2; i <= n; i++) dl += (dl ? "L" : "M") + x(i).toFixed(1) + " " + y(luck[i]).toFixed(1);
+    for (i = 0; i <= n; i++) de += (de ? "L" : "M") + x(i).toFixed(1) + " " + y(eq[i]).toFixed(1);
+    parts.push('<path class="luck" d="' + dl + '"/>');
+    parts.push('<path class="you" d="' + de + '"/>');
+    parts.push('<line class="cross" id="cross" y1="' + f.t + '" y2="' + (f.H - f.b) + '" visibility="hidden"/>');
+    parts.push('<circle class="dot" cx="' + x(n).toFixed(1) + '" cy="' + y(eq[n]).toFixed(1) + '" r="5"/>');
+    svg.innerHTML = parts.join("");
+    plot = { kind: "equity", x: x, y: y, f: f, n: n, eq: eq, luck: luck };
+    var ahead = eq[n] > luck[n];
+    $("chart-cap").textContent = "Your running profit, trade by trade, against what the luckiest of " + v.setups + (v.setups === 1 ? " setup" : " setups") + " would have made by now with no edge at all.";
+    $("legend").innerHTML = '<span><i class="swatch"></i>You: ' + money(eq[n], v.unit, v.digits, true) + "</span>" +
+      '<span><i class="swatch luck"></i>Luck alone: ' + money(luck[n], v.unit, v.digits, true) + "</span>" +
+      '<span><i class="swatch zero"></i>Break-even</span>';
+    svg.setAttribute("aria-label", "Equity curve over " + whole(n) + " trades. You finish at " + money(eq[n], v.unit, v.digits, true) +
+      ", " + (ahead ? "above" : "below") + " the luck-alone line at " + money(luck[n], v.unit, v.digits, true) + ".");
+  }
+
+  function drawProof() {
+    var v = view, f = frame(), PW = f.W - f.l - f.r, PH = f.H - f.t - f.b, parts = [], i;
+    function x(n) { return f.l + (Math.log(n) / Math.LN10 - 1) / 3 * PW; }
+    function y(p) { return f.t + (1 - p) * PH; }
+    [0, 0.25, 0.5, 0.75, 1].forEach(function (p) {
+      parts.push('<line class="gridline" x1="' + f.l + '" x2="' + (f.W - f.r) + '" y1="' + y(p) + '" y2="' + y(p) + '"/>');
+      parts.push('<text class="tick" text-anchor="end" x="' + (f.l - 8) + '" y="' + (y(p) + 4) + '">' + p * 100 + "%</text>");
     });
     [10, 100, 1000, 10000].forEach(function (n) {
-      parts.push('<line class="axis-line" x1="' + x(n) + '" x2="' + x(n) + '" y1="' + y(0) + '" y2="' + (y(0) + 4) + '"/>');
-      parts.push('<text class="tick" text-anchor="' + (n === 10000 ? "end" : "middle") + '" x="' + x(n) + '" y="' + (y(0) + 17) + '">' + n.toLocaleString("en-US") + '</text>');
+      parts.push('<text class="tick" text-anchor="' + (n === 10 ? "start" : n === 10000 ? "end" : "middle") + '" x="' + x(n) + '" y="' + (f.H - 12) + '">' + whole(n) + "</text>");
     });
-    parts.push('<line class="axis-line" x1="' + M.l + '" x2="' + (W - M.r) + '" y1="' + y(0) + '" y2="' + y(0) + '"/>');
-    parts.push('<text class="axis-title" text-anchor="middle" x="' + (M.l + PW / 2) + '" y="' + (H - 3) + '">Trades logged (log scale)</text>');
-    parts.push('<line class="threshold" x1="' + M.l + '" x2="' + (W - M.r) + '" y1="' + y(0.95) + '" y2="' + y(0.95) + '"/>');
-    parts.push('<text class="threshold-label" x="' + (M.l + 6) + '" y="' + (y(0.95) + 14) + '">95%: proven</text>');
-    var seen = {}, d = "";
+    parts.push('<line class="thresh" x1="' + f.l + '" x2="' + (f.W - f.r) + '" y1="' + y(0.95) + '" y2="' + y(0.95) + '"/>');
+    parts.push('<text class="thresh-label" x="' + (f.l + 6) + '" y="' + (y(0.95) + 15) + '">95%: proven</text>');
+    var d = "", seen = {};
     for (i = 0; i <= 150; i++) {
       var n = Math.round(Math.pow(10, 1 + i / 50));
       if (seen[n]) continue;
-      seen[n] = true;
-      d += (d ? "L" : "M") + x(n).toFixed(1) + " " + y(edgeProbability(s.stats, n, s.setups)).toFixed(1);
+      seen[n] = 1;
+      d += (d ? "L" : "M") + x(n).toFixed(1) + " " + y(edgeProbability(v.stats, n, v.setups)).toFixed(1);
     }
-    parts.push('<path class="series" d="' + d + '"/>');
-    parts.push('<line class="cross" id="cross" x1="0" x2="0" y1="' + M.t + '" y2="' + y(0) + '" visibility="hidden"/>');
-    var at = Math.min(10000, Math.max(10, s.trades));
-    parts.push('<circle class="marker" cx="' + x(at) + '" cy="' + y(edgeProbability(s.stats, at, s.setups)) + '" r="6"/>');
+    parts.push('<path class="you" d="' + d + '"/>');
+    parts.push('<line class="cross" id="cross" y1="' + f.t + '" y2="' + (f.H - f.b) + '" visibility="hidden"/>');
+    var at = Math.min(10000, Math.max(10, v.trades)), p = edgeProbability(v.stats, at, v.setups);
+    parts.push('<circle class="dot" cx="' + x(at).toFixed(1) + '" cy="' + y(p).toFixed(1) + '" r="5"/>');
     svg.innerHTML = parts.join("");
+    plot = { kind: "proof", x: x, y: y, f: f };
+    $("chart-cap").textContent = "How the chance would change if you kept trading with the same results. The dot is where you are now.";
+    $("legend").innerHTML = '<span><i class="swatch"></i>Chance the edge is real</span><span><i class="swatch luck"></i>95%: proven</span>';
+    svg.setAttribute("aria-label", "Chance the edge is real against trades logged. At " + whole(v.trades) + " trades it is " + pct(p) + ".");
   }
 
-  function update() {
-    $("out-winrate").textContent = $("in-winrate").value + "%";
-    $("out-rr").textContent = (+$("in-rr").value).toFixed(1);
-    $("out-trades").textContent = whole(fromLog(+$("in-trades").value));
-    $("out-setups").textContent = String(fromLog(+$("in-setups").value));
-    // Two sliders are on a log scale: tell screen readers the value shown, not the position.
-    ["winrate", "rr", "trades", "setups"].forEach(function (k) {
-      $("in-" + k).setAttribute("aria-valuetext", $("out-" + k).textContent);
-    });
-    var s = read(), errEl = $("calc-error");
-    errEl.textContent = s.error || "";
-    errEl.hidden = !s.error;
-    if (s.error) {
-      view = null;
-      $("out-prob").textContent = "–";
-      setVerdict("wait", "", "Waiting for your trades");
-      $("out-mean").textContent = "–";
-      $("out-luck").textContent = "–";
-      $("out-need").textContent = "–";
-      svg.innerHTML = "";
-      svg.setAttribute("aria-label", CHART_LABEL);
-      return;
+  function hover(ev) {
+    if (!view || !plot) return;
+    var box = svg.getBoundingClientRect(), f = plot.f, px = (ev.clientX - box.left) / box.width * f.W, cross = document.getElementById("cross"), cx, cy, text;
+    if (plot.kind === "equity") {
+      var k = Math.round((px - f.l) / (f.W - f.l - f.r) * plot.n);
+      k = Math.max(1, Math.min(plot.n, k));
+      cx = plot.x(k); cy = plot.y(plot.eq[k]);
+      text = "Trade " + whole(k) + " · you " + money(plot.eq[k], view.unit, view.digits, true) + " · luck " + money(plot.luck[k], view.unit, view.digits, true);
+    } else {
+      var n = Math.round(Math.pow(10, 1 + (px - f.l) / (f.W - f.l - f.r) * 3));
+      n = Math.max(10, Math.min(10000, n));
+      var p = edgeProbability(view.stats, n, view.setups);
+      cx = plot.x(n); cy = plot.y(p);
+      text = whole(n) + " trades: " + pct(p);
     }
-    view = s;
-    var prob = edgeProbability(s.stats, s.trades, s.setups);
-    $("out-prob").textContent = pct(prob);
-    if (!(s.stats.mean > 0)) setVerdict("fail", "✕", "Losing on average");
-    else if (prob >= 0.95) setVerdict("pass", "✓", "Hard to explain by luck");
-    else if (prob >= 0.5) setVerdict("wait", "●", "Promising, not proven");
-    else setVerdict("fail", "✕", "Could easily be luck");
-    $("out-mean").innerHTML = signed(s.stats.mean, s.digits) + s.unit +
-      (mode === "paste" ? "<small>" + Math.round(s.stats.winRate * 100) + "% win rate</small>" : "");
-    $("out-luck").innerHTML = signed(luckPerTrade(s.stats, s.trades, s.setups), s.digits) + s.unit +
-      "<small>best of " + s.setups + (s.setups === 1 ? " setup" : " setups") + "</small>";
-    var need = Math.ceil(tradesNeeded(s.stats, s.setups, 0.95));
-    $("out-need").innerHTML = !isFinite(need) ? "none will<small>the average is not positive</small>"
-      : whole(need) + "<small>" + (s.trades >= need ? "you have enough" : "you have " + whole(s.trades)) + "</small>";
-    draw(s);
-    svg.setAttribute("aria-label", CHART_LABEL + ". At " + whole(s.trades) + " trades it is " + pct(prob) + ". " +
-      (isFinite(need) ? "It reaches 95% at about " + whole(need) + " trades."
-        : "It does not reach 95% because the average is not positive."));
-  }
-
-  function setMode(next) {
-    mode = next;
-    $("mode-quick").setAttribute("aria-pressed", String(next === "quick"));
-    $("mode-paste").setAttribute("aria-pressed", String(next === "paste"));
-    $("panel-quick").hidden = next !== "quick";
-    $("panel-paste").hidden = next !== "paste";
-    update();
-  }
-
-  chart.addEventListener("pointermove", function (ev) {
-    if (!view) return;
-    var box = svg.getBoundingClientRect();
-    var px = (ev.clientX - box.left) / box.width * W;
-    var n = Math.round(Math.pow(10, 1 + (px - M.l) / PW * 3));
-    n = Math.min(10000, Math.max(10, n));
-    var v = edgeProbability(view.stats, n, view.setups), cross = document.getElementById("cross");
-    if (cross) {
-      cross.setAttribute("x1", x(n));
-      cross.setAttribute("x2", x(n));
-      cross.setAttribute("visibility", "visible");
-    }
-    tip.textContent = whole(n) + " trades: " + pct(v);
-    tip.style.left = (x(n) / W * box.width) + "px";
-    tip.style.top = (y(v) / H * box.height) + "px";
+    if (cross) { cross.setAttribute("x1", cx); cross.setAttribute("x2", cx); cross.setAttribute("visibility", "visible"); }
+    tip.textContent = text;
+    tip.style.left = Math.min(Math.max(cx / f.W * box.width, 90), box.width - 90) + "px";
+    tip.style.top = (cy / f.H * box.height) + "px";
     tip.hidden = false;
-  });
-  chart.addEventListener("pointerleave", function () {
+  }
+  function unhover() {
     tip.hidden = true;
     var cross = document.getElementById("cross");
     if (cross) cross.setAttribute("visibility", "hidden");
-  });
+  }
 
-  $("mode-quick").addEventListener("click", function () { setMode("quick"); });
-  $("mode-paste").addEventListener("click", function () { setMode("paste"); });
-  $("load-example").addEventListener("click", function () {
-    $("in-pasted").value = EXAMPLE.join("\n");
+  /* ---------- wiring ---------- */
+  function setMode(next) {
+    mode = next;
+    ["import", "paste", "quick"].forEach(function (m) {
+      $("mode-" + m).setAttribute("aria-pressed", String(m === next));
+      $("pane-" + m).hidden = m !== next;
+    });
+    if (next !== "quick" && chartMode === "proof" && !$("chart-proof").dataset.chosen) setChart("equity", true);
     update();
+  }
+  function setChart(next, quiet) {
+    chartMode = next;
+    $("chart-equity").setAttribute("aria-pressed", String(next === "equity"));
+    $("chart-proof").setAttribute("aria-pressed", String(next === "proof"));
+    if (!quiet) { $("chart-proof").dataset.chosen = next === "proof" ? "1" : ""; draw(); }
+  }
+
+  $("mode-import").addEventListener("click", function () { setMode("import"); });
+  $("mode-paste").addEventListener("click", function () { setMode("paste"); });
+  $("mode-quick").addEventListener("click", function () { setMode("quick"); });
+  $("chart-equity").addEventListener("click", function () { setChart("equity"); });
+  $("chart-proof").addEventListener("click", function () { setChart("proof"); });
+  $("setups-dec").addEventListener("click", function () { $("in-setups").value = Math.max(1, setups() - 1); update(); });
+  $("setups-inc").addEventListener("click", function () { $("in-setups").value = Math.min(10000, setups() + 1); update(); });
+  $("load-example").addEventListener("click", function () {
+    loadText($("example-csv").textContent.trim(), "example-trades.csv", true);
   });
-  $("calc").addEventListener("input", update);
-  window.addEventListener("resize", function () { if (view) draw(view); });
+  $("in-file").addEventListener("change", function () { readFile(this.files && this.files[0]); this.value = ""; });
+  var drop = $("drop");
+  ["dragenter", "dragover"].forEach(function (type) {
+    drop.addEventListener(type, function (ev) { ev.preventDefault(); drop.classList.add("over"); });
+  });
+  ["dragleave", "drop"].forEach(function (type) {
+    drop.addEventListener(type, function () { drop.classList.remove("over"); });
+  });
+  drop.addEventListener("drop", function (ev) {
+    ev.preventDefault();
+    readFile(ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0]);
+  });
+  $("calc").addEventListener("input", function (ev) { if (ev.target.id !== "in-file") update(); });
+  $("calc").addEventListener("change", function (ev) { if (ev.target.tagName === "SELECT" || ev.target.type === "checkbox") update(); });
   $("calc").addEventListener("submit", function (ev) { ev.preventDefault(); });
-  update();
+  chartBox.addEventListener("pointermove", hover);
+  chartBox.addEventListener("pointerleave", unhover);
+  var resizeTimer = 0;
+  window.addEventListener("resize", function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 100); });
+
+  loadText($("example-csv").textContent.trim(), "example-trades.csv", true);
 })();
 </script>
 </body>

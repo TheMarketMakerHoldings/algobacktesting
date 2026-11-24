@@ -16,8 +16,9 @@ Try enough strategy variations and one of them will look brilliant by luck alone
 tell a real edge apart from an overfit one.
 
 **Not a programmer?** The [online check](https://themarketmakerholdings.github.io/algobacktesting/)
-asks one question: are you actually profitable, or just lucky? Enter a win rate and a number of
-trades, or paste your trade results.
+asks one question: are you actually profitable, or just lucky? Import a strategy's trades from
+TopstepX, Quantower, NinjaTrader or thinkorswim, paste them, or enter a win rate. It runs in
+the browser, and nothing is uploaded.
 
 | Question | Tool |
 | --- | --- |

@@ -1,7 +1,8 @@
 # Explainer 4: The website's "profitable or lucky" number
 
 Page: `docs/index.html`
-Tests: `tests/test_site.py` (the page's math against the library) and
+Tests: `tests/test_site.py` (the page's math against the library),
+`tests/test_site_import.py` (reading trade exports) and
 `tests/test_luck_calibration.py` (how often it gives a false alarm)
 
 ## The question it answers
@@ -9,8 +10,9 @@ Tests: `tests/test_site.py` (the page's math against the library) and
 "My trading results are positive. How likely is it that I have a real edge, and not a lucky
 streak?"
 
-It answers that from four things a trader already knows: win rate, average win ÷ average
-loss, number of trades, and how many setups they tried before settling on this one.
+It answers from the trader's own trade history (an exported CSV file or pasted results),
+or, in the quick check, from four numbers they already know: win rate, average win ÷
+average loss, number of trades, and how many setups they tried before this one.
 
 ## The idea, in words
 
@@ -35,7 +37,7 @@ results against *that* instead of zero. This is the Deflated Sharpe Ratio.
 The same formula solved for the number of trades gives "trades needed to prove it": the
 count at which the answer reaches 95%.
 
-## Worked example (the page's starting values)
+## Worked example (the quick check's default values)
 
 45% win rate, 1.5 reward-to-risk, 120 trades, 5 setups tried.
 
@@ -58,6 +60,25 @@ count at which the answer reaches 95%.
    Ratio needs the variance of the trial Sharpe ratios. A trader doesn't know it, so the
    page uses 1 ÷ (trades − 1), the variance of a Sharpe ratio measured on that many trades
    when the true value is zero.
+
+## Reading a trade file
+
+The import reads the file in the browser; nothing is uploaded. It:
+
+- **finds the profit/loss column by its name**, preferring one marked net (after fees),
+  and never a running total, a percentage, a daily or open P&L, or a price;
+- **subtracts fees** when a fee or commission column exists and the P&L column is not
+  marked net, because a breakeven trade still pays commission. The user can switch it off;
+- **combines fills into trades** when the file has a position ID (Quantower), and pairs
+  buys and sells first in, first out when it only lists fills (thinkorswim);
+- **separates breakevens**: a trade that was flat *before* fees is a breakeven, reported
+  apart from wins and losses, together with what the breakevens cost in fees. The win rate
+  is shown both with and without them;
+- **filters to one strategy**, so a file with several setups is judged one setup at a time.
+
+Only Quantower's column names come from a published list. The TopstepX, NinjaTrader and
+thinkorswim samples in `tests/exports/` are modelled on secondhand descriptions, so every
+choice the importer makes is shown on the page and can be changed.
 
 ## How we know it behaves
 
