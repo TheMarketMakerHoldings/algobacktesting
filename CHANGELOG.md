@@ -62,6 +62,8 @@ All notable changes are listed here. The format follows
   synthetic random-walk market (`docs/example-bars.csv`) and two strategies traded on it.
   `tests/test_site_lab.py` checks the replay against a separate Python implementation.
 - The website moved to https://algobacktesting.com/.
+- "Save as PDF" on the website: a one-page report of the verdict and breakdown, with the
+  equity chart, the data used and the date.
 - Website redesigned as a light, corporate product page. It now loads nothing from other
   sites (system fonts, no third-party scripts) and carries a Content-Security-Policy that
   only allows network requests to the site itself, so a visitor's files cannot be sent

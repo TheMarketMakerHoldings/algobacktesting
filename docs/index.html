@@ -273,6 +273,31 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
 .footer .about p { font-size: 14px; max-width: 30em; margin-top: 12px; }
 .footer .legal { margin-top: 40px; padding-top: 22px; border-top: 1px solid #3a3c5c; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; font-size: 13px; }
 
+/* Print and "Save as PDF": the check's results only, on white, with a short header. */
+.print-only { display: none; }
+@media print {
+  @page { margin: 14mm; }
+  body { font-size: 11pt; color: #000; }
+  .topbar, .hero, .facts, #lab, #how, #export, #developers, .footer, .skip, noscript,
+  .toggles, .section-head, #pane-import .drop, #load-example, #print-report, .chart-cap, .tip { display: none !important; }
+  .print-only { display: block; margin-bottom: 10mm; }
+  .print-only h1 { font: 400 20pt/1.2 var(--serif); color: #000; }
+  .print-only p { font-size: 9.5pt; color: #333; margin-top: 2mm; }
+  .section { padding: 0 !important; background: #fff !important; }
+  .wrap { max-width: none; padding: 0; }
+  .desk { display: block !important; }
+  .desk > .card:first-child { display: none !important; }
+  .card { box-shadow: none; border: 1px solid #999; border-radius: 6px; }
+  .headline, .state, .chart-card { break-inside: avoid; }
+  .card-body { padding: 4mm 5mm; gap: 3mm; }
+  .stats { font-size: 10pt; }
+  .stats th, .stats td { padding: 1.6mm 0; }
+  .big { font-size: 26pt; }
+  .chart-card { margin-top: 6mm; }
+  .state, .headline > div { border: 1px solid #999; }
+  a { color: #000; text-decoration: none; }
+}
+
 @media (max-width: 960px) {
   .hero .wrap, .desk, .lab-card, .dev { grid-template-columns: minmax(0, 1fr); }
   .lab-inputs { border-right: 0; border-bottom: 1px solid var(--line); }
@@ -352,6 +377,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         <div class="dots center" aria-hidden="true"></div>
         <p>The page opens on a made-up example. Drop your own export to replace it.</p>
       </div>
+      <div class="print-only"><h1>Strategy check · algobacktesting.com</h1><p id="print-meta">Statistics about past results. Not financial advice.</p></div>
       <noscript><p class="error">This page needs JavaScript to work out your result. Nothing you enter leaves your browser.</p></noscript>
 
       <div class="desk">
@@ -411,7 +437,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         </section>
 
         <section class="card" aria-labelledby="verdict-title">
-          <div class="card-head"><h3 id="verdict-title">Verdict</h3><span class="sub" id="verdict-source"></span></div>
+          <div class="card-head"><h3 id="verdict-title">Verdict</h3><span class="sub" id="verdict-source"></span><button type="button" class="linkbtn" id="print-report">Save as PDF</button></div>
           <div class="card-body">
             <div role="status" class="card-body" style="padding:0;gap:12px">
               <div class="state idle" id="out-verdict">Waiting for trades</div>
@@ -2170,6 +2196,16 @@ function excursionSummary(aligned, bars, tick) {
   $("chart-proof").addEventListener("click", function () { setChart("proof"); });
   $("setups-dec").addEventListener("click", function () { $("in-setups").value = Math.max(1, setups() - 1); update(); });
   $("setups-inc").addEventListener("click", function () { $("in-setups").value = Math.min(10000, setups() + 1); update(); });
+  $("print-report").addEventListener("click", function () {
+    var when = new Date();
+    var filter = $("sel-filter"), picked = filter.selectedIndex > 0 ? filter.options[filter.selectedIndex].textContent : "all trades";
+    var what = mode === "import" && source ? (source.example ? "the example file" : source.name) + ", " + picked
+      : mode === "paste" ? "pasted trades" : "quick check";
+    $("print-meta").textContent = "Data: " + what + ". Setups tried: " + setups() + ". Printed " +
+      when.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) +
+      ". Statistics about past results, computed in the browser. Not financial advice.";
+    window.print();
+  });
   $("load-example").addEventListener("click", function () {
     loadText($("example-csv").textContent.trim(), "example-trades.csv", true);
   });
