@@ -366,6 +366,55 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
 .slice-bar.pos { background: var(--gain); }
 .slice-bar.neg { background: var(--loss); }
 
+/* Motion. Results arrive the way they are worked out: lines draw from the first trade to the
+   last, numbers count to their value, sections rise into view, and the top bar marks where
+   the reader is. Movement only runs for visitors whose system allows it, and nothing is
+   hidden from a visitor without JavaScript. */
+.hero { position: relative; isolation: isolate; }
+.hero::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; background-image: radial-gradient(circle, rgba(35, 36, 58, 0.11) 1.1px, transparent 1.5px); background-size: 22px 22px; -webkit-mask-image: radial-gradient(ellipse 48% 75% at 76% 50%, #000 10%, transparent 72%); mask-image: radial-gradient(ellipse 48% 75% at 76% 50%, #000 10%, transparent 72%); }
+@media (max-width: 960px) {
+  /* One column: the dots sit behind the sample card, below the text, not behind the words. */
+  .hero::before { -webkit-mask-image: radial-gradient(ellipse 90% 30% at 50% 84%, #000 10%, transparent 72%); mask-image: radial-gradient(ellipse 90% 30% at 50% 84%, #000 10%, transparent 72%); }
+}
+.sample-plot { position: relative; }
+.live { position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--navy); box-shadow: 0 0 0 3px var(--white); pointer-events: none; }
+.live::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: var(--navy); opacity: 0; }
+.topbar { transition: box-shadow 0.25s ease; }
+.topbar.scrolled { box-shadow: 0 6px 22px rgba(35, 36, 58, 0.22); }
+.nav a { transition: border-color 0.2s ease; }
+.nav a[aria-current="true"] { border-bottom-color: var(--mint); }
+.pill, .toggles button, .drop, .state, .steps li { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.25s ease, transform 0.2s ease; }
+.meter span { transition: width 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+@media (prefers-reduced-motion: no-preference) {
+  .hero .eyebrow, .hero h1, .hero .dots, .hero .lede, .hero .actions, .sample { animation: rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .hero h1 { animation-delay: 0.05s; }
+  .hero .dots { animation-delay: 0.1s; }
+  .hero .lede { animation-delay: 0.15s; }
+  .hero .lede + .lede { animation-delay: 0.2s; }
+  .hero .actions { animation-delay: 0.25s; }
+  .sample { animation-delay: 0.12s; }
+  .hero::before { animation: drift 40s linear infinite; }
+  .live { animation: pop 0.35s 1.05s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .live::after { animation: ping 2.4s 1.4s ease-out infinite; }
+  .draw { animation: draw 1.1s cubic-bezier(0.35, 0.6, 0.25, 1) both; }
+  .late { animation: fade 0.35s 0.95s ease both; }
+  .pill:hover { transform: translateY(-1px); }
+  .pill:active, .pill:disabled:hover { transform: none; }
+  .steps li:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(35, 36, 58, 0.09); }
+  .drop.over { transform: scale(1.01); }
+  .state.bump::before { animation: ring 0.9s ease-out; }
+  .motion .reveal { opacity: 0; transform: translateY(18px); }
+  .motion .reveal.in { opacity: 1; transform: none; transition: opacity 0.6s ease var(--d, 0s), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) var(--d, 0s); }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pop { from { opacity: 0; transform: scale(0.3); } to { opacity: 1; transform: none; } }
+@keyframes ping { 0% { opacity: 0.45; transform: scale(1); } 70%, 100% { opacity: 0; transform: scale(3.4); } }
+@keyframes ring { from { box-shadow: 0 0 0 0 currentColor; } to { box-shadow: 0 0 0 10px transparent; } }
+@keyframes drift { from { background-position: 0 0; } to { background-position: 22px 22px; } }
+/* Each line is uncovered from left to right, trade by trade. */
+@keyframes draw { from { clip-path: inset(-10% 100% -10% -2%); } to { clip-path: inset(-10% -2% -10% -2%); } }
+
 /* Print and "Save as PDF": the check's results only, on white, with a short header. */
 .print-only { display: none; }
 @media print {
@@ -389,6 +438,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
   .chart-card { margin-top: 6mm; }
   .state, .headline > div { border: 1px solid #999; }
   a { color: #000; text-decoration: none; }
+  .motion .reveal, .draw, .late { opacity: 1 !important; transform: none !important; animation: none !important; }
 }
 
 @media (max-width: 960px) {
@@ -408,6 +458,8 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
   .row2, .row3, .headline, .headline.three { grid-template-columns: minmax(0, 1fr); }
   .footer .cols { grid-template-columns: minmax(0, 1fr); }
   .card-head, .card-body, .chart-wrap { padding-left: 16px; padding-right: 16px; }
+  .sample { padding: 18px; }
+  .sample-nums b { font-size: 1.45rem; }
 }
 </style>
 </head>
@@ -454,7 +506,10 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
           <div><span class="k">Trades</span><b id="hs-trades">&ndash;</b></div>
           <div><span class="k">Net after fees</span><b id="hs-net">&ndash;</b></div>
         </div>
-        <svg class="sample-chart" id="hs-chart" viewBox="0 0 400 130" preserveAspectRatio="none" role="img" aria-label="Sample running profit against luck alone"></svg>
+        <div class="sample-plot">
+          <svg class="sample-chart" id="hs-chart" viewBox="0 0 400 130" preserveAspectRatio="none" role="img" aria-label="Sample running profit against luck alone"></svg>
+          <span class="live" id="hs-live" aria-hidden="true" hidden></span>
+        </div>
         <figcaption id="sample-cap" class="note">Solid line: the example strategy's running profit. Dashed: what the best of its 5 setups would typically have made by luck alone. Worked out live by the same code that checks your file.</figcaption>
       </figure>
     </div>
@@ -2980,6 +3035,57 @@ function describeRule(rule) {
     return v >= 1 ? Math.min(v, 10000) : 1;
   }
 
+  /* ---------- motion ---------- */
+  // Off when the visitor's system asks for less motion; every helper then shows the final
+  // state at once.
+  var motionOK = !!window.requestAnimationFrame && !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  // Shows `text` in `el`, counting its number up (or down) from the one shown before, or from
+  // zero the first time. Only the number moves; the words around it stay put. Inside a live
+  // region (`live`), screen readers are given the final text only, never the moving digits.
+  function countTo(el, text, live, ms) {
+    var m = /\d[\d,]*(?:\.\d+)?/.exec(text), prev = el.getAttribute("data-shown"), was = prev && /\d[\d,]*(?:\.\d+)?/.exec(prev);
+    if (prev === text && el.textContent) return; // unchanged: let any count already running finish
+    var running = el._count ? el._at : NaN; // a count cut short carries on from where it was
+    if (el._count) cancelAnimationFrame(el._count);
+    el._count = 0;
+    el.setAttribute("data-shown", text);
+    var head = m ? text.slice(0, m.index) : "", tail = m ? text.slice(m.index + m[0].length) : "";
+    // A change of form ("41%" to "never", "+$5" to "−$5") is shown at once, not counted.
+    var same = was && prev.slice(0, was.index) === head && prev.slice(was.index + was[0].length) === tail;
+    if (!motionOK || !m || (was && !same)) { el.textContent = text; return; }
+    var to = parseFloat(m[0].replace(/,/g, "")), from = !same ? 0 : isFinite(running) ? running : parseFloat(was[0].replace(/,/g, ""));
+    var digits = (m[0].split(".")[1] || "").length, show = el, start = 0, span = ms || (same ? 450 : 800);
+    if (live) {
+      el.textContent = "";
+      el.appendChild(Object.assign(document.createElement("span"), { className: "visually-hidden", textContent: text }));
+      show = el.appendChild(document.createElement("span"));
+      show.setAttribute("aria-hidden", "true");
+    }
+    function shown(v) { return head + v.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits }) + tail; }
+    function step(now) {
+      if (!start) start = now;
+      var t = Math.min(1, (now - start) / span), e = 1 - Math.pow(1 - t, 3);
+      el._at = from + (to - from) * e;
+      show.textContent = t < 1 ? shown(el._at) : text;
+      el._count = t < 1 ? requestAnimationFrame(step) : 0;
+    }
+    show.textContent = shown(from);
+    el._count = requestAnimationFrame(step);
+  }
+  // Restarts a one-off animation class on an element.
+  function replay(el, cls) {
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+  }
+  // Marks a verdict pill and pulses its dot when the verdict changes.
+  function setState(el, cls, text) {
+    var changed = el.textContent !== text;
+    el.className = "state " + cls;
+    el.textContent = text;
+    if (changed && motionOK && cls !== "idle") replay(el, "bump");
+  }
+
   /* ---------- importing a file ---------- */
   function addOption(select, value, label) {
     var o = document.createElement("option");
@@ -3154,9 +3260,9 @@ function describeRule(rule) {
     if (s.error) {
       view = null;
       refreshShare();
-      verdict.className = "state idle";
-      verdict.textContent = "Waiting for trades";
-      ["out-prob", "out-need"].forEach(function (id) { $(id).textContent = "–"; });
+      setState(verdict, "idle", "Waiting for trades");
+      ["out-prob", "out-need"].forEach(function (id) { countTo($(id), "–"); });
+      drawnKey = "";
       ["out-prob-sub", "out-need-sub", "verdict-source"].forEach(function (id) { $(id).textContent = ""; });
       $("stats-body").innerHTML = "";
       svg.innerHTML = "";
@@ -3175,14 +3281,14 @@ function describeRule(rule) {
     var prob = edgeProbability(s.stats, s.trades, n), need = Math.ceil(tradesNeeded(s.stats, n, 0.95));
     verdictProb = prob;
     var luck = luckPerTrade(s.stats, s.trades, n);
-    if (!(s.stats.mean > 0)) { verdict.className = "state fail"; verdict.textContent = "Losing money"; }
-    else if (prob >= 0.95) { verdict.className = "state pass"; verdict.textContent = "Hard to explain by luck"; }
-    else if (prob >= 0.5) { verdict.className = "state wait"; verdict.textContent = "Promising, not proven"; }
-    else { verdict.className = "state fail"; verdict.textContent = "Could be luck"; }
+    if (!(s.stats.mean > 0)) setState(verdict, "fail", "Losing money");
+    else if (prob >= 0.95) setState(verdict, "pass", "Hard to explain by luck");
+    else if (prob >= 0.5) setState(verdict, "wait", "Promising, not proven");
+    else setState(verdict, "fail", "Could be luck");
     $("verdict-source").textContent = s.label + " · " + n + (n === 1 ? " setup" : " setups");
-    $("out-prob").textContent = pct(prob);
+    countTo($("out-prob"), pct(prob), true);
     $("out-prob-sub").textContent = "after counting " + n + (n === 1 ? " setup" : " setups");
-    $("out-need").textContent = isFinite(need) ? whole(need) : "never";
+    countTo($("out-need"), isFinite(need) ? whole(need) : "never", true);
     $("out-need-sub").textContent = !isFinite(need) ? "the average trade is not positive"
       : s.trades >= need ? "you have " + whole(s.trades) + ": enough" : "you have " + whole(s.trades);
 
@@ -3245,8 +3351,14 @@ function describeRule(rule) {
     return { W: W, H: H, l: narrow ? 50 : 64, r: 14, t: 14, b: 34 };
   }
 
+  // The lines draw themselves only when what they show changes (other trades, the other
+  // chart), not when the window is resized or the setups count is nudged.
+  var drawnKey = "", drawIn = false;
   function draw() {
     if (!view) return;
+    var key = chartMode + "|" + mode + "|" + (view.values ? view.label + "|" + view.trades + "|" + view.stats.mean : "");
+    drawIn = motionOK && key !== drawnKey;
+    drawnKey = key;
     if (chartMode === "equity" && view.values) drawEquity(); else drawProof();
   }
 
@@ -3279,10 +3391,9 @@ function describeRule(rule) {
     var dl = "", de = "";
     for (i = 2; i <= n; i++) dl += (dl ? "L" : "M") + x(i).toFixed(1) + " " + y(luck[i]).toFixed(1);
     for (i = 0; i <= n; i++) de += (de ? "L" : "M") + x(i).toFixed(1) + " " + y(eq[i]).toFixed(1);
-    parts.push('<path class="luck" d="' + dl + '"/>');
-    parts.push('<path class="you" d="' + de + '"/>');
+    parts.push('<g' + (drawIn ? ' class="draw"' : "") + '><path class="luck" d="' + dl + '"/><path class="you" d="' + de + '"/></g>');
     parts.push('<line class="cross" id="cross" y1="' + f.t + '" y2="' + (f.H - f.b) + '" visibility="hidden"/>');
-    parts.push('<circle class="dot" cx="' + x(n).toFixed(1) + '" cy="' + y(eq[n]).toFixed(1) + '" r="5"/>');
+    parts.push('<circle class="dot' + (drawIn ? " late" : "") + '" cx="' + x(n).toFixed(1) + '" cy="' + y(eq[n]).toFixed(1) + '" r="5"/>');
     svg.innerHTML = parts.join("");
     plot = { kind: "equity", x: x, y: y, f: f, n: n, eq: eq, luck: luck };
     var ahead = eq[n] > luck[n];
@@ -3316,17 +3427,18 @@ function describeRule(rule) {
       seen[n] = 1;
       d += (d ? "L" : "M") + x(n).toFixed(1) + " " + y(edgeProbability(v.stats, n, v.setups)).toFixed(1);
     }
-    parts.push('<path class="you" d="' + d + '"/>');
+    parts.push('<g' + (drawIn ? ' class="draw"' : "") + '><path class="you" d="' + d + '"/></g>');
     parts.push('<line class="cross" id="cross" y1="' + f.t + '" y2="' + (f.H - f.b) + '" visibility="hidden"/>');
     var at = Math.min(10000, Math.max(10, v.trades)), p = edgeProbability(v.stats, at, v.setups);
-    var need = Math.ceil(tradesNeeded(v.stats, v.setups, 0.95));
+    var need = Math.ceil(tradesNeeded(v.stats, v.setups, 0.95)), late = drawIn ? ' class="late"' : "";
+    parts.push("<g" + late + ">");
     if (isFinite(need) && need > v.trades && need <= 10000) {
       // Where the curve crosses 95%: the number of trades that would prove the edge.
       parts.push('<circle class="dot goal" cx="' + x(need).toFixed(1) + '" cy="' + y(0.95).toFixed(1) + '" r="5"/>');
       parts.push('<text class="thresh-label" text-anchor="' + (x(need) > f.W - 160 ? "end" : "start") + '" x="' + (x(need) + (x(need) > f.W - 160 ? -10 : 10)).toFixed(1) +
         '" y="' + (y(0.95) - 10).toFixed(1) + '">proven at about ' + whole(need) + " trades</text>");
     }
-    parts.push('<circle class="dot" cx="' + x(at).toFixed(1) + '" cy="' + y(p).toFixed(1) + '" r="5"/>');
+    parts.push('<circle class="dot" cx="' + x(at).toFixed(1) + '" cy="' + y(p).toFixed(1) + '" r="5"/></g>');
     svg.innerHTML = parts.join("");
     plot = { kind: "proof", x: x, y: y, f: f };
     $("chart-cap").textContent = !(v.stats.mean > 0)
@@ -3722,7 +3834,7 @@ function describeRule(rule) {
         var tile = document.createElement("div");
         tile.className = "kpi";
         tile.appendChild(Object.assign(document.createElement("span"), { className: "k", textContent: k[0] }));
-        tile.appendChild(Object.assign(document.createElement("b"), { textContent: k[1] }));
+        countTo(tile.appendChild(document.createElement("b")), k[1], true);
         tile.appendChild(Object.assign(document.createElement("span"), { className: "sub", textContent: k[2] }));
         kpis.appendChild(tile);
       });
@@ -3752,7 +3864,7 @@ function describeRule(rule) {
     function y(v) { return (6 + (hi - v) / (hi - lo) * 108).toFixed(1); }
     var d = eq.map(function (v, k) { return (k ? "L" : "M") + x(k) + " " + y(v); }).join("");
     svg.innerHTML = '<line class="zero" x1="0" x2="600" y1="' + y(0) + '" y2="' + y(0) + '"/>' +
-      '<path class="area" d="' + d + "L600 " + y(0) + "L0 " + y(0) + 'Z"/><path class="line" d="' + d + '"/>';
+      "<g" + (motionOK ? ' class="draw"' : "") + '><path class="area" d="' + d + "L600 " + y(0) + "L0 " + y(0) + 'Z"/><path class="line" d="' + d + '"/></g>';
     svg.style.display = "";
     svg.setAttribute("aria-label", "Running profit of the tested rule, ending at " + money(eq[eq.length - 1], "$", 0, true) + ".");
   }
@@ -4115,7 +4227,7 @@ function describeRule(rule) {
   function runProp() {
     var out = $("prop-findings"), ids = ["prop-pass", "prop-fail", "prop-days-out"];
     function idle(msg) {
-      ids.forEach(function (id) { $(id).textContent = "\u2013"; });
+      ids.forEach(function (id) { countTo($(id), "\u2013"); });
       ["m-pass", "m-fail", "m-open"].forEach(function (c) { document.querySelector("#prop-meter ." + c).style.width = "0"; });
       out.textContent = "";
       out.appendChild(Object.assign(document.createElement("p"), { className: "note", textContent: msg }));
@@ -4141,9 +4253,9 @@ function describeRule(rule) {
     var opts = { runs: 5000, seed: 20261124, perDay: perDay, tradesPerDay: propNumber("prop-perday", 1, 3) };
     var real = simulateEvaluation(view.values, rules, opts);
     var none = simulateEvaluation(view.values, rules, Object.assign({}, opts, { zeroEdge: true }));
-    $("prop-pass").textContent = pct(real.pass);
-    $("prop-fail").textContent = pct(real.fail);
-    $("prop-days-out").textContent = isFinite(real.medianDays) ? whole(real.medianDays) : "\u2013";
+    countTo($("prop-pass"), pct(real.pass), true);
+    countTo($("prop-fail"), pct(real.fail), true);
+    countTo($("prop-days-out"), isFinite(real.medianDays) ? whole(real.medianDays) : "\u2013", true);
     document.querySelector("#prop-meter .m-pass").style.width = (real.pass * 100).toFixed(2) + "%";
     document.querySelector("#prop-meter .m-fail").style.width = (real.fail * 100).toFixed(2) + "%";
     document.querySelector("#prop-meter .m-open").style.width = (real.open * 100).toFixed(2) + "%";
@@ -4181,11 +4293,12 @@ function describeRule(rule) {
     var v = view;
     if (!v || !v.values) return;
     var prob = edgeProbability(v.stats, v.trades, v.setups), sum = tradeSummary(v.values, v.before), state = $("hs-verdict");
-    state.className = "state " + (!(v.stats.mean > 0) ? "fail" : prob >= 0.95 ? "pass" : prob >= 0.5 ? "wait" : "fail");
-    state.textContent = !(v.stats.mean > 0) ? "Losing money" : prob >= 0.95 ? "Hard to explain by luck" : prob >= 0.5 ? "Promising, not proven" : "Could be luck";
-    $("hs-prob").textContent = pct(prob);
-    $("hs-trades").textContent = whole(v.trades);
-    $("hs-net").textContent = money(sum.total, v.unit, 0, true);
+    setState(state, !(v.stats.mean > 0) ? "fail" : prob >= 0.95 ? "pass" : prob >= 0.5 ? "wait" : "fail",
+      !(v.stats.mean > 0) ? "Losing money" : prob >= 0.95 ? "Hard to explain by luck" : prob >= 0.5 ? "Promising, not proven" : "Could be luck");
+    // The numbers count up while the line draws, so they finish together.
+    countTo($("hs-prob"), pct(prob), false, 1100);
+    countTo($("hs-trades"), whole(v.trades), false, 1100);
+    countTo($("hs-net"), money(sum.total, v.unit, 0, true), false, 1100);
     var n = v.values.length, eq = [0], luck = [0, 0], i;
     for (i = 0; i < n; i++) eq.push(eq[i] + v.values[i]);
     for (i = 2; i <= n; i++) luck.push(i * luckPerTrade(v.stats, i, v.setups));
@@ -4194,7 +4307,14 @@ function describeRule(rule) {
     function x(k) { return (k / n * 400).toFixed(1); }
     function y(val) { return (8 + (hi - val) / (hi - lo) * 114).toFixed(1); }
     function path(list, from) { var d = ""; for (var k = from; k <= n; k++) d += (d ? "L" : "M") + x(k) + " " + y(list[k]); return d; }
-    $("hs-chart").innerHTML = '<line class="zero" x1="0" x2="400" y1="' + y(0) + '" y2="' + y(0) + '"/><path class="luck" d="' + path(luck, 2) + '"/><path class="you" d="' + path(eq, 0) + '"/>';
+    $("hs-chart").innerHTML = '<line class="zero" x1="0" x2="400" y1="' + y(0) + '" y2="' + y(0) + '"/><g' + (motionOK ? ' class="draw"' : "") + '><path class="luck" d="' +
+      path(luck, 2) + '"/><path class="you" d="' + path(eq, 0) + '"/></g>';
+    // A dot where the running profit ends, placed over the chart (the chart stretches to fit,
+    // which would turn a dot drawn inside it into an oval).
+    var live = $("hs-live");
+    live.style.left = "100%";
+    live.style.top = (y(eq[n]) / 130 * 100).toFixed(2) + "%";
+    live.hidden = false;
     // The same example, step by step, for "How it works".
     var need = Math.ceil(tradesNeeded(v.stats, v.setups, 0.95)), fill = {
       n: whole(v.trades), mean: money(v.stats.mean, v.unit, 2, true), sd: money(v.stats.sd, v.unit, 2), sharpe: v.stats.sharpe.toFixed(3),
@@ -4416,6 +4536,59 @@ function describeRule(rule) {
   chartBox.addEventListener("pointerleave", unhover);
   var resizeTimer = 0;
   window.addEventListener("resize", function () { clearTimeout(resizeTimer); resizeTimer = setTimeout(draw, 100); });
+
+  // The top bar casts a shadow once the page scrolls under it.
+  var topbar = document.querySelector(".topbar");
+  function shadeBar() { topbar.classList.toggle("scrolled", window.scrollY > 4); }
+  window.addEventListener("scroll", shadeBar, { passive: true });
+  shadeBar();
+  if ("IntersectionObserver" in window) {
+    // The top bar marks the section in the middle of the screen.
+    var navFor = {};
+    Array.prototype.forEach.call(document.querySelectorAll('.nav a[href^="#"]'), function (a) { navFor[a.getAttribute("href").slice(1)] = a; });
+    var spy = new IntersectionObserver(function (seen) {
+      seen.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        Object.keys(navFor).forEach(function (id) {
+          if (id === e.target.id) navFor[id].setAttribute("aria-current", "true"); else navFor[id].removeAttribute("aria-current");
+        });
+      });
+    }, { rootMargin: "-45% 0px -50% 0px" });
+    Array.prototype.forEach.call(document.querySelectorAll("main > section, main > .section"), function (s) { spy.observe(s); });
+    // The chart draws itself again the first time it comes into view.
+    var chartSeen = new IntersectionObserver(function (seen) {
+      if (!seen.some(function (e) { return e.isIntersecting; })) return;
+      chartSeen.disconnect();
+      drawnKey = "";
+      draw();
+    }, { rootMargin: "0px 0px -15% 0px" });
+    chartSeen.observe(chartBox);
+    // Sections rise into view as the reader reaches them; cards in a row follow one another.
+    if (motionOK) {
+      document.documentElement.classList.add("motion");
+      var reveal = new IntersectionObserver(function (seen) {
+        seen.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          var el = e.target;
+          reveal.unobserve(el);
+          el.classList.add("in");
+          // Once in place, the element goes back to its own transitions (hover and so on).
+          setTimeout(function () { el.classList.remove("reveal", "in"); el.style.removeProperty("--d"); }, 1300);
+        });
+      }, { rootMargin: "0px 0px -6% 0px" });
+      var groups = [".facts .fact", ".section-head", ".desk > .card", ".chart-card", ".saved-card", "main .section > .wrap > .card", ".b-card", ".steps li", ".faq", ".dev > *"];
+      groups.forEach(function (sel) {
+        Array.prototype.forEach.call(document.querySelectorAll(sel), function (el) {
+          if (el.classList.contains("reveal")) return;
+          el.classList.add("reveal");
+          // Siblings in a row or grid follow one another by a fraction of a second.
+          var rank = Array.prototype.indexOf.call(el.parentNode.children, el);
+          el.style.setProperty("--d", Math.min(rank, 4) * 0.08 + "s");
+          reveal.observe(el);
+        });
+      });
+    }
+  }
 
   loadSaved();
   renderSaved();
