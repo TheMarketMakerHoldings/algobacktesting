@@ -17,6 +17,18 @@ All notable changes are listed here. The format follows
 ### Changed
 
 - The website's developer section installs from PyPI: `pip install algobacktesting`.
+- Website motion: charts draw from the first trade to the last when their data changes; the
+  verdict, simulator and builder numbers count to their value (screen readers are given the
+  final value only); sections rise into view; the top bar marks the section on screen. All of
+  it is off when the visitor's system asks for less motion, and nothing is hidden without
+  JavaScript or in print.
+
+### Fixed
+
+- A link to a section below the stop lab (such as `#builder`) landed several hundred pixels
+  too high, because the lab grew above it once its example bars loaded. The page now returns
+  to the linked section until the visitor scrolls, and in-page links glide only after the
+  page has opened.
 
 ## [0.1.0] - 2026-11-24
 

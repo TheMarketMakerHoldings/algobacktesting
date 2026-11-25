@@ -67,8 +67,11 @@
 }
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 72px; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 72px; }
+/* Links within the page glide, but only once it has opened: a link to a section is reached at
+   once, so the glide cannot fight the page as it fills in. */
+html.smooth { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html.smooth { scroll-behavior: auto; } }
 body { margin: 0; background: var(--white); color: var(--ink); font: 400 17px/1.55 var(--sans); }
 h1, h2, h3, p { margin: 0; }
 a { color: var(--teal-ink); text-underline-offset: 0.18em; }
@@ -3493,6 +3496,7 @@ function describeRule(rule) {
   function barsChanged() {
     runLab();
     builderBars();
+    if (landing) jumpTo(landing); // the lab grew above the section the visitor opened
   }
   function loadBars(text, name, isExample) {
     var parsed = parseBars(text);
@@ -4523,6 +4527,16 @@ function describeRule(rule) {
   });
   // A shared link pasted into a tab that already shows the page.
   window.addEventListener("hashchange", function () { openShared(location.hash); });
+  // A link to a section (such as #builder) must still land there after the example bars load
+  // and the stop lab above it grows. Until the visitor scrolls, taps, clicks or types, the
+  // page goes back to that section; after that it stays where they put it.
+  var landing = /^#[A-Za-z][\w-]*$/.test(location.hash) && document.getElementById(location.hash.slice(1)) ? location.hash.slice(1) : "";
+  ["wheel", "touchstart", "keydown", "pointerdown"].forEach(function (type) {
+    window.addEventListener(type, function () { landing = ""; }, { passive: true, once: true });
+  });
+  window.addEventListener("load", function () {
+    setTimeout(function () { document.documentElement.classList.add("smooth"); }, 600);
+  });
   $("save-btn").addEventListener("click", saveNow);
   $("save-name").addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); saveNow(); } });
   $("saved-clear").addEventListener("click", deleteAllSaved);
