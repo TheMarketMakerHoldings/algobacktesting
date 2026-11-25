@@ -6,6 +6,14 @@ All notable changes are listed here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- Overfitting check in the strategy builder: once two or more versions have been tested on
+  the same bars, the page reports the probability that the best version is overfit, using a
+  port of the library's `probability_of_backtest_overfitting` (CSCV, Bailey et al. 2017) on
+  each version's daily profit and loss, next to what versions with no real difference would
+  give. `tests/test_site_pbo.py` checks the port against the library on five shapes of data.
+
 ### Changed
 
 - The website's developer section installs from PyPI: `pip install algobacktesting`.

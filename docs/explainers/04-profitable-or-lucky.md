@@ -230,6 +230,18 @@ Small cases are worked out by hand. On the example bars the builder takes all 15
 example's opening-range trades and all its 10:30 fade trades at the same prices for the
 same results. Those trades were made by `docs/build_example.py`, written separately.
 
+### Is the best version overfit?
+
+Counting versions as setups corrects the chance for how many were tried. The builder also
+runs the library's own overfitting check on them, the probability of backtest overfitting
+(Bailey, Borwein, López de Prado and Zhu, 2017). Each version's profit and loss is added up
+per day over the same bars. The days are cut into up to 16 equal periods, and for every way of
+splitting the periods into two halves, the page finds the best version in one half and ranks
+it among all versions in the other. The answer is the share of splits where that version did
+no better than the middle one. Versions with no real difference give about 50%; a low number
+means the best version tends to stay good on days it was not picked on. The page's code is a
+port of `algobacktesting.pbo` and is tested against it.
+
 ## Sharing a result
 
 "Share" under the verdict makes a link to the result. For the quick check the link holds its

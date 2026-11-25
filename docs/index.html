@@ -849,6 +849,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         <div class="card" id="b-versions" hidden>
           <div class="card-head"><h3>Versions you tested</h3><span class="sub">on this visit, each judged against all of them</span></div>
           <div class="card-body">
+            <div class="findings" id="b-pbo" aria-live="polite"></div>
             <div class="lab-table-wrap"><table class="stats lab-table" id="b-versions-table"></table></div>
             <p class="note">Each version counts as a setup: testing many and keeping the best is held to a higher bar.</p>
           </div>
@@ -2523,6 +2524,119 @@ function decodeShare(fragment) {
 }
 /* share:end */
 
+/* pbo:start */
+// Probability of Backtest Overfitting by combinatorially symmetric cross-validation (CSCV): a
+// port of src/algobacktesting/pbo.py (Bailey, Borwein, Lopez de Prado and Zhu, 2017,
+// Algorithm 2.3), checked against the library in tests/test_site_pbo.py. Rows are periods in
+// time order, columns are versions of a strategy. The rows split into S equal blocks; for every
+// way of choosing S/2 blocks as the "picking" half, the version with the best Sharpe ratio there
+// is ranked among all versions in the other half. PBO is the share of splits where it lands at
+// or below the median.
+
+// Ranks from 1 (lowest) to N; tied values share the average of their ranks.
+function averageRanks(values) {
+  var order = values.map(function (v, i) { return i; }).sort(function (a, b) { return values[a] - values[b]; });
+  var ranks = new Array(values.length), i = 0, j, k;
+  while (i < order.length) {
+    j = i;
+    while (j + 1 < order.length && values[order[j + 1]] === values[order[i]]) j++;
+    for (k = i; k <= j; k++) ranks[order[k]] = (i + j) / 2 + 1;
+    i = j + 1;
+  }
+  return ranks;
+}
+
+// Every way of choosing s/2 of the blocks 0..s-1, in the order itertools.combinations gives.
+function halfSplits(s) {
+  var out = [], pick = [];
+  (function go(start) {
+    if (pick.length === s / 2) { out.push(pick.slice()); return; }
+    for (var i = start; i < s; i++) { pick.push(i); go(i + 1); pick.pop(); }
+  })(0);
+  return out;
+}
+
+// CSCV on a matrix of rows (time, oldest first) by columns (versions). Returns the result, or
+// { error } for input the method cannot use.
+function pboCSCV(matrix, s) {
+  var t = matrix.length, n = t ? matrix[0].length : 0, r, c, b;
+  if (n < 2) return { error: "Need at least 2 versions to compare." };
+  if (s < 2 || s % 2) return { error: "The number of periods must be even." };
+  if (t % s) return { error: "The rows must split into equal periods." };
+  if (t / 2 < 2) return { error: "Each half needs at least 2 rows." };
+  for (r = 0; r < t; r++) for (c = 0; c < n; c++) if (!isFinite(matrix[r][c])) return { error: "Every value must be a number." };
+  // Per-block sums of values centred on each column's mean: any union of blocks then gives an
+  // exact Sharpe ratio (mean over standard deviation, n - 1) without re-reading the rows.
+  var rows = t / s, shift = [], sums = [], squares = [];
+  for (c = 0; c < n; c++) { var m = 0; for (r = 0; r < t; r++) m += matrix[r][c]; shift.push(m / t); }
+  for (b = 0; b < s; b++) {
+    sums.push([]); squares.push([]);
+    for (c = 0; c < n; c++) {
+      var a = 0, q = 0;
+      for (r = b * rows; r < (b + 1) * rows; r++) { var d = matrix[r][c] - shift[c]; a += d; q += d * d; }
+      sums[b].push(a); squares[b].push(q);
+    }
+  }
+  function sharpe(chosen) {
+    var count = rows * chosen.length, out = [];
+    for (var col = 0; col < n; col++) {
+      var sa = 0, sq = 0;
+      chosen.forEach(function (blk) { sa += sums[blk][col]; sq += squares[blk][col]; });
+      var mean = sa / count;
+      out.push((mean + shift[col]) / Math.sqrt((sq - count * mean * mean) / (count - 1)));
+    }
+    return out;
+  }
+  var splits = halfSplits(s), isPerf = [], oosPerf = [], logits = [], ranks = [];
+  for (var i = 0; i < splits.length; i++) {
+    var train = splits[i], test = [];
+    for (b = 0; b < s; b++) if (train.indexOf(b) < 0) test.push(b);
+    var rIs = sharpe(train), rOos = sharpe(test);
+    if (!rIs.concat(rOos).every(isFinite)) return { error: "A version never changes within some periods, so it cannot be ranked there." };
+    var best = 0;
+    for (c = 1; c < n; c++) if (rIs[c] > rIs[best]) best = c; // the first column wins a tie
+    var w = averageRanks(rOos)[best] / (n + 1);
+    isPerf.push(rIs[best]); oosPerf.push(rOos[best]); ranks.push(w); logits.push(Math.log(w / (1 - w)));
+  }
+  var k = splits.length, mx = 0, my = 0, vx = 0, cxy = 0;
+  for (i = 0; i < k; i++) { mx += isPerf[i]; my += oosPerf[i]; }
+  mx /= k; my /= k;
+  for (i = 0; i < k; i++) { vx += (isPerf[i] - mx) * (isPerf[i] - mx); cxy += (isPerf[i] - mx) * (oosPerf[i] - my); }
+  vx /= k; cxy /= k;
+  var slope = vx > 0 ? cxy / vx : NaN;
+  return {
+    pbo: logits.filter(function (l) { return l <= 0; }).length / k,
+    logits: logits, relativeRanks: ranks, isPerformance: isPerf, oosPerformance: oosPerf,
+    degradationSlope: slope, degradationIntercept: vx > 0 ? my - slope * mx : NaN,
+    probOosLoss: oosPerf.filter(function (v) { return v < 0; }).length / k,
+    nPartitions: s, nStrategies: n, nCombinations: k
+  };
+}
+
+// The number of periods for t rows: up to 16 (the paper's choice), at least 5 rows in each,
+// and even. 0 when there are fewer than 20 rows.
+function pboPeriods(t) {
+  var s = Math.min(16, 2 * Math.floor(t / 10));
+  return s >= 4 ? s : 0;
+}
+
+// Each version's profit and loss per day, on the same list of days (oldest first); a day
+// without trades is 0. The oldest days that do not fill a whole period are left out.
+function dailyMatrix(versions, days, s) {
+  var at = {}, keep = s > 0 ? days.length - days.length % s : 0, start = days.length - keep;
+  days.forEach(function (d, i) { at[d] = i; });
+  var matrix = [];
+  for (var i = start; i < days.length; i++) matrix.push(versions.map(function () { return 0; }));
+  versions.forEach(function (trades, col) {
+    trades.forEach(function (tr) {
+      var row = at[tr.day];
+      if (row !== undefined && row >= start) matrix[row - start][col] += tr.pnl;
+    });
+  });
+  return { matrix: matrix, dropped: start };
+}
+/* pbo:end */
+
 /* build:start */
 // Strategy builder: a rule written as a sentence with blanks, traded on the trader's own bars.
 // Pure functions, checked in tests/test_site_build.py against a separate Python version and
@@ -3499,6 +3613,7 @@ function describeRule(rule) {
     $("b-reply").hidden = true;
     builderLast = null;
     // An example picked before any bars were loaded runs as soon as they arrive.
+    if (builderVersions.length) renderPbo(); // new bars: only versions tested on them can be compared
     if (builderPending && lab && lab.parsed) { builderPending = false; askBuilder(); }
   }
 
@@ -3644,8 +3759,51 @@ function describeRule(rule) {
 
   // Every version tested on this visit, each judged against all of them.
   var builderVersions = [];
+  function barsKey() {
+    var bars = lab && lab.parsed ? lab.parsed.bars : null;
+    return bars ? lab.name + "|" + bars.length + "|" + bars[0].clock : "";
+  }
+
+  // How likely the best version is overfit: the library's PBO check on each version's daily
+  // profit and loss, over the days of the current bars.
+  function renderPbo() {
+    var box = $("b-pbo"), bars = lab && lab.parsed ? lab.parsed.bars : null, key = barsKey();
+    box.textContent = "";
+    function para(text, strong, cls) {
+      var p = document.createElement("p");
+      if (cls) p.className = cls;
+      if (strong) p.appendChild(Object.assign(document.createElement("strong"), { textContent: strong + " " }));
+      p.appendChild(document.createTextNode(text));
+      box.appendChild(p);
+    }
+    if (!bars) return;
+    var usable = builderVersions.filter(function (v) { return v.barsKey === key && v.n >= 10; });
+    if (usable.length < 2) {
+      para("Test at least 2 versions on these bars, each taking 10 or more trades, to see how likely your best version is overfit.", "", "note");
+      return;
+    }
+    var days = sessionsOf(bars).map(function (s) { return dayOf(bars[s.start].clock); }), s = pboPeriods(days.length);
+    if (!s) { para("These bars cover " + days.length + " days; the overfit check needs at least 20.", "", "note"); return; }
+    var dm = dailyMatrix(usable.map(function (v) { return v.daily; }), days, s), res = pboCSCV(dm.matrix, s);
+    if (res.error) { para("The overfit check could not run on these versions: " + res.error, "", "note"); return; }
+    var n = usable.length, luck = n % 2 ? (n + 1) / (2 * n) : 0.5;
+    // Only clearly low numbers earn a good word: strategies with no edge give about the luck
+    // figure, and on few versions or few days the number swings a lot around it.
+    var strong = res.pbo <= 0.1 ? "Your best version holds up:" : res.pbo <= 0.25 ? "Your best version partly holds up:" : "Picking the best version could easily be picking luck:";
+    para(pct(res.pbo) + " chance it is overfit.", strong, "lead");
+    para("Your " + n + " versions' daily results were split into " + s + " periods of " + whole(dm.matrix.length / s) + " days, and compared in all " +
+      whole(res.nCombinations) + " ways of halving them. In " + pct(res.pbo) + " of those, the version that did best in one half did no better than the middle version in the other half. " +
+      "Versions with no real difference would give about " + pct(luck) + ". In " + pct(res.probOosLoss) + ", the best version of one half lost money in the other.");
+    para("This is the probability of backtest overfitting (Bailey, Borwein, López de Prado and Zhu, 2017), the library's own check." +
+      (dm.dropped ? " The oldest " + dm.dropped + (dm.dropped === 1 ? " day was" : " days were") + " left out so the periods are equal." : "") +
+      (usable.length < builderVersions.length ? " Versions tested on other bars, or with fewer than 10 trades, are not included." : ""), "", "note");
+  }
+
   function addVersion(r) {
-    var row = { key: r.key, sentence: r.sentence, n: r.n, stats: r.stats, total: r.sum ? r.sum.total : NaN };
+    var row = {
+      key: r.key, sentence: r.sentence, n: r.n, stats: r.stats, total: r.sum ? r.sum.total : NaN, barsKey: barsKey(),
+      daily: r.trades.map(function (t) { return { day: dayOf(t.entryTime), pnl: t.pnl }; })
+    };
     var at = builderVersions.map(function (v) { return v.key; }).indexOf(r.key);
     if (at >= 0) builderVersions[at] = row; else builderVersions.push(row);
     var table = $("b-versions-table"), tried = Object.keys(builderTried).length;
@@ -3668,6 +3826,7 @@ function describeRule(rule) {
       body.appendChild(tr);
     });
     table.appendChild(body);
+    renderPbo();
   }
 
   function openBuilt() {
