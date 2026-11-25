@@ -258,7 +258,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .shared-text { font: 400 1.15rem/1.4 var(--serif); color: var(--navy); }
 
 /* Strategy builder: the rule reads as a sentence with fields inside it */
-.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); border: 0; }
+.visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; min-height: 0 !important; margin: -1px; padding: 0 !important; overflow: hidden; clip: rect(0 0 0 0); border: 0 !important; }
 .linkbtn.inline { display: inline; align-self: auto; font-size: 11.5px; }
 .linkbtn.inline:focus-within { outline: 3px solid var(--teal-bright); outline-offset: 2px; }
 .sentence { font: 400 1.1rem/2.5 var(--serif); color: var(--navy); }
@@ -267,10 +267,38 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .sentence input[type="number"] { width: 5.2em; }
 .sentence input[type="time"] { width: 9.2em; }
 .sentence [hidden] { display: none; }
-.b-controls { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 12px; align-items: end; }
-.b-out { border-top: 1px solid var(--line); }
-.b-rule { padding: 12px 16px; border-left: 3px solid var(--teal); background: var(--warm-2); border-radius: 0 10px 10px 0; font: 400 1.05rem/1.45 var(--serif); color: var(--navy); }
-@media (max-width: 640px) { .b-controls { grid-template-columns: minmax(0, 1fr); } }
+.b-rule { margin: 0; font: 400 1.12rem/1.45 var(--serif); color: var(--navy); }
+
+/* Strategy builder: the trader's own words in, a result card out, in the site's card style */
+.b-card .card-head .sub, .b-results .card-head .sub { overflow-wrap: anywhere; }
+.b-examples { font-size: 14px; color: var(--ink-2); line-height: 1.9; }
+#b-text { min-height: 96px; font: 400 16px/1.5 var(--sans); }
+.b-controls { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) auto; gap: 12px; align-items: end; }
+.b-results { display: flex; flex-direction: column; gap: 22px; margin-top: 22px; }
+.b-results > .card[hidden] { display: none; }
+.read-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.read-chips:empty { display: none; }
+.read-chips li { padding: 4px 10px; border-radius: 999px; background: #e3f5ef; color: var(--teal-ink); font: 500 13px/1.3 var(--sans); }
+.read-chips li.assumed { background: var(--warm-2); color: var(--ink-2); }
+.read-chips li.assumed::after { content: " · assumed"; color: var(--slate); }
+.headline.kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.kpis:empty { display: none; }
+.kpi b { display: block; font: 400 clamp(1.6rem, 3vw, 2.1rem)/1.1 var(--serif); color: var(--navy); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.spark { display: block; width: 100%; height: 120px; }
+.spark .zero { stroke: var(--line-2); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.spark .line { fill: none; stroke: var(--navy); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.spark .area { fill: rgba(23, 128, 106, 0.08); }
+.b-edit { border-top: 1px solid var(--line); padding-top: 12px; }
+.b-edit summary { cursor: pointer; font: 700 12px/1.4 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal-ink); }
+.b-edit > * + * { margin-top: 12px; }
+.b-rules-note { max-width: 860px; margin: 22px auto 0; text-align: center; }
+#b-versions .rule-cell { min-width: 280px; white-space: normal; text-align: left; font-size: 14px; color: var(--ink-2); }
+#b-versions tr.now th, #b-versions tr.now td { background: #eef9f5; }
+@media (max-width: 760px) {
+  .b-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .headline.kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) { .b-controls { grid-template-columns: minmax(0, 1fr); } }
 .lab-table th, .lab-table td { padding: 8px 10px; text-align: right; white-space: nowrap; }
 .lab-table thead th { font: 700 11px/1.3 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); border-bottom: 2px solid var(--line-2); }
 .lab-table tbody th { color: var(--navy); font-weight: 600; text-align: right; }
@@ -736,18 +764,50 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
     <div class="wrap">
       <div class="section-head">
         <span class="eyebrow">Strategy builder</span>
-        <h2 id="builder-title">Describe a strategy, <em>test it on your bars</em></h2>
+        <h2 id="builder-title">Describe a strategy. <em>Test it on your bars.</em></h2>
         <div class="dots center" aria-hidden="true"></div>
-        <p>Fill in the blanks to write your rule as a sentence. The page trades it on your own price bars, in your browser. Every version you test is counted, so tuning a rule until the past looks good cannot fool you.</p>
+        <p>Write your rule the way you would say it. The page shows how it read your words, trades the rule on your own price bars in your browser, and counts every version you try, so tuning a rule until the past looks good cannot fool you.</p>
       </div>
-      <div class="card">
+
+      <div class="card b-card">
         <div class="card-head">
-          <h3>Your rule</h3>
-          <div class="file-line" id="b-bars-line" aria-live="polite"></div>
+          <h3>Your strategy</h3>
+          <span class="sub" id="b-bars-line" aria-live="polite">No bars loaded</span>
         </div>
         <div class="card-body">
-          <p class="note" id="b-bars-empty">The builder trades on the bar file loaded in the stop lab. <button type="button" class="linkbtn inline" id="b-load-bars">Load the example bars</button> or <label class="linkbtn inline">choose your bar file<input type="file" id="b-in-bars" class="visually-hidden" accept=".csv,.txt,text/csv"></label>.</p>
-          <p class="sentence" id="b-sentence">
+          <label class="field"><span>Describe it in your own words</span>
+            <textarea id="b-text" rows="3" spellcheck="false" placeholder="Go long when price breaks the high of the first 15 minutes after 9:30. Stop 12 ticks, target 24, out by 11:30."></textarea>
+          </label>
+          <p class="b-examples">Or start from an example:
+            <button type="button" class="linkbtn inline b-example" data-text="Go long or short when a bar closes beyond the first 15 minutes after 9:30. Stop 12 ticks, target 24, move the stop to entry after 12 ticks, out by 11:29.">opening-range breakout</button> ·
+            <button type="button" class="linkbtn inline b-example" data-text="Fade the move since 9:30 at 10:30. Stop 10 ticks, target 10, move the stop to entry after 6 ticks, out by 11:29.">fade the morning move</button> ·
+            <button type="button" class="linkbtn inline b-example" data-text="Buy when the close crosses above its 20-bar moving average between 9:45 and 11:00. Stop 12 ticks, target 24, out by 11:29, up to 3 trades a day.">moving-average cross</button> ·
+            <button type="button" class="linkbtn inline b-example" data-text="Long or short when a bar closes beyond yesterday's high or low after 9:35. Stop 16 ticks, target 32, out by 11:29.">yesterday's high or low</button>
+          </p>
+          <p class="b-examples">Price bars: use the <button type="button" class="linkbtn inline" id="b-load-bars">example bars</button> or <label class="linkbtn inline">your own bar file<input type="file" id="b-in-bars" class="visually-hidden" accept=".csv,.txt,text/csv"></label> (one-minute bars work best; the stop lab uses the same file).</p>
+          <div class="b-controls">
+            <label class="field"><span>Contract</span><select id="b-instrument"></select></label>
+            <label class="field"><span>Fees per contract ($)</span><input type="number" id="b-fee" min="0" max="1000" step="0.01" value="4.12" inputmode="decimal"></label>
+            <button type="button" class="pill teal" id="b-run">Test strategy</button>
+          </div>
+          <p class="error" id="b-error" role="alert" hidden></p>
+        </div>
+      </div>
+
+      <div class="b-results" aria-live="polite">
+        <div class="card" id="b-reply" hidden>
+          <div class="card-head"><h3>Result</h3><span class="sub">how the page read your strategy, and what it did on your bars</span></div>
+          <div class="card-body">
+          <p class="b-rule" id="b-rule"></p>
+          <ul class="read-chips" id="b-read"></ul>
+          <div class="findings" id="b-findings"></div>
+          <div class="headline kpis" id="b-kpis"></div>
+          <svg class="spark" id="b-spark" viewBox="0 0 600 120" preserveAspectRatio="none" role="img" aria-label="Running profit of the tested rule"></svg>
+          <div class="lab-table-wrap"><table class="stats lab-table" id="b-table"></table></div>
+          <div class="share-actions"><button type="button" class="pill teal small" id="b-open" hidden>Open these trades in the check</button></div>
+          <details class="b-edit" id="b-edit">
+            <summary>Edit the details</summary>
+            <p class="sentence" id="b-sentence">
             <select id="b-side" aria-label="Direction"></select>
             <select id="b-entry" aria-label="How the trade starts">
               <option value="orb">when a bar closes beyond the opening range</option>
@@ -766,21 +826,20 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
             stop to entry after <input type="number" id="b-be" min="0" max="100000" step="1" value="0" inputmode="numeric" aria-label="Move stop to entry after, ticks"> ticks,
             out by <input type="time" id="b-exit" step="60" value="11:29" aria-label="Exit time">,
             at most <input type="number" id="b-max" min="1" max="50" step="1" value="1" inputmode="numeric" aria-label="Trades a day"> a day.
-          </p>
-          <div class="b-controls">
-            <label class="field"><span>Instrument</span><select id="b-instrument"></select></label>
-            <label class="field"><span>Fees per contract, round trip ($)</span><input type="number" id="b-fee" min="0" max="1000" step="0.01" value="4.12" inputmode="decimal"></label>
-            <button type="button" class="pill teal" id="b-run">Test this rule</button>
+            </p>
+            <button type="button" class="pill teal small" id="b-rerun">Test these details</button>
+          </details>
           </div>
-          <p class="note">Target 0 means no target; 0 for stop to entry means the stop never moves. A signal is a bar's close and the trade enters at the next bar's open; a set time enters at that bar's open. One contract per trade. When one bar reaches both the stop and the target, the stop counts. Times are on your bar file's clock.</p>
-          <p class="error" id="b-error" role="alert" hidden></p>
         </div>
-        <div class="card-body b-out">
-          <div class="findings" id="b-findings" aria-live="polite"><p class="note">Load bars, write a rule, and press Test this rule.</p></div>
-          <div class="lab-table-wrap"><table class="stats lab-table" id="b-table"></table></div>
-          <div class="share-actions"><button type="button" class="pill teal small" id="b-open" hidden>Open these trades in the check</button></div>
+        <div class="card" id="b-versions" hidden>
+          <div class="card-head"><h3>Versions you tested</h3><span class="sub">on this visit, each judged against all of them</span></div>
+          <div class="card-body">
+            <div class="lab-table-wrap"><table class="stats lab-table" id="b-versions-table"></table></div>
+            <p class="note">Each version counts as a setup: testing many and keeping the best is held to a higher bar.</p>
+          </div>
         </div>
       </div>
+      <p class="note b-rules-note">How it trades: a signal is a bar's close and the trade enters at the next bar's open; a set time enters at that bar's open. One contract per trade. When one bar reaches both the stop and the target, the stop counts. Times are on your bar file's clock. Anything you don't say is filled with a default and marked as assumed.</p>
     </div>
   </section>
 
@@ -2570,6 +2629,144 @@ function ruleKey(rule) {
   return keys.map(function (k) { return k + "=" + rule[k]; }).join("&");
 }
 
+// "9:30", "9:30am", "2 pm", "14:00", "9.30" -> minutes after midnight, else NaN. Without am or
+// pm the time is read on a 24-hour clock, as written.
+function readClock(text) {
+  var m = /^(\d{1,2})(?:[:.](\d{2}))?\s*([ap])?\.?\s*(?:m\.?)?$/i.exec(String(text == null ? "" : text).trim());
+  if (!m) return NaN;
+  var h = +m[1], min = m[2] ? +m[2] : 0, ap = (m[3] || "").toLowerCase();
+  if (ap) {
+    if (h < 1 || h > 12) return NaN;
+    h = h % 12 + (ap === "p" ? 12 : 0);
+  }
+  return h <= 23 && min <= 59 ? h * 60 + min : NaN;
+}
+
+// Reads a strategy written in plain words into a rule for buildTrades. It looks for a few kinds
+// of phrase: how a trade starts (an opening range, a clock time, a moving average, the previous
+// day's high or low), the direction, the stop, target and move to breakeven (in ticks, or points
+// turned into ticks with `tick`), the entry window, the exit time and trades a day. Anything not
+// said is filled with a default that is reported, never hidden. Each phrase is blanked once read,
+// so "stop to entry after 12" is not also read as a 12-tick stop.
+// Returns { rule, read: [...], assumed: [...], problems: [...] }.
+function parseStrategy(text, tick) {
+  var s = " " + String(text == null ? "" : text).toLowerCase().replace(/[‘’`]/g, "'").replace(/\s+/g, " ") + " ";
+  var T = "(\\d{1,2}(?:[:.]\\d{2})?(?:\\s*[ap]\\.?m\\b\\.?)?)", NUM = "(\\d+(?:\\.\\d+)?)\\s*(ticks?|points?|pts?|t)?\\b";
+  var out = { rule: {}, read: [], assumed: [], problems: [] }, r = out.rule;
+  function grab(src) {
+    var m = new RegExp(src, "i").exec(s);
+    if (m) s = s.slice(0, m.index) + new Array(m[0].length + 1).join(" ") + s.slice(m.index + m[0].length);
+    return m;
+  }
+  function has(re) { return re.test(s); }
+  function ticks(m, what) {
+    var v = +m[1];
+    if (/^p/.test(m[2] || "")) {
+      if (!(tick > 0)) { out.problems.push("Pick the contract, so the " + what + " in points can be turned into ticks."); return NaN; }
+      return Math.round(v / tick);
+    }
+    return Math.round(v);
+  }
+  function time(m, i, what) {
+    var v = readClock(m[i]);
+    if (!isFinite(v)) out.problems.push("I could not read " + m[i].trim() + " as a time for the " + what + ".");
+    return v;
+  }
+  var WORDS = { one: 1, two: 2, three: 3, four: 4, five: 5, once: 1, twice: 2 };
+  var m;
+  // A size said either way round: "a 12-tick stop" or "stop 12 ticks". The number-first form
+  // goes first (in "12 tick stop 24 tick target" the stop is 12, not 24), unless that number
+  // belongs to the word before it (in "target 24 ticks stop 12" the 24 is the target's).
+  function size(words) {
+    var first = "(\\d+(?:\\.\\d+)?)\\s*-?\\s*(ticks?|points?|pts?|t)\\s*-?\\s*(?:" + words + ")\\b", m = new RegExp(first, "i").exec(s);
+    if (m && !/(?:stop|loss|sl|target|tp|profit|even|entry|after|at|of)\W*$/.test(s.slice(0, m.index))) return grab(first);
+    return grab("\\b(?:" + words + ")\\b\\s*(?:of|at|is|=|:)?\\s*" + NUM);
+  }
+
+  // Sizes. The move to breakeven goes first: it also contains the word "stop".
+  m = grab("(?:break[- ]?even|stop to (?:entry|break[- ]?even)|stop up to entry)\\s*(?:after|at|once|when|of|on|:|=)?\\s*(?:it is |price is |we are |up |in profit )*" + NUM);
+  r.breakevenTicks = m ? ticks(m, "move to breakeven") : 0;
+  if (m) out.read.push("stop to entry after " + r.breakevenTicks + " ticks");
+  m = size("stop(?:[- ]?loss)?|sl");
+  if (m) { r.stopTicks = ticks(m, "stop"); out.read.push("stop " + r.stopTicks + " ticks"); }
+  else out.problems.push("Add a stop, such as \"stop 12 ticks\".");
+  m = size("profit target|take[- ]?profit|target|tp");
+  if (m) { r.targetTicks = ticks(m, "target"); out.read.push("target " + r.targetTicks + " ticks"); }
+  else { r.targetTicks = 0; out.assumed.push(grab("\\bno (?:profit )?target\\b") ? "no target" : "no target: each trade ends at its stop or the exit time"); }
+
+  // Trades a day first, so "up to 3 trades a day" is not read as "until 3:00".
+  m = grab("\\b(?:up to |at most |max(?:imum)? )?(\\d+|one|two|three|four|five)\\s+(?:trades?|times?|entries|setups?)\\s+(?:a|per|each)\\s+day\\b") || grab("\\b(once|twice) (?:a|per) day\\b");
+  r.maxPerDay = m ? (WORDS[m[1]] || +m[1]) : 1;
+  (m ? out.read : out.assumed).push(r.maxPerDay === 1 ? "one trade a day" : "up to " + r.maxPerDay + " trades a day");
+
+  // Times.
+  m = grab("\\b(?:out|exit|flat|close(?: (?:all|out|everything|positions?|the trades?))?)\\s+(?:by|at|before)\\s+" + T);
+  if (m) { r.exitAt = time(m, 1, "exit"); out.read.push("out by " + m[1].trim()); }
+  var between = grab("\\bbetween\\s+" + T + "\\s+and\\s+" + T), until = between ? null
+    : grab("\\b(?:until|till|up to|no (?:new )?(?:trades?|entries) after|last entry(?: at)?|stop (?:trading|entering) at)\\s+" + T);
+  var since = grab("\\b(?:move|direction|change)\\s+(?:since|from)\\s+" + T);
+  var after = grab("\\b(?:after|from|starting(?: at)?|since)\\s+(?:the\\s+)?(?:open(?:ing)?\\s+(?:at\\s+)?)?" + T);
+  // The last entry may not default past the exit time the trader gave.
+  var lastDefault = isFinite(r.exitAt) ? Math.max(0, r.exitAt - 1) : 1438;
+
+  // How a trade starts.
+  var range = grab("\\bfirst\\s+(\\d+)\\s*-?\\s*(?:min(?:ute)?s?|m)\\b") || grab("\\b(\\d+)\\s*-?\\s*(?:min(?:ute)?s?|m)\\s+(?:opening\\s+)?(?:range|or|orb)\\b") ||
+    grab("\\b(?:orb|opening range)\\s*(?:of\\s+)?(\\d+)\\s*-?\\s*(?:min(?:ute)?s?|m)\\b");
+  var avg = grab("\\b(\\d+)\\s*-?\\s*(?:bar|period|minute|min|candle)?s?\\s+(?:simple |exponential )?(?:moving average|sma|ema|ma|average)\\b") ||
+    grab("\\b(?:moving average|sma|ema|ma)\\s*\\(?\\s*(\\d+)\\b");
+  var at = grab("\\bat\\s+" + T);
+  if (range || has(/opening range|\borb\b|range breakout|\bbreak(?:s|out)? (?:of |out of )?the (?:first|opening)/)) r.entry = "orb";
+  else if (avg || has(/moving average|\bsma\b|\bema\b|\bma\b|\baverage\b/)) r.entry = "ma";
+  else if (has(/\b(?:yesterday|previous day|prior day|previous session|prior session|last day)'?s?\b/)) r.entry = "prior";
+  else if (at) r.entry = "time";
+  else {
+    out.problems.unshift("I could not tell how a trade starts. Mention an opening range (\"first 15 minutes\"), a time (\"at 10:30\"), a moving average (\"20-bar average\"), or yesterday's high or low.");
+    return out;
+  }
+
+  // Direction.
+  var fade = has(/\bfade\b|\bagainst\b|\bopposite\b|\bcounter\b|\brevers/), follow = has(/\bwith the (?:move|trend)\b|\bfollow|\bmomentum\b|\bsame direction\b/);
+  var both = has(/\blong (?:or|and|\/) short\b|\bshort (?:or|and|\/) long\b|\bboth (?:ways|directions|sides)\b|\beither (?:way|direction)\b/);
+  var up = has(/\b(?:long|buy|buys|buying|bullish)\b/), down = has(/\b(?:short|sell|sells|selling|bearish)\b/);
+  if (r.entry === "time") {
+    r.side = fade ? "against" : follow ? "with" : up && !down ? "long" : down && !up ? "short" : "";
+    if (!r.side) out.problems.push("Say what to do at that time: buy, sell, or trade with or against the move.");
+  } else {
+    if (fade) out.problems.push("Fading a signal is not supported yet: the builder trades each signal in its own direction.");
+    r.side = both || up === down ? "both" : up ? "long" : "short";
+    (both || up !== down ? out.read : out.assumed).push(r.side === "both" ? "long or short" : r.side + " only");
+  }
+
+  // Details of each kind of entry, with stated defaults.
+  if (r.entry === "orb") {
+    r.rangeMinutes = range ? +range[1] : 15;
+    r.rangeStart = after ? time(after, 1, "start of the range") : 570;
+    (range ? out.read : out.assumed).push("range of the first " + r.rangeMinutes + " minutes");
+    (after ? out.read : out.assumed).push("range starts at " + clockText(r.rangeStart));
+    r.until = between ? time(between, 2, "last entry") : until ? time(until, 1, "last entry") : Math.min(lastDefault, r.rangeStart + Math.max(90, r.rangeMinutes + 60));
+    (between || until ? out.read : out.assumed).push("entries until " + clockText(r.until));
+  } else if (r.entry === "time") {
+    r.at = time(at, 1, "entry");
+    out.read.push("enter at " + at[1].trim());
+    if (r.side === "with" || r.side === "against") {
+      var base = since || after;
+      r.from = base ? time(base, 1, "start of the move") : (r.at > 570 ? 570 : Math.max(0, r.at - 60));
+      (base ? out.read : out.assumed).push("move measured from " + clockText(r.from));
+    }
+  } else {
+    if (r.entry === "ma") {
+      r.maBars = avg ? +avg[1] : 20;
+      (avg ? out.read : out.assumed).push(r.maBars + "-bar simple average" + (has(/\bema\b|exponential/) ? " (the builder uses simple averages)" : ""));
+    } else out.read.push("the previous day's high or low");
+    r.from = between ? time(between, 1, "first entry") : after ? time(after, 1, "first entry") : 0;
+    r.until = between ? time(between, 2, "last entry") : until ? time(until, 1, "last entry") : lastDefault;
+    (between || after || until ? out.read : out.assumed).push(between || after || until ? "entries " + clockText(r.from) + " to " + clockText(r.until)
+      : r.until === 1438 ? "entries any time of day" : "entries any time until " + clockText(r.until));
+  }
+  if (!isFinite(r.exitAt)) { r.exitAt = 1439; out.assumed.push("out at the end of each day in your bars"); }
+  return out;
+}
+
 // The rule as one plain sentence.
 function describeRule(rule) {
   var side = { both: "Long or short", long: "Long", short: "Short", with: "With the move", against: "Against the move" }[rule.side] || "";
@@ -3194,7 +3391,6 @@ function describeRule(rule) {
     signal: [["both", "Go long or short"], ["long", "Go long"], ["short", "Go short"]],
     time: [["long", "Go long"], ["short", "Go short"], ["with", "Trade with the move"], ["against", "Trade against the move"]]
   };
-  var B_EMPTY = '<p class="note">Load bars, write a rule, and press Test this rule.</p>';
   (function () {
     var sel = $("b-instrument");
     addOption(sel, "auto", "From the bar file");
@@ -3231,64 +3427,141 @@ function describeRule(rule) {
     };
   }
 
-  // New bars: show them, and drop results made on the old ones.
+  // New bars: name them on the strategy card, and drop results made on the old ones.
+  var builderPending = false;
   function builderBars() {
     var line = $("b-bars-line");
     if (lab && lab.parsed) {
       var bars = lab.parsed.bars;
-      line.innerHTML = "<b>" + esc(lab.name) + "</b><span>" + whole(bars.length) + " bars · " + date(bars[0].clock) + " to " +
-        date(bars[bars.length - 1].clock) + "</span>" + (lab.example ? "<span>synthetic random walk, not real prices</span>" : "");
+      line.textContent = "Bars: " + lab.name + " · " + whole(bars.length) + " bars · " + date(bars[0].clock) + " to " + date(bars[bars.length - 1].clock) +
+        (lab.example ? " · made-up example" : "");
       if (lab.example && $("b-instrument").value === "auto") $("b-instrument").value = "ES";
-    } else line.textContent = "";
+    } else {
+      line.textContent = lab && lab.error ? "Bar file not read" : "No bars loaded";
+    }
     $("b-error").textContent = lab && lab.error ? lab.error : "";
     $("b-error").hidden = !(lab && lab.error);
-    $("b-findings").innerHTML = B_EMPTY;
-    $("b-table").textContent = "";
-    $("b-open").hidden = true;
+    $("b-reply").hidden = true;
     builderLast = null;
+    // An example picked before any bars were loaded runs as soon as they arrive.
+    if (builderPending && lab && lab.parsed) { builderPending = false; askBuilder(); }
   }
 
-  function testRule() {
-    var err = $("b-error"), out = $("b-findings"), table = $("b-table"), open = $("b-open");
+  // Puts a rule read from words into the detail fields, which stay the one thing a test reads.
+  function fillBuilder(rule) {
+    $("b-entry").value = rule.entry;
+    builderShape();
+    $("b-side").value = rule.side;
+    builderShape();
+    function set(id, v, clock) { if (v !== undefined && isFinite(v)) $(id).value = clock ? clockText(v) : v; }
+    set("b-range", rule.rangeMinutes);
+    set("b-start", rule.rangeStart, true);
+    set("b-at", rule.at, true);
+    set(rule.entry === "time" ? "b-move-from" : "b-from", rule.from, true);
+    set("b-until", rule.until, true);
+    set("b-ma", rule.maBars);
+    set("b-exit", rule.exitAt, true);
+    set("b-stop", rule.stopTicks);
+    set("b-target", rule.targetTicks);
+    set("b-be", rule.breakevenTicks);
+    set("b-max", rule.maxPerDay);
+  }
+
+  // "Test strategy": read the words, say how they were read, then test.
+  function askBuilder() {
+    var text = $("b-text").value.trim(), err = $("b-error");
+    if (!text) {
+      err.textContent = "Describe your strategy in the box first, or pick one of the examples under it.";
+      err.hidden = false;
+      return;
+    }
+    var reading = parseStrategy(text, builderRule().tick);
+    if (reading.problems.length) {
+      err.hidden = true;
+      showReply({ problems: reading.problems });
+      return;
+    }
+    fillBuilder(reading.rule);
+    testRule(reading);
+  }
+
+  function testRule(reading) {
+    var err = $("b-error");
     function fail(msg) {
       err.textContent = msg;
       err.hidden = false;
-      out.innerHTML = B_EMPTY;
-      table.textContent = "";
-      open.hidden = true;
       builderLast = null;
     }
-    if (!lab || !lab.parsed) return fail(lab && lab.error ? lab.error : "Load a bar file first: the example bars, or your own one-minute bars.");
+    if (!lab || !lab.parsed) return fail(lab && lab.error ? lab.error : "Load bars first: press Example bars or Your bar file in the box above.");
     var rule = builderRule(), problem = ruleProblem(rule);
     if (problem) return fail(problem);
     err.hidden = true;
-    var bars = lab.parsed.bars, trades = buildTrades(bars, rule), n = trades.length;
-    builderTried[ruleKey(rule)] = true;
-    var tried = Object.keys(builderTried).length, sentence = describeRule(rule), days = sessionsOf(bars).length, traded = {};
-    trades.forEach(function (t) { traded[dayOf(t.entryTime)] = 1; });
-    var lines = ['<p class="b-rule">' + esc(sentence) + "</p>"];
-    if (n < 10) {
-      lines.push("<p>This rule took " + n + (n === 1 ? " trade" : " trades") + " on " + whole(days) + " days of bars. At least 10 are needed to judge it: widen the rule or load more bars.</p>");
-    } else {
+    var bars = lab.parsed.bars, trades = buildTrades(bars, rule), n = trades.length, key = ruleKey(rule);
+    builderTried[key] = true;
+    var res = { key: key, trades: trades, n: n, sentence: describeRule(rule), tried: Object.keys(builderTried).length, fee: rule.fee, days: sessionsOf(bars).length };
+    if (n >= 2) {
       var values = trades.map(function (t) { return t.pnl; }), before = trades.map(function (t) { return t.before; });
-      var stats = statsFromTrades(values), sum = tradeSummary(values, before);
-      var chance = stats.sd > 0 ? edgeProbability(stats, n, tried) : NaN;
-      lines.push("<p>On " + esc(lab.name) + " it took <strong>" + whole(n) + " trades</strong> on " + whole(Object.keys(traded).length) + " of " +
-        whole(days) + " days. Net <strong>" + money(sum.total, "$", 2, true) + "</strong> after fees, " + money(stats.mean, "$", 2, true) +
-        " a trade; " + sum.wins + " won, " + sum.losses + " lost, " + sum.breakevens + " breakeven.</p>");
-      var counted = "after counting the " + tried + (tried === 1 ? " version" : " versions") + " you tested";
-      lines.push("<p>" + (!(stats.mean > 0) ? "<strong>It lost money</strong>, so there is no edge to prove."
-        : chance >= 0.95 ? "<strong>Hard to explain by luck:</strong> " + aPct(chance) + " chance the edge is real, " + counted + "."
-        : chance >= 0.5 ? "<strong>Promising, not proven:</strong> " + aPct(chance) + " chance the edge is real, " + counted + "."
-        : "<strong>Could easily be luck:</strong> only " + aPct(chance) + " chance the edge is real, " + counted + ".") + "</p>");
-      if (lab.example) lines.push('<p class="note">These are the made-up example bars, a random walk: any edge here is luck by construction.</p>');
+      res.stats = statsFromTrades(values);
+      res.sum = tradeSummary(values, before);
+      res.chance = n >= 10 && res.stats.sd > 0 ? edgeProbability(res.stats, n, res.tried) : NaN;
     }
-    lines.push('<p class="note">Versions tested on this visit: ' + tried + ". Each one counts as a setup, so testing many and keeping the best is held to a higher bar.</p>");
-    out.innerHTML = lines.join("");
-    table.textContent = "";
-    if (n) {
-      var html = '<caption class="sub">' + (n > 10 ? "The last 10 of " + whole(n) + " trades" : "All " + n + " trades") + '</caption><thead><tr><th scope="col">Entry</th><th scope="col">Side</th><th scope="col">Price</th><th scope="col">Exit</th><th scope="col">Closed by</th><th scope="col">P&amp;L</th></tr></thead><tbody>';
-      trades.slice(-10).forEach(function (t) {
+    builderLast = res;
+    showReply({ reading: reading, result: res });
+    addVersion(res);
+  }
+
+  // The reply card: how the words were read, then the result.
+  function showReply(o) {
+    var findings = $("b-findings"), read = $("b-read"), kpis = $("b-kpis"), spark = $("b-spark"), table = $("b-table");
+    $("b-reply").hidden = false;
+    [findings, read, kpis, spark, table].forEach(function (el) { el.textContent = ""; });
+    spark.style.display = "none";
+    $("b-open").hidden = true;
+    function para(text, strong, cls) {
+      var p = document.createElement("p");
+      if (cls) p.className = cls;
+      if (strong) p.appendChild(Object.assign(document.createElement("strong"), { textContent: strong + " " }));
+      p.appendChild(document.createTextNode(text));
+      findings.appendChild(p);
+    }
+    if (o.problems) {
+      $("b-rule").textContent = "I need a little more to test this.";
+      o.problems.forEach(function (msg) { para(msg); });
+      para("Or pick one of the examples above and change it to your rule.", "", "note");
+      return;
+    }
+    var r = o.result;
+    $("b-rule").textContent = r.sentence;
+    if (o.reading) {
+      o.reading.read.forEach(function (x) { read.appendChild(Object.assign(document.createElement("li"), { textContent: x })); });
+      o.reading.assumed.forEach(function (x) { read.appendChild(Object.assign(document.createElement("li"), { className: "assumed", textContent: x })); });
+    }
+    if (r.n < 10) {
+      para("This rule took " + r.n + (r.n === 1 ? " trade" : " trades") + " on " + whole(r.days) + " days of bars. At least 10 are needed to judge it: widen the rule or load more bars.");
+    } else {
+      var st = r.stats, sum = r.sum, counted = "after counting the " + r.tried + (r.tried === 1 ? " version" : " versions") + " you tested.";
+      if (!(st.mean > 0)) para("After fees it averaged " + money(st.mean, "$", 2, true) + " a trade, so there is no edge to prove.", "It lost money.");
+      else if (r.chance >= 0.95) para(aPct(r.chance) + " chance the edge is real, " + counted, "Hard to explain by luck:");
+      else if (r.chance >= 0.5) para(aPct(r.chance) + " chance the edge is real, " + counted, "Promising, not proven:");
+      else para("only " + aPct(r.chance) + " chance the edge is real, " + counted, "Could easily be luck:");
+      [["Trades", whole(r.n), "on " + whole(r.days) + " days"],
+       ["Net after fees", money(sum.total, "$", 0, true), money(st.mean, "$", 2, true) + " a trade"],
+       ["Win rate", Math.round(sum.wins / r.n * 100) + "%", sum.wins + " won · " + sum.losses + " lost · " + sum.breakevens + " even"],
+       ["Chance it's real", isFinite(r.chance) ? pct(r.chance) : "–", r.tried + (r.tried === 1 ? " version" : " versions") + " counted"]
+      ].forEach(function (k) {
+        var tile = document.createElement("div");
+        tile.className = "kpi";
+        tile.appendChild(Object.assign(document.createElement("span"), { className: "k", textContent: k[0] }));
+        tile.appendChild(Object.assign(document.createElement("b"), { textContent: k[1] }));
+        tile.appendChild(Object.assign(document.createElement("span"), { className: "sub", textContent: k[2] }));
+        kpis.appendChild(tile);
+      });
+      drawSpark(spark, r.trades.map(function (t) { return t.pnl; }));
+      if (lab.example) para("These are the made-up example bars, a random walk: any edge here is luck by construction.", "", "note");
+    }
+    if (r.n) {
+      var html = '<caption class="sub">' + (r.n > 10 ? "The last 10 of " + whole(r.n) + " trades" : "All " + r.n + " trades") + '</caption><thead><tr><th scope="col">Entry</th><th scope="col">Side</th><th scope="col">Price</th><th scope="col">Exit</th><th scope="col">Closed by</th><th scope="col">P&amp;L</th></tr></thead><tbody>';
+      r.trades.slice(-10).forEach(function (t) {
         html += '<tr><th scope="row">' + date(t.entryTime) + " " + clockText(minuteOfDay(t.entryTime)) + "</th><td>" + (t.side > 0 ? "Long" : "Short") + "</td>" +
           "<td>" + (Math.round(t.entryPrice * 1e6) / 1e6) + "</td><td>" + (Math.round(t.exitPrice * 1e6) / 1e6) + "</td>" +
           "<td>" + { stop: "Stop", target: "Target", time: "Exit time" }[t.exit] + "</td>" +
@@ -3296,8 +3569,50 @@ function describeRule(rule) {
       });
       table.innerHTML = html + "</tbody>";
     }
-    open.hidden = n < 10;
-    builderLast = { trades: trades, sentence: sentence, tried: tried, fee: rule.fee };
+    $("b-open").hidden = r.n < 10;
+  }
+
+  // A small running-profit line for the reply card. Only numbers go into the markup.
+  function drawSpark(svg, values) {
+    var eq = [0], i;
+    for (i = 0; i < values.length; i++) eq.push(eq[i] + values[i]);
+    var lo = Math.min.apply(null, eq), hi = Math.max.apply(null, eq);
+    if (hi === lo) hi = lo + 1;
+    function x(k) { return (k / (eq.length - 1) * 600).toFixed(1); }
+    function y(v) { return (6 + (hi - v) / (hi - lo) * 108).toFixed(1); }
+    var d = eq.map(function (v, k) { return (k ? "L" : "M") + x(k) + " " + y(v); }).join("");
+    svg.innerHTML = '<line class="zero" x1="0" x2="600" y1="' + y(0) + '" y2="' + y(0) + '"/>' +
+      '<path class="area" d="' + d + "L600 " + y(0) + "L0 " + y(0) + 'Z"/><path class="line" d="' + d + '"/>';
+    svg.style.display = "";
+    svg.setAttribute("aria-label", "Running profit of the tested rule, ending at " + money(eq[eq.length - 1], "$", 0, true) + ".");
+  }
+
+  // Every version tested on this visit, each judged against all of them.
+  var builderVersions = [];
+  function addVersion(r) {
+    var row = { key: r.key, sentence: r.sentence, n: r.n, stats: r.stats, total: r.sum ? r.sum.total : NaN };
+    var at = builderVersions.map(function (v) { return v.key; }).indexOf(r.key);
+    if (at >= 0) builderVersions[at] = row; else builderVersions.push(row);
+    var table = $("b-versions-table"), tried = Object.keys(builderTried).length;
+    $("b-versions").hidden = builderVersions.length < 2;
+    table.textContent = "";
+    var head = document.createElement("thead"), hr = document.createElement("tr");
+    ["#", "Rule", "Trades", "Net", "Chance it's real"].forEach(function (h) { hr.appendChild(Object.assign(document.createElement("th"), { scope: "col", textContent: h })); });
+    head.appendChild(hr);
+    table.appendChild(head);
+    var body = document.createElement("tbody");
+    builderVersions.forEach(function (v, k) {
+      var chance = v.n >= 10 && v.stats && v.stats.sd > 0 ? edgeProbability(v.stats, v.n, tried) : NaN;
+      var tr = document.createElement("tr");
+      if (v.key === r.key) tr.className = "now";
+      tr.appendChild(Object.assign(document.createElement("th"), { scope: "row", textContent: String(k + 1) }));
+      tr.appendChild(Object.assign(document.createElement("td"), { className: "rule-cell", textContent: v.sentence }));
+      tr.appendChild(Object.assign(document.createElement("td"), { textContent: whole(v.n) }));
+      tr.appendChild(Object.assign(document.createElement("td"), { className: signClass(v.total), textContent: isFinite(v.total) ? money(v.total, "$", 0, true) : "–" }));
+      tr.appendChild(Object.assign(document.createElement("td"), { textContent: isFinite(chance) ? pct(chance) : "–" }));
+      body.appendChild(tr);
+    });
+    table.appendChild(body);
   }
 
   function openBuilt() {
@@ -3813,7 +4128,19 @@ function describeRule(rule) {
   ["compare-a", "compare-b"].forEach(function (id) { $(id).addEventListener("change", runCompare); });
   $("b-entry").addEventListener("change", builderShape);
   $("b-side").addEventListener("change", builderShape);
-  $("b-run").addEventListener("click", testRule);
+  $("b-run").addEventListener("click", askBuilder);
+  $("b-rerun").addEventListener("click", function () { testRule(); });
+  // Enter sends, as in a chat; Shift+Enter starts a new line.
+  $("b-text").addEventListener("keydown", function (ev) {
+    if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); askBuilder(); }
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("#builder .b-example"), function (chip) {
+    chip.addEventListener("click", function () {
+      $("b-text").value = chip.getAttribute("data-text");
+      if (lab && lab.parsed) askBuilder();
+      else { builderPending = true; loadExampleBars(); }
+    });
+  });
   $("b-open").addEventListener("click", openBuilt);
   $("b-load-bars").addEventListener("click", loadExampleBars);
   $("b-in-bars").addEventListener("change", function () { readBarsFile(this.files && this.files[0]); this.value = ""; });

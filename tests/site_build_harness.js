@@ -15,5 +15,10 @@ console.log(JSON.stringify({
   problems: input.problems.map(ruleProblem),
   clocks: input.clocks.map(parseClock),
   sentences: input.sentences.map(describeRule),
-  keys: input.keyRules.map(ruleKey)
+  keys: input.keyRules.map(ruleKey),
+  parsed: input.phrases.map(function (p) {
+    const out = parseStrategy(p[0], p[1]);
+    out.problem = ruleProblem(Object.assign({ tick: 0.25, point: 50, fee: 0 }, out.rule));
+    return out;
+  })
 }));

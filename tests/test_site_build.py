@@ -379,6 +379,114 @@ KEY_PAIRS: list[tuple[Rule, Rule, bool]] = [
 ]
 
 
+# Strategies written in plain words, the contract's tick size (0 = no contract picked), and
+# what the reader must make of them: rule fields, or the start of its first problem.
+PHRASES: list[tuple[str, float, dict[str, Any] | str]] = [
+    (
+        "Go long when price breaks the high of the first 15 minutes after 9:30, "
+        "stop 12 ticks, target 24, out by 11:30",
+        0.25,
+        {
+            "entry": "orb",
+            "side": "long",
+            "rangeMinutes": 15,
+            "rangeStart": 570,
+            "until": 660,
+            "stopTicks": 12,
+            "targetTicks": 24,
+            "breakevenTicks": 0,
+            "exitAt": 690,
+            "maxPerDay": 1,
+        },
+    ),
+    (
+        "ORB 30 min, 12 tick stop 24 tick target, breakeven after 12 ticks, flat by 11:29am",
+        0.25,
+        {
+            "entry": "orb",
+            "side": "both",
+            "rangeMinutes": 30,
+            "stopTicks": 12,
+            "targetTicks": 24,
+            "breakevenTicks": 12,
+            "exitAt": 689,
+        },
+    ),
+    (
+        "Fade the move since 9:30 at 10:30, stop 10 target 10, move stop to entry after 6 ticks",
+        0.25,
+        {
+            "entry": "time",
+            "side": "against",
+            "at": 630,
+            "from": 570,
+            "stopTicks": 10,
+            "targetTicks": 10,
+            "breakevenTicks": 6,
+            "exitAt": 1439,
+        },
+    ),
+    (
+        "Buy when the close crosses above the 20-bar moving average between 9:45 and 11:00, "
+        "stop 8 points target 16 points, up to 3 trades a day",
+        0.25,
+        {
+            "entry": "ma",
+            "side": "long",
+            "maBars": 20,
+            "from": 585,
+            "until": 660,
+            "stopTicks": 32,
+            "targetTicks": 64,
+            "maxPerDay": 3,
+        },
+    ),
+    (
+        "Short when price breaks yesterday's low, stop 20 ticks, no target, out by 15:00",
+        0.25,
+        {
+            "entry": "prior",
+            "side": "short",
+            "stopTicks": 20,
+            "targetTicks": 0,
+            "exitAt": 900,
+            "from": 0,
+            "until": 899,
+        },
+    ),
+    (
+        "Go long at 9:45, 12 tick stop, target 24 ticks, out by 10:45, breakeven 8",
+        0.25,
+        {
+            "entry": "time",
+            "side": "long",
+            "at": 585,
+            "stopTicks": 12,
+            "targetTicks": 24,
+            "exitAt": 645,
+            "breakevenTicks": 8,
+        },
+    ),
+    (
+        "target 24 ticks stop 12 ticks, ORB of 5 min long or short, 2 trades a day",
+        0.25,
+        {
+            "entry": "orb",
+            "side": "both",
+            "rangeMinutes": 5,
+            "stopTicks": 12,
+            "targetTicks": 24,
+            "maxPerDay": 2,
+        },
+    ),
+    ("Sell at 2pm", 0.25, "Add a stop"),
+    ("Trade the news, stop 10", 0.25, "I could not tell how a trade starts"),
+    ("Fade the opening range breakout, stop 10", 0.25, "Fading a signal is not supported"),
+    ("At 10:30, stop 10 ticks", 0.25, "Say what to do at that time"),
+    ("Buy the first 15 minute breakout, stop 3 points", 0, "Pick the contract"),
+]
+
+
 @pytest.fixture(scope="module")
 def js() -> dict[str, Any]:
     if NODE is None:
@@ -398,6 +506,7 @@ def js() -> dict[str, Any]:
         "clocks": ["09:30", "9:05", "23:59", "24:00", "09:60", "930", ""],
         "sentences": [EXAMPLE_RULES["ORB"], EXAMPLE_RULES["Fade"]],
         "keyRules": [rule for pair in KEY_PAIRS for rule in pair[:2]],
+        "phrases": [[p[0], p[1]] for p in PHRASES],
     }
     with tempfile.TemporaryDirectory() as tmp:
         script, data = Path(tmp) / "build.js", Path(tmp) / "input.json"
@@ -477,3 +586,26 @@ def test_sentences(js: dict[str, Any]) -> None:
         "Against the move at 10:30 (move since 09:30); stop 10, target 10, breakeven at 6 "
         "(ticks); out by 11:29.",
     ]
+
+
+def test_reads_strategies_written_in_plain_words(js: dict[str, Any]) -> None:
+    for (text, _, want), got in zip(PHRASES, js["parsed"], strict=True):
+        if isinstance(want, str):
+            assert got["problems"], text
+            assert got["problems"][0].startswith(want), (text, got["problems"])
+            continue
+        assert got["problems"] == [], (text, got["problems"])
+        assert got["problem"] == "", (text, got["problem"])  # the engine accepts the rule
+        for key, value in want.items():
+            assert got["rule"][key] == value, (text, key, got["rule"])
+
+
+def test_says_what_it_assumed(js: dict[str, Any]) -> None:
+    first = js["parsed"][0]
+    # Said: direction, range, start, stop, target, exit. Not said: entries until, one a day.
+    assert "long only" in first["read"]
+    assert "entries until 11:00" in first["assumed"]
+    assert "one trade a day" in first["assumed"]
+    fade = js["parsed"][2]
+    assert "out at the end of each day in your bars" in fade["assumed"]
+    assert "move measured from 09:30" in fade["read"]

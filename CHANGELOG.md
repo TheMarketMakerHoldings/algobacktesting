@@ -82,6 +82,14 @@ All notable changes are listed here. The format follows
   the gambler's ruin formulas and hand-worked cases.
 - "Save as PDF" on the website: a one-page report of the verdict and breakdown, with the
   equity chart, the data used and the date.
+- Strategy builder reads a strategy written in plain words ("go long when price breaks the
+  first 15 minutes after 9:30, stop 12 ticks, target 24, out by 11:30"), shows how it read
+  them with every default marked as assumed, and says plainly what it could not understand.
+  The result card shows the trades, net after fees, win rate, the chance the edge is real, a
+  running-profit line and the last trades, and a list of every version tested, each judged
+  against all of them. The detailed fields stay available under "Edit the details". The
+  reader runs in the page: no AI service, nothing sent anywhere. `tests/test_site_build.py`
+  checks twelve phrasings, including stop and target written either way round.
 - Stop lab lines up TradingView trades from continuous contracts (such as `NQ1!`): their
   prices are adjusted at each roll, so they sit a fixed gap away from real contract prices,
   and each trade can be stamped a chart bar before it filled. The lab searches minute shifts

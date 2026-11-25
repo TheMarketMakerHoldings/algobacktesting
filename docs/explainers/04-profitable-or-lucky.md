@@ -189,8 +189,12 @@ entry, so a damaged or hand-edited list is dropped, never trusted.
 
 ## The strategy builder
 
-"Would this idea have worked?" The builder lets a trader write a rule as a sentence with
-blanks, then trades it on their own bar file. There are four ways in:
+"Would this idea have worked?" The builder lets a trader describe a rule in plain words,
+then trades it on their own bar file. A small reader in the page (no AI service; nothing is
+sent anywhere) looks for a few kinds of phrase: how a trade starts, the direction, the stop,
+target and move to breakeven in ticks or points, the entry window, the exit time and trades a
+day. It shows how it read the words, marks every default it filled in as assumed, and says
+plainly what it could not understand. There are four ways in:
 
 - **Opening-range breakout:** a bar closes above the high or below the low of the first N
   minutes after a start time.
