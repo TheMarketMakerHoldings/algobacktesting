@@ -1,5 +1,6 @@
 # algobacktesting
 
+[![PyPI](https://img.shields.io/pypi/v/algobacktesting.svg)](https://pypi.org/project/algobacktesting/)
 [![CI](https://github.com/TheMarketMakerHoldings/algobacktesting/actions/workflows/ci.yml/badge.svg)](https://github.com/TheMarketMakerHoldings/algobacktesting/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/LICENSE)
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
@@ -7,9 +8,8 @@
 
 **Is your backtest real? Overfitting checks for trading research.**
 
-> **Status: pre-release.** Not yet on PyPI. The Sharpe and PBO modules are verified
-> against their source papers. The cross-validation module is built from the standard
-> definitions and is awaiting review against the book.
+> The Sharpe and PBO modules are verified against their source papers. The cross-validation
+> module is built from the standard definitions and is awaiting review against the book.
 
 Try enough strategy variations and one of them will look brilliant by luck alone.
 `algobacktesting` implements statistical tests from Bailey & López de Prado's research that
@@ -120,14 +120,16 @@ has a plain-English guide to each module.
 
 ## Installation
 
-Install the latest version straight from GitHub (needs Git):
+```bash
+pip install algobacktesting
+```
+
+Requires Python 3.11+ and NumPy, which installs with it. For the latest version from GitHub
+instead (needs Git):
 
 ```bash
 pip install git+https://github.com/TheMarketMakerHoldings/algobacktesting
 ```
-
-Requires Python 3.11+ and NumPy. Once version 0.1.0 is on PyPI, `pip install algobacktesting`
-will work too.
 
 ## Verification
 

@@ -6,6 +6,8 @@ All notable changes are listed here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-24
+
 ### Added
 
 - `algobacktesting.sharpe`, verified against Bailey & López de Prado (2012, 2014):
