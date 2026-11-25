@@ -191,6 +191,18 @@ ALIGN = [
     },
 ]
 TRADINGVIEW = (ROOT / "tests" / "exports" / "tradingview.csv").read_text(encoding="utf-8")
+THINKORSWIM = (ROOT / "tests" / "exports" / "thinkorswim.csv").read_text(encoding="utf-8")
+THINKORSWIM_BARS = (
+    "DateTime,Open,High,Low,Close\n"
+    "6/2/2026 9:41:00 AM,5900,5901,5899.5,5900.5\n"
+    "6/2/2026 9:42:00 AM,5900.5,5901.5,5900,5901\n"
+    "6/3/2026 10:01:00 AM,590,590.5,589.75,590.25\n"
+    "6/3/2026 10:02:00 AM,590.25,590.5,590,590.25\n"
+    "6/4/2026 9:45:00 AM,21000.5,21001,20999,21000\n"
+    "6/4/2026 9:46:00 AM,21000,21000.5,20999.5,21000\n"
+    "6/5/2026 10:00:00 AM,2.45,2.6,2.4,2.55\n"
+    "6/5/2026 10:01:00 AM,2.55,2.6,2.5,2.55\n"
+)
 TV_BARS = (
     "DateTime,Open,High,Low,Close\n"
     "3/2/2026 9:40:00 AM,20100,20104,20096,20101\n"
@@ -211,6 +223,13 @@ ALIGN.extend(
             "trades": TRADINGVIEW,
             "filter": ["Signal", "L"],
             "expect": {"useUtc": False, "shift": 0, "matched": 2, "entries": 2},
+        },
+        # thinkorswim fills: each round trip enters at its opening fill (four round trips; the
+        # /ES buy is still open). Two one-minute bars around each entry, holding its price.
+        {
+            "bars": THINKORSWIM_BARS,
+            "trades": THINKORSWIM,
+            "expect": {"useUtc": False, "shift": 0, "matched": 4, "entries": 4},
         },
         # ...and a Type filter reads the exit row, the only one that says "Exit short".
         {

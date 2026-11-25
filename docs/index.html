@@ -1728,15 +1728,18 @@ function fifoTrades(table, cols, filter) {
     if (!mm.known) unknown = true;
     fills.push({
       id: [symbol, cols.exp >= 0 ? r[cols.exp] : "", cols.strike >= 0 ? r[cols.strike] : "", type].join("|"),
-      q: q, p: p, mult: mm.mult, time: cols.time >= 0 ? parseTime(r[cols.time]) : NaN, first: i
+      q: q, p: p, mult: mm.mult, time: cols.time >= 0 ? parseTime(r[cols.time]) : NaN, first: i,
+      raw: cols.time >= 0 ? r[cols.time] : "", symbol: symbol
     });
   });
   orderByTime(fills);
   var books = {}, trades = [];
   fills.forEach(function (f) {
-    var b = books[f.id] || (books[f.id] = { lots: [], pos: 0, pnl: 0 }), q = f.q;
+    var b = books[f.id] || (books[f.id] = { lots: [], pos: 0, pnl: 0, open: null }), q = f.q;
     while (Math.abs(q) > 1e-12) {
       if (Math.abs(b.pos) < 1e-12 || (b.pos > 0) === (q > 0)) {
+        // The fill that opens a position from flat is where the stop lab replays the trade from.
+        if (Math.abs(b.pos) < 1e-12) b.open = { raw: f.raw, p: f.p, side: q > 0 ? 1 : -1, qty: Math.abs(q), symbol: f.symbol };
         b.lots.push({ q: q, p: f.p });
         b.pos += q;
         break;
@@ -1748,7 +1751,7 @@ function fifoTrades(table, cols, filter) {
       b.pos -= m * dir;
       if (Math.abs(lot.q) < 1e-12) b.lots.shift();
       if (Math.abs(b.pos) < 1e-12) {
-        trades.push({ pnl: b.pnl, time: f.time });
+        trades.push({ pnl: b.pnl, time: f.time, open: b.open, closeRaw: f.raw, closeP: f.p });
         b.pos = 0; b.pnl = 0; b.lots = [];
       }
     }
@@ -1756,6 +1759,11 @@ function fifoTrades(table, cols, filter) {
   var open = 0;
   Object.keys(books).forEach(function (k) { if (Math.abs(books[k].pos) > 1e-12) open++; });
   return {
+    // Each round trip from flat to flat: its opening fill (time as written, price, side, size)
+    // and its closing fill, for the stop lab.
+    roundTrips: trades.map(function (t) {
+      return { entryRaw: t.open.raw, entryPrice: t.open.p, side: t.open.side, qty: t.open.qty, symbol: t.open.symbol, exitRaw: t.closeRaw, exitPrice: t.closeP };
+    }),
     values: trades.map(function (t) { return Math.round(t.pnl * 1e8) / 1e8; }),
     before: trades.map(function (t) { return Math.round(t.pnl * 1e8) / 1e8; }),
     times: trades.map(function (t) { return t.time; }),
@@ -1942,6 +1950,12 @@ function tradeEntries(table, filter) {
     return /^(L|LONG|B|BUY|BOT|BTO)\b/.test(s) ? 1 : /^(S|SHORT|SELL|SLD|STO|SS)\b/.test(s) ? -1 : 0;
   }
   var entries = [], cols = table.cols;
+  if (table.kind === "fills") {
+    // Fills only (thinkorswim): the round trips that pairing buys and sells first in, first out makes.
+    return fifoTrades(table, cols, filter).roundTrips.map(function (rt) {
+      return { entry: readStamp(rt.entryRaw), exit: readStamp(rt.exitRaw), side: rt.side, entryPrice: rt.entryPrice, exitPrice: rt.exitPrice, qty: rt.qty, symbol: rt.symbol };
+    }).filter(function (e) { return isFinite(e.entry.clock) && isFinite(e.entryPrice); });
+  }
   if (cols.legs >= 0 && cols.tradeNo >= 0 && cols.time >= 0 && cols.price >= 0) {
     // TradingView: pair each trade's entry and exit rows by trade number.
     var legsByTrade = {}, tradeOrder = [];
@@ -3273,7 +3287,7 @@ function describeRule(rule) {
     var t = source.table, f = $("sel-filter").value, cut = f.indexOf("|");
     var filter = f ? { col: +f.slice(0, cut), value: f.slice(cut + 1) } : null;
     var entries = tradeEntries(t, filter);
-    if (!entries.length) return stop("This trade file has no entry time, side and entry price for each trade, so it can't be replayed. thinkorswim statements are not supported yet.");
+    if (!entries.length) return stop("This trade file has no entry time, side and entry price for each trade, so it can't be replayed.");
     // The contract: from a symbol column, else from the file names (TradingView puts "NQ1!" in it).
     var found = instrumentRoot(entries[0].symbol) || instrumentRoot(bars[0].symbol) || instrumentFromName(source.name) || instrumentFromName(lab.name);
     $("lab-instrument").options[0].textContent = found ? "From your files: " + found : "Not in your files: pick one";

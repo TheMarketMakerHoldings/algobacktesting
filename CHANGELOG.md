@@ -82,6 +82,11 @@ All notable changes are listed here. The format follows
   the gambler's ruin formulas and hand-worked cases.
 - "Save as PDF" on the website: a one-page report of the verdict and breakdown, with the
   equity chart, the data used and the date.
+- Stop lab replays thinkorswim trades: pairing buys and sells first in, first out now keeps
+  each round trip's opening fill (time, price, side, size) and closing fill. Checked by
+  writing the example's 151 trades as a thinkorswim statement: all 151 line up, and at every
+  stop size the result differs from the original file's by exactly the $4.12 fee that the
+  statement leaves out.
 - Strategy builder reads a strategy written in plain words ("go long when price breaks the
   first 15 minutes after 9:30, stop 12 ticks, target 24, out by 11:30"), shows how it read
   them with every default marked as assumed, and says plainly what it could not understand.

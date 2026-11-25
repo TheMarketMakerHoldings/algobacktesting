@@ -51,7 +51,7 @@ function run(text, filterSpec) {
     skipped: res.skipped, unknown: res.unknownMultiplier,
     filters: t.cols.filters.map(function (f) { return [f.name, f.values]; }),
     labels: t.cols.filters.map(function (f) { return [f.name, f.labels]; }),
-    times: res.times, entryTimes: res.entryTimes,
+    times: res.times, entryTimes: res.entryTimes, roundTrips: res.roundTrips || null,
     summary: tradeSummary(res.values, res.before),
     dsr5: stats ? edgeProbability(stats, n, 5) : null
   };
@@ -209,6 +209,14 @@ def test_thinkorswim_fills_are_paired_first_in_first_out(js: dict[str, Any]) -> 
     assert r["values"] == pytest.approx([21.25, 30.0, 38.0, 60.0])
     assert r["open"] == 1
     assert r["unknown"] is False
+    # Each round trip keeps its opening and closing fills, so the stop lab can replay it.
+    keys = ("entryRaw", "entryPrice", "side", "qty", "symbol", "exitRaw", "exitPrice")
+    assert [tuple(t[k] for k in keys) for t in r["roundTrips"]] == [
+        ("6/2/26 09:41:12", 5900.25, 1, 1, "/MESU26", "6/2/26 09:58:30", 5904.5),
+        ("6/3/26 10:01:00", 590.1, 1, 100, "SPY", "6/3/26 11:00:00", 589.5),  # closed in two sells
+        ("6/4/26 09:45:00", 21000.0, -1, 2, "/MNQU26", "6/4/26 10:15:00", 20990.5),
+        ("6/5/26 10:00:00", 2.5, 1, 1, "SPY", "6/5/26 10:45:00", 3.1),
+    ]
 
 
 @pytest.mark.parametrize(("raw", "delimiter", "expected"), NUMBERS)
