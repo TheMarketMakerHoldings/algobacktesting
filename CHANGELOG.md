@@ -6,6 +6,10 @@ All notable changes are listed here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- The website's developer section installs from PyPI: `pip install algobacktesting`.
+
 ## [0.1.0] - 2026-11-24
 
 ### Added
