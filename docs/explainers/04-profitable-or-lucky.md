@@ -108,7 +108,10 @@ The rules, all stated on the page:
   entry. The shift explaining the most trades wins, then the one needing the fewest gaps. Each
   trade is then replayed on real prices; moving entry and exit by the same gap changes no move,
   so no result changes. On one real export, 59 of 59 trades lined up with gaps of 507, 289.5
-  and about 0 points, which change exactly at the March and June rolls.
+  and about 0 points, which change exactly at the March and June rolls. That export's prices
+  differ from the bar data by a few points, so the shift came out one minute before the real
+  fill; replaying the trades from the true minute instead changed 2 of 54 results at one stop
+  size and none at the others.
 
 **The search counts.** Comparing 19 stop sizes and keeping the best is itself a search,
 just like trying 19 setups. So the lab scores each size as one of (setups tried × stop

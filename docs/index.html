@@ -359,7 +359,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
 @media print {
   @page { margin: 14mm; }
   body { font-size: 11pt; color: #000; }
-  .topbar, .hero, .facts, #prop, #timing, #compare, #lab, #builder, #how, #export, #developers, .footer, .skip, noscript,
+  .topbar, .hero, .facts, #prop, #timing, #compare, #lab, #builder, #how, #export, #questions, #developers, .footer, .skip, noscript,
   .toggles, .section-head, #pane-import .drop, #load-example, .head-actions, .share-box, .chart-cap, .tip { display: none !important; }
   .print-only { display: block; margin-bottom: 10mm; }
   .print-only h1 { font: 400 20pt/1.2 var(--serif); color: #000; }
@@ -884,7 +884,28 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         <details><summary>TopstepX</summary><p>Open the <strong>Trades</strong> tab at the bottom of the platform (not Orders), choose the date range and click <strong>Export</strong>. If the file has separate fee columns, keep subtract fees on.</p></details>
         <details><summary>Quantower</summary><p>Open the <strong>Trades</strong> panel, choose <strong>Export data</strong> from its menu, tick all columns, pick comma-separated and export. Fills that share a position ID are combined into one trade, using the Net P/L column. For the stop lab, export bars from the History exporter.</p></details>
         <details><summary>NinjaTrader 8</summary><p>Control Center, <strong>New → Trade Performance</strong>, choose the account, strategy and dates, click Generate, open the <strong>Trades</strong> view, then right-click and <strong>Export</strong>. Check whether your Profit column already includes commission, and set subtract fees to match.</p></details>
-        <details><summary>thinkorswim (Schwab)</summary><p><strong>Monitor → Account Statement</strong>, set the dates, then <strong>Export to File</strong> from the menu at the top right. Buys and sells in Account Trade History are paired into round trips, first in, first out. Commissions are not in that section, so results are before fees. The stop lab does not read thinkorswim files yet.</p></details>
+        <details><summary>thinkorswim (Schwab)</summary><p><strong>Monitor → Account Statement</strong>, set the dates, then <strong>Export to File</strong> from the menu at the top right. Buys and sells in Account Trade History are paired into round trips, first in, first out. Commissions are not in that section, so results are before fees. The stop lab replays each round trip from the fill that opened it.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="questions" aria-labelledby="questions-title">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Questions</span>
+        <h2 id="questions-title">What the numbers <em>mean</em></h2>
+        <div class="dots center" aria-hidden="true"></div>
+        <p>Short answers to what traders ask most about this page.</p>
+      </div>
+      <div class="faq">
+        <details><summary>What does "chance the edge is real" mean?</summary><p>How sure you can be that your strategy makes money for a real reason, not because of a lucky streak. It looks at how many trades you have, how much your results swing from trade to trade, and how many setups you tried. At 95% or more, luck is a poor explanation for your results. Below 50%, your results are no better than the luckiest of your setups would typically show with no edge at all. It describes the past; it does not promise the future.</p></details>
+        <details><summary>What is a "setup", and why does the number matter?</summary><p>A setup is any strategy, indicator or set of rules you tested. Try ten ideas and keep the best, and the best one usually looks good even if none of them works: that is luck you selected for. So the check asks what the best of your setups would have shown with no edge at all, and holds your result to that bar. Count every version you tried and dropped. If this is the only idea you ever tested, enter 1.</p></details>
+        <details><summary>What is the dashed "luck alone" line?</summary><p>What the luckiest of your setups would typically have made by now if none of them had any edge. With one setup it sits at $0, because a strategy with no edge averages nothing. Each extra setup you tried raises it. Finishing above it is a good sign; the chance at the top says whether you are far enough above.</p></details>
+        <details><summary>Why are breakevens counted apart, and why do they cost money?</summary><p>A trade that was flat before fees still paid commission, so after fees it is a small loss. The page counts these trades apart from real wins and losses, shows your win rate with and without them, and shows what they cost you in total.</p></details>
+        <details><summary>Which time zone are the hours in?</summary><p>Your file's, exactly as written in it; the page cannot know which zone that is. TradingView exports in the time zone set on your chart (the clock at its bottom right). Most other platforms use the time zone set in the platform or on your computer.</p></details>
+        <details><summary>Why didn't my TradingView trades line up with my bars?</summary><p>Usually the two files cover different dates: load bars for the same months as your trades. Continuous contracts such as NQ1! are also adjusted at each contract roll, so their prices sit a fixed number of points away from real prices, and trades may be stamped one chart bar early. The stop lab finds and corrects both, and tells you what it changed.</p></details>
+        <details><summary>Is my data uploaded anywhere?</summary><p>No. Your files are read in your browser, and the page is locked so it cannot send data to any other site. Saved strategies stay in your browser on that device, and a shared link holds only summary numbers, never your trades.</p></details>
+        <details><summary>Is this financial advice?</summary><p>No. It is statistics about past results. A real edge can stop working when the market changes, and fills in live trading can be worse than in a replay.</p></details>
       </div>
     </div>
   </section>
@@ -926,6 +947,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         <li><a href="#lab">Stop lab</a></li>
         <li><a href="#builder">Strategy builder</a></li>
         <li><a href="#export">Export help</a></li>
+        <li><a href="#questions">Questions</a></li>
       </ul></nav>
       <nav aria-labelledby="f-research"><h2 id="f-research">Research</h2><ul>
         <li><a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/paper/verification-report.md">Verification report</a></li>
