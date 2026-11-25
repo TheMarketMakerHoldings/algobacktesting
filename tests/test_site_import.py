@@ -12,6 +12,7 @@ The sample files imitate each platform's export; they are not real exports. See
 
 from __future__ import annotations
 
+import calendar
 import csv
 import io
 import json
@@ -49,6 +50,8 @@ function run(text, filterSpec) {
     subtractFees: r.subtractFees, values: res.values, before: res.before, open: res.open,
     skipped: res.skipped, unknown: res.unknownMultiplier,
     filters: t.cols.filters.map(function (f) { return [f.name, f.values]; }),
+    labels: t.cols.filters.map(function (f) { return [f.name, f.labels]; }),
+    times: res.times, entryTimes: res.entryTimes,
     summary: tradeSummary(res.values, res.before),
     dsr5: stats ? edgeProbability(stats, n, 5) : null
   };
@@ -215,8 +218,6 @@ def test_money_cells(js: dict[str, Any], raw: str, delimiter: str, expected: flo
 
 
 def test_timestamps(js: dict[str, Any]) -> None:
-    import calendar
-
     for (raw, parts), got in zip(TIMES, js["times"], strict=True):
         if parts is None:
             assert got is None, raw
@@ -265,7 +266,9 @@ def test_tradingview_counts_each_trade_once(js: dict[str, Any]) -> None:
     # Each trade has an Entry row and an Exit row with the same result: only exits count.
     assert r["values"] == pytest.approx([195.5, -104.5, -4.5])
     assert r["subtractFees"] is False  # net already
-    assert ["Type", ["Exit long", "Exit short"]] in r["filters"]  # entry values are not offered
+    # Only exit values are offered, shown as the long and the short trades.
+    assert ["Direction", ["Exit long", "Exit short"]] in r["filters"]
+    assert ["Direction", ["Long trades", "Short trades"]] in r["labels"]
     assert js["by_name"]["tradingview short"]["values"] == pytest.approx([-104.5])
 
 
@@ -273,6 +276,29 @@ def test_tradingview_signal_names_the_setup(js: dict[str, Any]) -> None:
     # The Signal column names the setup on entry rows (L, S) and how the trade closed on exit
     # rows (L_x, S_x). Only entry signals are offered, and choosing one picks every trade that
     # entry opened (trades 1 and 3), although results are read from the exit rows.
-    assert ["Signal", ["L", "S"]] in js["by_name"]["tradingview"]["filters"]
+    assert ["Entry signal", ["L", "S"]] in js["by_name"]["tradingview"]["filters"]
     assert js["by_name"]["tradingview signal L"]["values"] == pytest.approx([195.5, -4.5])
     assert js["by_name"]["tradingview exit signal"]["values"] == []  # never offered
+
+
+def _ms(*parts: int) -> int:
+    return calendar.timegm((*parts, 0, 0, 0)) * 1000 if len(parts) == 6 else 0
+
+
+def test_entry_times(js: dict[str, Any]) -> None:
+    # The timing section groups trades by when they were entered.
+    by = js["by_name"]
+    # TradingView: each trade's Entry row.
+    assert by["tradingview"]["entryTimes"] == [
+        _ms(2026, 3, 2, 9, 40, 0),
+        _ms(2026, 3, 3, 10, 20, 0),
+        _ms(2026, 3, 4, 9, 31, 0),
+    ]
+    # Quantower: a position's earliest fill (7001 bought at 9:31:05, sold at 9:40:10).
+    assert by["quantower"]["entryTimes"][0] == _ms(2026, 6, 1, 9, 31, 5)
+    # TopstepX and NinjaTrader: their entry time columns, never after the exit.
+    for name in ("topstepx", "ninjatrader"):
+        entries, exits = by[name]["entryTimes"], by[name]["times"]
+        assert all(e < x for e, x in zip(entries, exits, strict=True)), name
+    assert _ms(2026, 6, 5, 10, 2, 11) in by["topstepx"]["entryTimes"]
+    assert by["ninjatrader"]["entryTimes"][0] == _ms(2026, 6, 1, 9, 31, 0)

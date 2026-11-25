@@ -136,8 +136,10 @@ often than one that trails every trade; the tests check that ordering.
 
 ## Timing: when does it work?
 
-The timing section splits the trades by the hour of day or the weekday in the file's time
-column. Finding a "best hour" means looking at every hour, which is a search like trying
+The timing section splits the trades by the hour of day or the weekday they were entered
+(the entry time column, TradingView's entry rows, or a position's first fill; otherwise the
+file's one time column). Hours are in the file's own time zone, exactly as written: the page
+cannot know it, and TradingView, for one, exports in the time zone set on the chart. Finding a "best hour" means looking at every hour, which is a search like trying
 setups, so each slice with at least 5 trades is scored with the Deflated Sharpe Ratio using
 (slices with enough trades) x (setups tried) as the number of tries. The same check on the
 negated results scores whether a losing slice's losses are a real pattern. On the page's

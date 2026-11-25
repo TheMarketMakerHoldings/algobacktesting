@@ -220,6 +220,18 @@ ALIGN.extend(
         },
     ]
 )
+# File names a trader might have, and the contract the lab should read from them.
+NAMES = [
+    ("NQ_Topstep_Pro_CME_MINI_NQ1!_2026-06-27_355f6.csv", "NQ"),
+    ("NQ_Top_Pro_CME_MINI_MNQ1!_2026-06-28_13e30.csv", "MNQ"),  # the contract beats the name
+    ("Trade_Every_Candle_CME_MINI_ES1!_2026-06-29.csv", "ES"),
+    ("1 min 3 months ES.csv", "ES"),
+    ("mes.csv", "MES"),
+    ("trades MESZ25 export.csv", "MES"),
+    ("1 min 1 year.csv", ""),
+    ("best setups TEST close.csv", ""),  # words that merely contain ES or CL are not contracts
+    ("", ""),
+]
 ROOTS = [
     ("ESU6", "ES"),
     ("MESZ25", "MES"),
@@ -265,6 +277,7 @@ def js() -> dict[str, Any]:
             {"bars": a["bars"], "trades": a["trades"], "filter": a.get("filter")} for a in ALIGN
         ],
         "roots": [r[0] for r in ROOTS],
+        "names": [n[0] for n in NAMES],
         "wide": WIDE,
     }
     with tempfile.TemporaryDirectory() as tmp:
@@ -325,6 +338,10 @@ def test_trades_are_lined_up_with_bars(js: dict[str, Any]) -> None:
 
 def test_instrument_roots(js: dict[str, Any]) -> None:
     assert js["roots"] == [r[1] for r in ROOTS]
+
+
+def test_contract_from_file_names(js: dict[str, Any]) -> None:
+    assert js["names"] == [n[1] for n in NAMES]
 
 
 def test_wide_and_quoted_bar_files(js: dict[str, Any]) -> None:

@@ -82,6 +82,18 @@ All notable changes are listed here. The format follows
   the gambler's ruin formulas and hand-worked cases.
 - "Save as PDF" on the website: a one-page report of the verdict and breakdown, with the
   equity chart, the data used and the date.
+- Website made easier to read, after a review by its first user:
+  - Stop lab: the contract is read from the file names (TradingView's `MNQ1!`, a bar file
+    called `ES.csv`); the stops tried, the target and the hold time start from the trader's
+    own trades; the settings sit under "Adjust the test"; and the result starts with one
+    plain answer (keep the stop, or which one to use).
+  - Timing groups trades by when they were entered (TradingView entry rows, TopstepX
+    EnteredAt, a position's first fill), says the hours are in the file's own time zone, and
+    explains its "Chance it's real" column.
+  - The prop-firm simulator takes trades per day from the file whenever it has dates.
+  - The setups question, the profit-versus-luck chart and the trades-to-prove-it chart say
+    in plain words what they mean; the proof chart marks where 95% is reached.
+  - Filter menus for TradingView files read "Entry signal" and "Long trades / Short trades".
 - Strategy builder on the website: write a rule as a sentence with blanks (opening-range
   breakout, a set time with or against the morning's move, a moving-average cross, or a break
   of the previous day's high or low; stop, target, move to breakeven, exit time, trades a

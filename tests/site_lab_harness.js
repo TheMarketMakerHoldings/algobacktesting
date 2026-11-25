@@ -29,6 +29,7 @@ out.align = input.align.map(function (a) {
   return { useUtc: al.useUtc, shift: al.shiftHours, matched: al.matched.length, entries: entries.length };
 });
 out.roots = input.roots.map(instrumentRoot);
+out.names = input.names.map(instrumentFromName);
 out.wide = input.wide.map(function (text) {
   const p = parseBars(text);
   return p ? p.bars.map(function (b) { return [b.clock, b.utc, b.o, b.h, b.l, b.c]; }) : null;

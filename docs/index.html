@@ -164,6 +164,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .field > span { font: 700 11px/1.3 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--slate); }
 .field input, .field select, .field textarea { width: 100%; min-width: 0; min-height: 44px; padding: 9px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--white); font: 400 16px/1.3 var(--sans); font-variant-numeric: tabular-nums; }
 .field input:hover, .field select:hover, .field textarea:hover { border-color: var(--slate); }
+.field input:disabled { background: var(--warm-2); color: var(--ink-2); cursor: default; }
 .field select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--slate) 50%), linear-gradient(135deg, var(--slate) 50%, transparent 50%); background-position: calc(100% - 17px) 55%, calc(100% - 12px) 55%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 30px; }
 .field textarea { min-height: 150px; resize: vertical; font-family: var(--mono); font-size: 14px; }
 .row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
@@ -219,6 +220,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .thresh { stroke: var(--teal-bright); stroke-width: 1.5; stroke-dasharray: 4 4; }
 .thresh-label { fill: var(--teal-ink); font: 600 12px var(--sans); }
 .dot { fill: var(--teal); stroke: var(--white); stroke-width: 3; }
+.dot.goal { fill: var(--white); stroke: var(--teal-bright); stroke-width: 2.5; }
 .cross { stroke: var(--line-2); stroke-width: 1; }
 .tip { position: absolute; top: 0; left: 0; pointer-events: none; white-space: nowrap; padding: 7px 11px; border-radius: 8px; background: var(--navy); color: var(--white); font: 500 13px/1.4 var(--sans); transform: translate(-50%, calc(-100% - 12px)); box-shadow: 0 6px 18px rgba(35, 36, 58, 0.25); }
 
@@ -230,6 +232,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .findings strong { color: var(--navy); }
 .findings .lead { font: 400 1.25rem/1.35 var(--serif); color: var(--navy); }
 .lab-table-wrap { overflow-x: auto; }
+.lab-steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--ink-2); }
+.lab-adjust { border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+.lab-adjust > * + * { margin-top: 12px; }
+.lab-adjust summary { cursor: pointer; font: 700 12px/1.4 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal-ink); }
 
 /* Saving and listing strategies */
 .save-box { border-top: 1px solid var(--line); gap: 10px; }
@@ -487,13 +493,13 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
             </div>
 
             <div class="setups field">
-              <span id="setups-label">Setups tried, including this one</span>
+              <span id="setups-label">How many setups did you try? (including this one)</span>
               <div class="stepper">
                 <button type="button" id="setups-dec" aria-label="One fewer setup">−</button>
                 <input type="number" id="in-setups" min="1" max="10000" step="1" value="5" inputmode="numeric" aria-labelledby="setups-label">
                 <button type="button" id="setups-inc" aria-label="One more setup">+</button>
               </div>
-              <p class="note">Every strategy, indicator or rule set you tested and dropped. Be honest: this number matters most.</p>
+              <p class="note">A setup is any strategy, indicator or set of rules you tested. Tried 10 ideas and kept this one because it did best? Enter 10: the best of 10 looks good by luck alone, so the check raises the bar. Only ever tried this one? Leave 1.</p>
             </div>
             <p class="error" id="calc-error" role="alert" hidden></p>
           </form>
@@ -534,8 +540,8 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         <div class="card-head">
           <h3 id="chart-title">Chart</h3>
           <div class="toggles" role="group" aria-label="Which chart">
-            <button type="button" id="chart-equity" aria-pressed="true">Equity vs luck</button>
-            <button type="button" id="chart-proof" aria-pressed="false">Proof curve</button>
+            <button type="button" id="chart-equity" aria-pressed="true">Profit vs luck</button>
+            <button type="button" id="chart-proof" aria-pressed="false">Trades to prove it</button>
           </div>
         </div>
         <div class="chart-wrap">
@@ -586,10 +592,10 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
             </label>
           </div>
           <div class="row2">
-            <label class="field"><span>Trades per day</span><input type="number" id="prop-perday" min="1" max="200" step="1" value="3" inputmode="numeric"></label>
+            <label class="field"><span id="prop-perday-label">Trades per day</span><input type="number" id="prop-perday" min="1" max="200" step="1" value="3" inputmode="numeric"></label>
             <label class="field"><span>Max trading days (0 = none)</span><input type="number" id="prop-days" min="0" max="2000" step="1" value="0" inputmode="numeric"></label>
           </div>
-          <p class="note" id="prop-perday-note">Trades per day is used only when your file has no trade dates.</p>
+          <p class="note" id="prop-perday-note">Trades per day comes from your file when it has trade dates.</p>
           <p class="note">A trailing limit never rises above your starting balance. Amounts are in the same money as your trades.</p>
         </form>
         <div class="card-body lab-out">
@@ -624,9 +630,10 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
           </div>
         </div>
         <div class="card-body">
+          <p class="note" id="timing-clock"></p>
           <div class="findings" id="timing-findings" aria-live="polite"><p class="note">Import a trade file with trade times in the check above to see this.</p></div>
           <div class="lab-table-wrap"><table class="stats lab-table" id="timing-table"></table></div>
-          <p class="note">Times are as written in your file, from the time column the check uses (usually when each trade closed). Slices with fewer than 5 trades are listed but not scored.</p>
+          <p class="note"><strong>Chance it's real</strong>: how sure you can be that the hour's result is a real pattern that would repeat, not a lucky or unlucky streak. For a winning hour it is about its profits; for a losing hour, about its losses. Only act on an hour at 95% or more. "Too few trades" means under 5, too few to judge.</p>
         </div>
       </div>
     </div>
@@ -693,21 +700,28 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
           </label>
           <button type="button" class="linkbtn" id="load-bars">Load the example bars</button>
           <div class="file-line" id="bars-line" aria-live="polite"></div>
-          <div class="row2">
-            <label class="field"><span>Instrument</span><select id="lab-instrument"></select></label>
-            <label class="field"><span>Max hold (minutes)</span><input type="number" id="lab-hold" min="1" max="1440" step="1" value="240" inputmode="numeric"></label>
-          </div>
-          <div class="row3">
-            <label class="field"><span>Stops from</span><input type="number" id="lab-from" min="1" max="400" step="1" value="4" inputmode="numeric"></label>
-            <label class="field"><span>to (ticks)</span><input type="number" id="lab-to" min="1" max="400" step="1" value="40" inputmode="numeric"></label>
-            <label class="field"><span>step</span><input type="number" id="lab-step" min="1" max="100" step="1" value="2" inputmode="numeric"></label>
-          </div>
-          <div class="row2">
-            <label class="field"><span>Target (ticks)</span><input type="number" id="lab-target" min="0" max="2000" step="1" value="24" inputmode="numeric"></label>
-            <label class="field"><span>Breakeven after (ticks)</span><input type="number" id="lab-be" min="0" max="2000" step="1" value="0" inputmode="numeric"></label>
-          </div>
-          <p class="note">Breakeven 0 means the stop never moves. Your bar file is read in your browser and never uploaded.</p>
+          <ol class="lab-steps">
+            <li>Import your trades in the check above.</li>
+            <li>Drop one-minute bars for the same contract and dates here.</li>
+            <li>Read the answer on the right. The lab sets everything else from your trades.</li>
+          </ol>
+          <label class="field"><span>Contract</span><select id="lab-instrument"></select></label>
           <p class="error" id="lab-error" role="alert" hidden></p>
+          <details class="lab-adjust">
+            <summary>Adjust the test (optional)</summary>
+            <p class="note">These start from your own trades: stops around the one you use now, and your usual profit as the target. Change them only to test something specific.</p>
+            <div class="row3">
+              <label class="field"><span>Try stops from (ticks)</span><input type="number" id="lab-from" min="1" max="400" step="1" value="4" inputmode="numeric"></label>
+              <label class="field"><span>up to</span><input type="number" id="lab-to" min="1" max="400" step="1" value="40" inputmode="numeric"></label>
+              <label class="field"><span>every</span><input type="number" id="lab-step" min="1" max="100" step="1" value="2" inputmode="numeric"></label>
+            </div>
+            <div class="row2">
+              <label class="field"><span>Take profit at (ticks, 0 = none)</span><input type="number" id="lab-target" min="0" max="2000" step="1" value="24" inputmode="numeric"></label>
+              <label class="field"><span>Stop to entry after (ticks, 0 = never)</span><input type="number" id="lab-be" min="0" max="2000" step="1" value="0" inputmode="numeric"></label>
+            </div>
+            <label class="field"><span>Close any trade still open after (minutes)</span><input type="number" id="lab-hold" min="1" max="1440" step="1" value="240" inputmode="numeric"></label>
+          </details>
+          <p class="note">Your bar file is read in your browser and never uploaded.</p>
         </div>
         <div class="card-body lab-out">
           <div id="lab-findings" class="findings" aria-live="polite"><p class="note">Load a trade file above and a bar file here to see how different stops would have done.</p></div>
@@ -1470,6 +1484,8 @@ function detectColumns(header, rows, delimiter) {
   cols.group = findColumn(keys, /^(positionid|position#|positionno|positionnumber)$/);
   cols.time = findColumn(keys, /^(exit|exited|close|closed)(time|at|date|datetime)?$|^(exittime|exitedat|closetime|closedat|exitdate|closedate)$/);
   if (cols.time < 0) cols.time = findColumn(keys, /datetime|dateandtime|date\/time|exectime|^time$|^date$|enteredat|entrytime|tradeday|^opened|filledat|^timestamp$/);
+  // When each trade was opened, if the file says: the timing section groups trades by this.
+  cols.entryTime = findColumn(keys, /^(enteredat|entrytime|entrydate|entrydatetime|opentime|openedat|opened|timeopened)$/);
   cols.side = findColumn(keys, /^(side|action|b\/s|buy\/sell|buysell|direction)$/);
   cols.qty = findColumn(keys, /^(qty|quantity|size|sizeqty|filledqty|filled|shares|contracts)$/);
   cols.price = findColumn(keys, /^(price|priceusd|fillprice|execprice|executionprice|avgprice|averageprice|avgfillprice)$/);
@@ -1507,7 +1523,15 @@ function detectColumns(header, rows, delimiter) {
       var values = c === cols.legs
         ? distinctValues(rows, c).filter(function (v) { return /^exit/i.test(v); })
         : distinctValues(setupRows, c);
-      if (values.length >= 2 && values.length <= 60) cols.filters.push({ col: c, name: header[c], values: values });
+      if (values.length < 2 || values.length > 60) return;
+      // What the menus show. In a file of legs, "Exit long" means the long trades, and the
+      // Signal column names each trade's entry setup.
+      var f = { col: c, name: header[c], values: values, labels: values.slice() };
+      if (c === cols.legs) {
+        f.name = "Direction";
+        f.labels = values.map(function (v) { return /long/i.test(v) ? "Long trades" : /short/i.test(v) ? "Short trades" : v; });
+      } else if (cols.legs >= 0 && /signal/.test(k)) f.name = "Entry signal";
+      cols.filters.push(f);
     });
   });
   return cols;
@@ -1573,6 +1597,7 @@ function orderByTime(trades) {
 function tradesFromTable(table, opt) {
   var byKey = {}, order = [], skipped = 0, dollars = false, feeTotal = 0;
   var legs = table.cols && table.cols.legs >= 0 ? table.cols.legs : -1, entryRows = entryRowsByTrade(table);
+  var entryCol = table.cols && table.cols.entryTime >= 0 ? table.cols.entryTime : -1;
   table.rows.forEach(function (r, i) {
     if (legs >= 0 && !/^exit/i.test(r[legs])) return; // the entry row repeats the trade's result
     if (!matchesFilter(filterRow(table, r, opt.filter, entryRows), opt.filter)) return;
@@ -1585,11 +1610,16 @@ function tradesFromTable(table, opt) {
       if (isFinite(f)) fee += Math.abs(f);
     });
     var key = opt.group >= 0 && r[opt.group] ? "p" + r[opt.group] : "r" + i;
-    if (!byKey[key]) { byKey[key] = { pnl: 0, fee: 0, time: NaN, first: i }; order.push(key); }
+    if (!byKey[key]) { byKey[key] = { pnl: 0, fee: 0, time: NaN, entry: NaN, first: i }; order.push(key); }
     var t = byKey[key], when = opt.time >= 0 ? parseTime(r[opt.time]) : NaN;
     t.pnl += value;
     t.fee += fee;
     if (isFinite(when)) t.time = isFinite(t.time) ? Math.max(t.time, when) : when;
+    // Opened: the entry time column; else the entry row of a trade in legs; else the earliest
+    // fill of a position; else the trade's one time.
+    var opened = entryCol >= 0 ? parseTime(r[entryCol])
+      : entryRows && opt.time >= 0 && entryRows[r[table.cols.tradeNo]] ? parseTime(entryRows[r[table.cols.tradeNo]][opt.time]) : when;
+    if (isFinite(opened)) t.entry = isFinite(t.entry) ? Math.min(t.entry, opened) : opened;
   });
   var trades = orderByTime(order.map(function (k) { return byKey[k]; }));
   trades.forEach(function (t) { feeTotal += t.fee; });
@@ -1598,6 +1628,7 @@ function tradesFromTable(table, opt) {
     // Each trade before fees: a net P&L column gets its fees added back. Breakevens are judged on this.
     before: trades.map(function (t) { return Math.round((opt.pnlIsNet ? t.pnl + t.fee : t.pnl) * 1e8) / 1e8; }),
     times: trades.map(function (t) { return t.time; }),
+    entryTimes: trades.map(function (t) { return t.entry; }),
     fees: feeTotal,
     skipped: skipped,
     unit: dollars ? "$" : "",
@@ -1731,6 +1762,23 @@ function instrumentRoot(symbol) {
     if (s.indexOf(roots[i]) === 0 && /^([FGHJKMNQUVXZ]\d{1,2}|[ .:-]|$)/.test(rest)) return roots[i];
   }
   return "";
+}
+
+// The contract a file name names, such as "..._CME_MINI_MNQ1!_2026-06-28.csv" (TradingView) or
+// "1 min 3 months ES.csv", else "". A word that looks like a contract (a root followed by a
+// continuous-contract number or a month code and year) beats a bare root, so "NQ_Top_Pro_
+// CME_MINI_MNQ1!" reads as MNQ even though the strategy's own name starts with NQ.
+function instrumentFromName(name) {
+  var words = String(name || "").toUpperCase().split(/[^A-Z0-9]+/), bare = "";
+  var roots = Object.keys(INSTRUMENTS).sort(function (a, b) { return b.length - a.length; });
+  for (var i = 0; i < words.length; i++) {
+    if (!bare && INSTRUMENTS[words[i]]) bare = words[i];
+    for (var j = 0; j < roots.length; j++) {
+      var rest = words[i].slice(roots[j].length);
+      if (words[i].indexOf(roots[j]) === 0 && /^(\d{1,2}|[FGHJKMNQUVXZ]\d{1,2})$/.test(rest)) return roots[j];
+    }
+  }
+  return bare;
 }
 
 // Minutes east of UTC from "-05:00", "+0100", "Z" or "UTC", else NaN.
@@ -2523,10 +2571,10 @@ function describeRule(rule) {
       t.cols.filters.forEach(function (f) {
         var group = document.createElement("optgroup");
         group.label = f.name;
-        f.values.forEach(function (v) {
+        f.values.forEach(function (v, i) {
           var o = document.createElement("option");
           o.value = f.col + "|" + v;
-          o.textContent = v;
+          o.textContent = f.labels[i];
           group.appendChild(o);
         });
         filterSel.appendChild(group);
@@ -2591,7 +2639,7 @@ function describeRule(rule) {
     if (!(stats.sd > 0)) return { error: "Every trade has the same result, so there is nothing to measure." };
     // Futures platforms report results in US dollars even when the cells carry no $ sign.
     var unit = res.unit || (source.platform || source.example ? "$" : "");
-    return { stats: stats, values: res.values, before: res.before, times: res.times, trades: n, unit: unit, digits: 2, fees: res.fees, feesOn: pick !== "fifo" && $("chk-fees").checked && t.cols.fees.length > 0, label: source.example ? "Example file" : source.name };
+    return { stats: stats, values: res.values, before: res.before, times: res.times, entryTimes: res.entryTimes, trades: n, unit: unit, digits: 2, fees: res.fees, feesOn: pick !== "fifo" && $("chk-fees").checked && t.cols.fees.length > 0, label: source.example ? "Example file" : source.name };
   }
 
   function parsePasted(text) {
@@ -2625,7 +2673,7 @@ function describeRule(rule) {
     var stats = statsFromTrades(b.values);
     if (!(stats.sd > 0)) return { error: "Every trade has the same result, so there is nothing to measure." };
     return {
-      stats: stats, values: b.values, before: b.before, times: b.times, trades: b.values.length, unit: "$", digits: 2,
+      stats: stats, values: b.values, before: b.before, times: b.times, entryTimes: b.times, trades: b.values.length, unit: "$", digits: 2,
       fees: b.fees, feesOn: b.fees > 0, label: "Strategy builder"
     };
   }
@@ -2799,7 +2847,9 @@ function describeRule(rule) {
     svg.innerHTML = parts.join("");
     plot = { kind: "equity", x: x, y: y, f: f, n: n, eq: eq, luck: luck };
     var ahead = eq[n] > luck[n];
-    $("chart-cap").textContent = "Your running profit, trade by trade, against what the luckiest of " + v.setups + (v.setups === 1 ? " setup" : " setups") + " would have made by now with no edge at all.";
+    $("chart-cap").textContent = v.setups === 1
+      ? "Your running profit (solid line) against what luck alone would have made (dashed). A strategy with no edge averages $0, so with 1 setup tried the dashed line sits on zero. Each extra setup you tried raises it, because the best of several lucky tries is usually ahead."
+      : "Your running profit (solid line) against luck alone (dashed): what the best of " + v.setups + " setups with no real edge would typically have made by now. Finishing above it is a good sign; the chance at the top says whether you are far enough above.";
     $("legend").innerHTML = '<span><i class="swatch"></i>You: ' + money(eq[n], v.unit, v.digits, true) + "</span>" +
       '<span><i class="swatch luck"></i>Luck alone: ' + money(luck[n], v.unit, v.digits, true) + "</span>" +
       '<span><i class="swatch zero"></i>Break-even</span>';
@@ -2816,7 +2866,7 @@ function describeRule(rule) {
       parts.push('<text class="tick" text-anchor="end" x="' + (f.l - 8) + '" y="' + (y(p) + 4) + '">' + p * 100 + "%</text>");
     });
     [10, 100, 1000, 10000].forEach(function (n) {
-      parts.push('<text class="tick" text-anchor="' + (n === 10 ? "start" : n === 10000 ? "end" : "middle") + '" x="' + x(n) + '" y="' + (f.H - 12) + '">' + whole(n) + "</text>");
+      parts.push('<text class="tick" text-anchor="' + (n === 10 ? "start" : n === 10000 ? "end" : "middle") + '" x="' + x(n) + '" y="' + (f.H - 12) + '">' + whole(n) + (n === 10 ? " trades" : "") + "</text>");
     });
     parts.push('<line class="thresh" x1="' + f.l + '" x2="' + (f.W - f.r) + '" y1="' + y(0.95) + '" y2="' + y(0.95) + '"/>');
     parts.push('<text class="thresh-label" x="' + (f.l + 6) + '" y="' + (y(0.95) + 15) + '">95%: proven</text>');
@@ -2830,10 +2880,21 @@ function describeRule(rule) {
     parts.push('<path class="you" d="' + d + '"/>');
     parts.push('<line class="cross" id="cross" y1="' + f.t + '" y2="' + (f.H - f.b) + '" visibility="hidden"/>');
     var at = Math.min(10000, Math.max(10, v.trades)), p = edgeProbability(v.stats, at, v.setups);
+    var need = Math.ceil(tradesNeeded(v.stats, v.setups, 0.95));
+    if (isFinite(need) && need > v.trades && need <= 10000) {
+      // Where the curve crosses 95%: the number of trades that would prove the edge.
+      parts.push('<circle class="dot goal" cx="' + x(need).toFixed(1) + '" cy="' + y(0.95).toFixed(1) + '" r="5"/>');
+      parts.push('<text class="thresh-label" text-anchor="' + (x(need) > f.W - 160 ? "end" : "start") + '" x="' + (x(need) + (x(need) > f.W - 160 ? -10 : 10)).toFixed(1) +
+        '" y="' + (y(0.95) - 10).toFixed(1) + '">proven at about ' + whole(need) + " trades</text>");
+    }
     parts.push('<circle class="dot" cx="' + x(at).toFixed(1) + '" cy="' + y(p).toFixed(1) + '" r="5"/>');
     svg.innerHTML = parts.join("");
     plot = { kind: "proof", x: x, y: y, f: f };
-    $("chart-cap").textContent = "How the chance would change if you kept trading with the same results. The dot is where you are now.";
+    $("chart-cap").textContent = !(v.stats.mean > 0)
+      ? "If your next trades look like these, the chance never rises: the average trade is not positive, so no number of trades can prove an edge."
+      : p >= 0.95 ? "You are already past 95% at " + whole(v.trades) + " trades: hard to explain by luck. The line shows how sure the check would be with fewer or more trades like these."
+      : "If your next trades look like your last " + whole(v.trades) + ", this is how sure the check would become. You are at " + pct(p) + " (the dot)." +
+        (isFinite(need) ? " At about " + whole(need) + " trades it would cross 95%, proven: about " + whole(need - v.trades) + " more trades like these." : "");
     $("legend").innerHTML = '<span><i class="swatch"></i>Chance the edge is real</span><span><i class="swatch luck"></i>95%: proven</span>';
     svg.setAttribute("aria-label", "Chance the edge is real against trades logged. At " + whole(v.trades) + " trades it is " + pct(p) + ".");
   }
@@ -2866,12 +2927,12 @@ function describeRule(rule) {
   }
 
   /* ---------- stop lab ---------- */
-  var lab = null, labTargetEdited = false, labKey = "", labFromExample = false;
+  var lab = null, labTargetEdited = false, labRangeEdited = false, labKey = "", labFromExample = false;
   var LAB_EMPTY = '<p class="note">Load a trade file above and a bar file here to see how different stops would have done.</p>';
 
   (function () {
     var sel = $("lab-instrument");
-    addOption(sel, "auto", "From the files");
+    addOption(sel, "auto", "From your files");
     Object.keys(INSTRUMENTS).sort().forEach(function (k) {
       addOption(sel, k, k + " · tick " + INSTRUMENTS[k].tick + " · $" + INSTRUMENTS[k].point + "/pt");
     });
@@ -2943,17 +3004,29 @@ function describeRule(rule) {
     var filter = f ? { col: +f.slice(0, cut), value: f.slice(cut + 1) } : null;
     var entries = tradeEntries(t, filter);
     if (!entries.length) return stop("This trade file has no entry time, side and entry price for each trade, so it can't be replayed. thinkorswim statements are not supported yet.");
-    var pick = $("lab-instrument").value, root = pick !== "auto" ? pick : instrumentRoot(entries[0].symbol) || instrumentRoot(bars[0].symbol);
+    // The contract: from a symbol column, else from the file names (TradingView puts "NQ1!" in it).
+    var found = instrumentRoot(entries[0].symbol) || instrumentRoot(bars[0].symbol) || instrumentFromName(source.name) || instrumentFromName(lab.name);
+    $("lab-instrument").options[0].textContent = found ? "From your files: " + found : "Not in your files: pick one";
+    var pick = $("lab-instrument").value, root = pick !== "auto" ? pick : found;
     var spec = INSTRUMENTS[root];
-    if (!spec) return stop("Pick the instrument above, so the lab knows the tick size and dollars per point.");
+    if (!spec) return stop("Which contract are these trades in? Pick it under Contract above (NQ or MNQ, ES or MES, and so on), so the lab knows the tick size and dollars per point.");
     var aligned = alignEntries(entries, bars, p.barMs, spec.tick), m = aligned.matched.length;
-    if (m < 10) return stop("Only " + m + " of " + entries.length + " trades line up with these bars (entry time inside a bar, entry price inside its range). Check that the bar file covers the same dates and instrument.");
+    if (m < 10) return stop("Only " + m + " of " + entries.length + " trades line up with these bars (entry time inside a bar, entry price inside its range). Check that the bar file covers the same dates and contract." +
+      (source.platform === "TradingView" ? " TradingView's continuous contracts (such as NQ1!) are adjusted for contract rolls, so their prices sit above or below real contract prices, and the lab cannot match them yet." : ""));
 
     var ex = excursionSummary(aligned, bars, spec.tick);
     var key = source.name + "|" + f;
     if (key !== labKey) {
       labKey = key;
       if (!labTargetEdited && ex.winSizes.length) $("lab-target").value = Math.max(1, Math.round(quantile(ex.winSizes, 0.5)));
+      // Stops to try: from about a third of the stop used now to about two and a half times it,
+      // in roughly 15 steps, unless the trader set the range.
+      if (!labRangeEdited && ex.lossSizes.length) {
+        var usual = quantile(ex.lossSizes, 0.5), lo = Math.max(1, Math.round(usual * 0.3)), hi = Math.min(400, Math.max(lo + 4, Math.round(usual * 2.5)));
+        $("lab-from").value = lo;
+        $("lab-to").value = hi;
+        $("lab-step").value = Math.max(1, Math.round((hi - lo) / 15));
+      }
     }
     var from = labInt("lab-from", 1, 400, 4), to = labInt("lab-to", from, 400, Math.max(from, 40)), step = labInt("lab-step", 1, 100, 2);
     var stops = [];
@@ -2973,8 +3046,16 @@ function describeRule(rule) {
     var current = ex.lossSizes.length ? quantile(ex.lossSizes, 0.5) : NaN;
     var now = isFinite(current) ? rows.reduce(function (a, b) { return Math.abs(b.ticks - current) < Math.abs(a.ticks - current) ? b : a; }) : null;
     var lines = [];
-    lines.push('<p class="lead">Replayed ' + whole(m) + " of " + whole(entries.length) + " trades on " + whole(bars.length) + " bars" +
-      (aligned.shiftHours ? " (trade times shifted " + (aligned.shiftHours > 0 ? "+" : "") + aligned.shiftHours + " h to match the bars)" : "") + ".</p>");
+    // The answer first, in one sentence; the reasons follow.
+    var same = now && best.ticks === now.ticks;
+    lines.push('<p class="lead">' + (!(best.mean > 0) ? "No stop size made these trades profitable in the replay, so changing the stop alone will not fix this strategy."
+      : best.chance >= 0.95
+      ? (same ? "Keep your stop: about " + best.ticks + " ticks did best, and that holds up." : "Consider a " + best.ticks + "-tick stop: it did best, and that holds up after counting every size tried.")
+      : best.chance >= 0.5 ? "Keep your stop for now: a " + best.ticks + "-tick stop did best, but that is not proven yet."
+      : "Keep your stop: no stop size did better than luck would explain.") + "</p>");
+    lines.push("<p>Replayed " + whole(m) + " of " + whole(entries.length) + " trades on " + whole(bars.length) + " bars of " + root +
+      (aligned.shiftHours ? " (trade times shifted " + (aligned.shiftHours > 0 ? "+" : "") + aligned.shiftHours + " h to match the bars)" : "") +
+      ", with " + stops.length + " stop sizes from " + stops[0] + " to " + stops[stops.length - 1] + " ticks.</p>");
     if (isFinite(current)) {
       lines.push("<p>Your losing trades closed about <strong>" + Math.round(current) + " ticks</strong> against you, so that is roughly your stop now.</p>");
     }
@@ -2997,11 +3078,11 @@ function describeRule(rule) {
     lines.push("<p>" + verdict + "</p>");
     if (now && view && view.values) {
       lines.push("<p>At about your current stop (" + now.ticks + " ticks) the replay made " + money(now.mean, unit, 2, true) + " per trade; your file shows " +
-        money(view.stats.mean, view.unit, 2, true) + ". If those differ a lot, set the target and breakeven above to match how you actually trade.</p>");
+        money(view.stats.mean, view.unit, 2, true) + ". If those differ a lot, open Adjust the test and set the target and stop-to-entry to match how you actually trade.</p>");
     }
     out.innerHTML = lines.join("");
 
-    var html = "<thead><tr><th scope=\"col\">Stop</th><th scope=\"col\">Risk</th><th scope=\"col\">Win rate</th><th scope=\"col\">Avg / trade</th><th scope=\"col\">Net</th><th scope=\"col\">Max DD</th><th scope=\"col\">Edge real</th></tr></thead><tbody>";
+    var html = "<thead><tr><th scope=\"col\">Stop</th><th scope=\"col\">Risk</th><th scope=\"col\">Win rate</th><th scope=\"col\">Avg / trade</th><th scope=\"col\">Net</th><th scope=\"col\">Max DD</th><th scope=\"col\">Chance it's real</th></tr></thead><tbody>";
     rows.forEach(function (r) {
       var cls = (r === now ? "now " : "") + (r === best ? "best" : "");
       html += '<tr class="' + cls.trim() + '"><th scope="row">' + r.ticks + (r === now ? " · now" : "") + (r === best ? " · best" : "") + "</th>" +
@@ -3045,7 +3126,7 @@ function describeRule(rule) {
 
   function builderRule() {
     var entry = $("b-entry").value, pick = $("b-instrument").value, root = pick;
-    if (pick === "auto") root = lab && lab.parsed ? instrumentRoot(lab.parsed.bars[0].symbol) : "";
+    if (pick === "auto") root = lab && lab.parsed ? instrumentRoot(lab.parsed.bars[0].symbol) || instrumentFromName(lab.name) : "";
     var spec = INSTRUMENTS[root] || {};
     function int(id) { var v = $(id).value; return v === "" ? NaN : Math.round(+v); }
     return {
@@ -3173,7 +3254,7 @@ function describeRule(rule) {
       }
       if (hasView) group("Now in the check", [["cur", currentLabel()]]);
       if (saved.length) group("Saved strategies", saved.map(function (s) { return ["s:" + s.id, s.name]; }));
-      if (t) t.cols.filters.forEach(function (f) { group(f.name, f.values.map(function (v) { return [f.col + "|" + v, v]; })); });
+      if (t) t.cols.filters.forEach(function (f) { group(f.name, f.values.map(function (v, i) { return [f.col + "|" + v, f.labels[i]]; })); });
     });
     var all = Array.prototype.map.call($("compare-a").options, function (o) { return o.value; });
     function has(v) { return all.indexOf(v) >= 0; }
@@ -3197,9 +3278,10 @@ function describeRule(rule) {
     }
     var cut = value.indexOf("|");
     if (cut < 1 || mode !== "import" || !source || !source.table) return null;
-    var f = { col: +value.slice(0, cut), value: value.slice(cut + 1) };
+    var f = { col: +value.slice(0, cut), value: value.slice(cut + 1) }, name = f.value;
+    source.table.cols.filters.forEach(function (g) { if (g.col === f.col && g.values.indexOf(f.value) >= 0) name = g.labels[g.values.indexOf(f.value)]; });
     return {
-      kind: "group", col: f.col, name: f.value, values: tradesFor(source.table, f).values,
+      kind: "group", col: f.col, name: name, values: tradesFor(source.table, f).values,
       unit: view && view.unit ? view.unit : (source.platform || source.example ? "$" : ""), setups: setups()
     };
   }
@@ -3345,27 +3427,38 @@ function describeRule(rule) {
     function para(text, cls) { out.appendChild(Object.assign(document.createElement("p"), { className: cls || "", textContent: text })); }
     out.textContent = "";
     table.textContent = "";
-    var withTimes = view && view.values && view.times ? view.times.filter(function (x) { return Number.isFinite(x); }).length : 0;
-    if (!withTimes) { para("Import a trade file with trade times in the check above to see this. Pasted results and the quick check have no times.", "note"); return; }
-    var n = setups(), rep = timeSlices(view.values, view.times, timingBy, n, 5), u = view.unit, d = view.digits;
+    // Group by when each trade was opened, which is the time a trader chooses; fall back to the
+    // file's one time column.
+    function finite(list) { return list ? list.filter(function (x) { return Number.isFinite(x); }).length : 0; }
+    var byEntry = view && view.values && finite(view.entryTimes) === view.values.length;
+    var times = view && view.values ? (byEntry ? view.entryTimes : view.times) : null;
+    if (!finite(times)) {
+      $("timing-clock").textContent = "";
+      para("Import a trade file with trade times in the check above to see this. Pasted results and the quick check have no times.", "note");
+      return;
+    }
+    $("timing-clock").textContent = (byEntry ? "Trades are grouped by the time they were entered. " : "Trades are grouped by the time in your file (for most platforms, when the trade closed). ") +
+      "Hours are in your file's time zone, exactly as written in it. " +
+      (source && source.platform === "TradingView" ? "TradingView exports in the time zone set on your chart (the clock at its bottom right)." : "Most platforms export in the time zone set in the platform or on your computer.");
+    var n = setups(), rep = timeSlices(view.values, times, timingBy, n, 5), u = view.unit, d = view.digits;
     var scored = rep.rows.filter(function (r) { return isFinite(r.chance); });
-    var noun = timingBy === "hour" ? "hours" : "weekdays";
-    if (!scored.length) { para("No " + (timingBy === "hour" ? "hour" : "weekday") + " has 5 or more trades yet, so none can be judged.", "note"); }
+    var noun = timingBy === "hour" ? "hours" : "weekdays", one = timingBy === "hour" ? "hour" : "weekday";
+    if (!scored.length) { para("No " + one + " has 5 or more trades yet, so none can be judged.", "note"); }
     else {
       var best = scored.reduce(function (a, b) { return b.mean > a.mean ? b : a; });
       var worst = scored.reduce(function (a, b) { return b.mean < a.mean ? b : a; });
-      para("Best: " + sliceLabel(best.key) + ", " + money(best.mean, u, d, true) + " a trade over " + whole(best.n) + " trades.", "lead");
-      para("After counting the " + rep.slices + " " + noun + " with enough trades" + (n > 1 ? " and your " + n + " setups" : "") +
-        ", the chance that is a real edge is " + pct(best.chance) + ". " +
-        (best.chance >= 0.95 ? "That holds up." : best.chance >= 0.5 ? "Promising, not proven." : "That could easily be luck: don't trade only then because of this."));
+      para("Best " + one + ": " + sliceLabel(best.key) + ", " + money(best.mean, u, d, true) + " a trade over " + whole(best.n) + " trades.", "lead");
+      para("Some " + noun + " look great or terrible by luck alone, more so with few trades. Counting all " + rep.slices + " " + noun + " with 5 or more trades" +
+        (n > 1 ? " and your " + n + " setups" : "") + ", the chance " + sliceLabel(best.key) + "'s profits are a real edge and not luck is " + pct(best.chance) + ". " +
+        (best.chance >= 0.95 ? "That holds up." : best.chance >= 0.5 ? "Promising, not proven: keep trading the other " + noun + " too and check again later." : "That could easily be luck: don't trade only then because of this."));
       if (worst !== best && worst.mean < 0) {
-        para("Worst: " + sliceLabel(worst.key) + ", " + money(worst.mean, u, d, true) + " a trade over " + whole(worst.n) + " trades. The chance those losses are a real pattern is " +
-          pct(worst.lossChance) + (worst.lossChance >= 0.95 ? ": worth avoiding." : ", so cutting it may just remove noise."));
+        para("Worst " + one + ": " + sliceLabel(worst.key) + ", " + money(worst.mean, u, d, true) + " a trade over " + whole(worst.n) + " trades. The chance those losses are a real pattern is " +
+          pct(worst.lossChance) + (worst.lossChance >= 0.95 ? ": worth avoiding." : ". Below 95%, stopping trading then may only cut noise, and a lucky good hour may follow."));
       }
     }
     var maxAbs = rep.rows.reduce(function (m, r) { return Math.max(m, Math.abs(r.mean)); }, 0) || 1;
     var head = document.createElement("thead"), hr = document.createElement("tr");
-    [timingBy === "hour" ? "Hour" : "Day", "Trades", "Win rate", "Avg / trade", "Net", "Real, not luck"].forEach(function (h) {
+    [timingBy === "hour" ? "Hour" : "Day", "Trades", "Win rate", "Avg / trade", "Net", "Chance it's real"].forEach(function (h) {
       hr.appendChild(Object.assign(document.createElement("th"), { scope: "col", textContent: h }));
     });
     head.appendChild(hr);
@@ -3386,7 +3479,7 @@ function describeRule(rule) {
       tr.appendChild(avg);
       tr.appendChild(Object.assign(document.createElement("td"), { className: signClass(r.total), textContent: money(r.total, u, 0, true) }));
       var real = isFinite(r.chance) ? (r.mean >= 0 ? r.chance : r.lossChance) : NaN;
-      tr.appendChild(Object.assign(document.createElement("td"), { textContent: isFinite(real) ? pct(real) : "too few" }));
+      tr.appendChild(Object.assign(document.createElement("td"), { textContent: isFinite(real) ? pct(real) : "too few trades" }));
       body.appendChild(tr);
     });
     table.appendChild(body);
@@ -3412,10 +3505,18 @@ function describeRule(rule) {
       drawdown: $("prop-drawdown").value, dailyLoss: propNumber("prop-daily", 0, 0),
       dailyLossFails: $("prop-daily-mode").value === "fail", maxDays: Math.round(propNumber("prop-days", 0, 0))
     };
-    var perDay = tradesPerDay(view.times);
-    $("prop-perday-note").textContent = perDay.length
-      ? "Using your file's real days: " + perDay.length + " trading days, " + (view.values.length / perDay.length).toFixed(1) + " trades a day on average."
-      : "Your trades have no dates, so each day takes the trades per day above.";
+    // A file with dates sets the trades per day itself: each simulated day takes as many trades
+    // as one of the trader's real days. Only files without dates use the number typed in.
+    var perDay = tradesPerDay(view.times), input = $("prop-perday"), fromFile = perDay.length > 0;
+    if (fromFile && !input.disabled) input.dataset.own = input.value;
+    if (!fromFile && input.disabled && input.dataset.own) input.value = input.dataset.own;
+    input.disabled = fromFile;
+    if (fromFile) input.value = (view.values.length / perDay.length).toFixed(1);
+    $("prop-perday-label").textContent = fromFile ? "Trades per day (from your file)" : "Trades per day";
+    $("prop-perday-note").textContent = fromFile
+      ? "Trades per day comes from your file: each simulated day takes as many trades as one of your " + perDay.length + " real trading days (" +
+        (view.values.length / perDay.length).toFixed(1) + " a day on average), so busy and quiet days both happen."
+      : "Your trades have no dates, so each simulated day takes the number of trades above.";
     var opts = { runs: 5000, seed: 20261124, perDay: perDay, tradesPerDay: propNumber("prop-perday", 1, 3) };
     var real = simulateEvaluation(view.values, rules, opts);
     var none = simulateEvaluation(view.values, rules, Object.assign({}, opts, { zeroEdge: true }));
@@ -3570,7 +3671,11 @@ function describeRule(rule) {
   $("calc").addEventListener("change", function (ev) { if (ev.target.tagName === "SELECT" || ev.target.type === "checkbox") update(); });
   $("calc").addEventListener("submit", function (ev) { ev.preventDefault(); });
   ["lab-instrument", "lab-hold", "lab-from", "lab-to", "lab-step", "lab-target", "lab-be"].forEach(function (id) {
-    $(id).addEventListener("input", function () { if (id === "lab-target") labTargetEdited = true; runLab(); });
+    $(id).addEventListener("input", function () {
+      if (id === "lab-target") labTargetEdited = true;
+      if (id === "lab-from" || id === "lab-to" || id === "lab-step") labRangeEdited = true;
+      runLab();
+    });
   });
   $("load-bars").addEventListener("click", loadExampleBars);
   $("in-bars").addEventListener("change", function () { readBarsFile(this.files && this.files[0]); this.value = ""; });
