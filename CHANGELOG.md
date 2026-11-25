@@ -82,6 +82,14 @@ All notable changes are listed here. The format follows
   the gambler's ruin formulas and hand-worked cases.
 - "Save as PDF" on the website: a one-page report of the verdict and breakdown, with the
   equity chart, the data used and the date.
+- Stop lab lines up TradingView trades from continuous contracts (such as `NQ1!`): their
+  prices are adjusted at each roll, so they sit a fixed gap away from real contract prices,
+  and each trade can be stamped a chart bar before it filled. The lab searches minute shifts
+  and finds the gap for each stretch between rolls, then replays the trades on real prices;
+  every move, and so every result, is unchanged. It says what it corrected, and says plainly
+  when the trades and the bars cover different dates. `tests/test_site_lab.py` disguises the
+  example's 151 trades this way and checks that the shift and both gaps are recovered and
+  the replay is identical, and that unrelated trades are never forced to line up.
 - Website made easier to read, after a review by its first user:
   - Stop lab: the contract is read from the file names (TradingView's `MNQ1!`, a bar file
     called `ES.csv`); the stops tried, the target and the hold time start from the trader's

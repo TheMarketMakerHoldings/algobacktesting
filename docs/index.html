@@ -1961,11 +1961,84 @@ function alignEntries(entries, bars, barMs, tick) {
       var exitT = (useUtc ? e.exit.utc : e.exit.clock) + h * 3600000;
       matched.push({ trade: e, index: i, entryTime: t, exitTime: exitT, atOpen: t === times[i] && Math.abs(e.entryPrice - b.o) < tick / 2 });
     });
-    if (!best || matched.length > best.matched.length) best = { shiftHours: h, matched: matched };
+    if (!best || matched.length > best.matched.length) best = { shiftHours: h, shiftMinutes: h * 60, matched: matched, offsets: [] };
   });
+  // Most trades did not line up: try the roll-adjusted search below, and keep it if it explains more.
+  if (best.matched.length < entries.length / 2) {
+    var adjusted = alignAdjusted(entries, bars, times, barMs, tick, useUtc);
+    if (adjusted && adjusted.matched.length > best.matched.length) best = adjusted;
+  }
+  best.matched.sort(function (a, b) { return a.entryTime - b.entryTime; });
   best.useUtc = useUtc;
   best.times = times;
   return best;
+}
+
+// Trades from a continuous contract adjusted for rolls (TradingView's NQ1!, for one) sit a
+// constant amount above or below real prices between two rolls, and a platform may stamp each
+// trade one chart bar before it filled. So: try every shift of whole minutes up to 13 hours;
+// at each, walk the trades in time order and keep runs of at least 3 in which one price gap fits
+// every entry inside its bar. The shift that explains the most trades wins; then the one that
+// needs the fewest different gaps (a gap changes only at a roll); then the one that puts the most
+// entries exactly at their bar's open, where a strategy's market orders fill (when entries are at
+// the open, the minute before also fits, as a bar opens where the last one closed); then the
+// smallest shift. Accepted only when it explains at least 60% of the trades.
+function offsetRuns(list, bars, times, barMs, tick, useUtc, shiftMs) {
+  var runs = [], cur = null;
+  list.forEach(function (e) {
+    var t = (useUtc ? e.entry.utc : e.entry.clock) + shiftMs, i = barAt(times, t, barMs);
+    if (i < 0) return; // no bar at that time: skip the trade, keep the run
+    var lo = e.entryPrice - bars[i].h - tick / 2, hi = e.entryPrice - bars[i].l + tick / 2, item = { e: e, i: i, t: t };
+    if (cur && Math.max(cur.lo, lo) <= Math.min(cur.hi, hi)) {
+      cur.lo = Math.max(cur.lo, lo);
+      cur.hi = Math.min(cur.hi, hi);
+      cur.items.push(item);
+    } else {
+      cur = { lo: lo, hi: hi, items: [item] };
+      runs.push(cur);
+    }
+  });
+  return runs.filter(function (r) { return r.items.length >= 3; }).map(function (r) {
+    // The gap: a whole number of ticks inside the range that fits every entry, else its middle.
+    var mid = (r.lo + r.hi) / 2, gap = Math.round(mid / tick) * tick;
+    r.gap = gap >= r.lo && gap <= r.hi ? gap : mid;
+    r.atOpen = r.items.filter(function (it) { return it.t === times[it.i] && Math.abs(it.e.entryPrice - r.gap - bars[it.i].o) < tick / 2; }).length;
+    return r;
+  });
+}
+
+function alignAdjusted(entries, bars, times, barMs, tick, useUtc) {
+  var list = entries.filter(function (e) { return isFinite(useUtc ? e.entry.utc : e.entry.clock) && isFinite(e.entryPrice); })
+    .sort(function (a, b) { return (useUtc ? a.entry.utc - b.entry.utc : a.entry.clock - b.entry.clock); });
+  if (list.length < 3) return null;
+  // Search on up to 150 trades spread over the file, then line up all of them at the best shift.
+  var sample = list.length <= 150 ? list : list.filter(function (e, k) { return k % Math.ceil(list.length / 150) === 0; });
+  function better(a, b) {
+    return a.n !== b.n ? a.n > b.n : a.runs !== b.runs ? a.runs < b.runs : a.open !== b.open ? a.open > b.open : Math.abs(a.m) < Math.abs(b.m);
+  }
+  var best = null;
+  for (var m = -780; m <= 780; m++) {
+    var runs = offsetRuns(sample, bars, times, barMs, tick, useUtc, m * 60000);
+    var sc = runs.reduce(function (s, r) { s.n += r.items.length; s.open += r.atOpen; return s; }, { n: 0, open: 0, runs: runs.length, m: m });
+    if (!best || better(sc, best)) best = sc;
+  }
+  var shiftMs = best.m * 60000, runs = offsetRuns(list, bars, times, barMs, tick, useUtc, shiftMs), matched = [];
+  runs.forEach(function (r) {
+    r.items.forEach(function (it) {
+      var e = it.e, b = bars[it.i];
+      // The same trade on real prices: entry and exit moved by the gap, so every move is unchanged.
+      var real = Object.assign({}, e, { entryPrice: e.entryPrice - r.gap, exitPrice: e.exitPrice - r.gap });
+      matched.push({
+        trade: real, index: it.i, entryTime: it.t, exitTime: (useUtc ? e.exit.utc : e.exit.clock) + shiftMs,
+        atOpen: it.t === times[it.i] && Math.abs(real.entryPrice - b.o) < tick / 2
+      });
+    });
+  });
+  if (matched.length < list.length * 0.6) return null;
+  return {
+    shiftHours: best.m / 60, shiftMinutes: best.m, matched: matched, adjusted: true,
+    offsets: runs.map(function (r) { return { gap: r.gap, n: r.items.length, first: r.items[0].t, last: r.items[r.items.length - 1].t }; })
+  };
 }
 
 // One trade under a bracket, in points (positive = profit). From the entry bar on, a bar that
@@ -3011,8 +3084,15 @@ function describeRule(rule) {
     var spec = INSTRUMENTS[root];
     if (!spec) return stop("Which contract are these trades in? Pick it under Contract above (NQ or MNQ, ES or MES, and so on), so the lab knows the tick size and dollars per point.");
     var aligned = alignEntries(entries, bars, p.barMs, spec.tick), m = aligned.matched.length;
-    if (m < 10) return stop("Only " + m + " of " + entries.length + " trades line up with these bars (entry time inside a bar, entry price inside its range). Check that the bar file covers the same dates and contract." +
-      (source.platform === "TradingView" ? " TradingView's continuous contracts (such as NQ1!) are adjusted for contract rolls, so their prices sit above or below real contract prices, and the lab cannot match them yet." : ""));
+    if (m < 10) {
+      // Say why: most often the two files cover different dates.
+      var clocks = entries.map(function (e) { return e.entry.clock; }).filter(function (x) { return isFinite(x); });
+      var tFirst = Math.min.apply(null, clocks), tLast = Math.max.apply(null, clocks);
+      var apart = clocks.length && (tLast < bars[0].clock || tFirst > bars[bars.length - 1].clock);
+      return stop("Only " + m + " of " + entries.length + " trades line up with these bars. " + (apart
+        ? "Your trades run from " + date(tFirst) + " to " + date(tLast) + ", but the bars cover " + date(bars[0].clock) + " to " + date(bars[bars.length - 1].clock) + ": load bars for the same dates."
+        : "Check that the bar file is the same contract and covers the same dates. The lab also looks for trades stamped a few minutes off and for continuous-contract prices shifted at each roll, and found neither here."));
+    }
 
     var ex = excursionSummary(aligned, bars, spec.tick);
     var key = source.name + "|" + f;
@@ -3053,9 +3133,21 @@ function describeRule(rule) {
       ? (same ? "Keep your stop: about " + best.ticks + " ticks did best, and that holds up." : "Consider a " + best.ticks + "-tick stop: it did best, and that holds up after counting every size tried.")
       : best.chance >= 0.5 ? "Keep your stop for now: a " + best.ticks + "-tick stop did best, but that is not proven yet."
       : "Keep your stop: no stop size did better than luck would explain.") + "</p>");
+    function shiftText(min) {
+      var a = Math.abs(min), h = Math.floor(a / 60), mm = a % 60;
+      return (min > 0 ? "+" : "−") + (h ? h + " h" : "") + (h && mm ? " " : "") + (mm ? mm + " min" : "");
+    }
     lines.push("<p>Replayed " + whole(m) + " of " + whole(entries.length) + " trades on " + whole(bars.length) + " bars of " + root +
-      (aligned.shiftHours ? " (trade times shifted " + (aligned.shiftHours > 0 ? "+" : "") + aligned.shiftHours + " h to match the bars)" : "") +
+      (aligned.shiftMinutes ? " (trade times shifted " + shiftText(aligned.shiftMinutes) + " to match the bars)" : "") +
       ", with " + stops.length + " stop sizes from " + stops[0] + " to " + stops[stops.length - 1] + " ticks.</p>");
+    if (aligned.adjusted) {
+      // Continuous-contract prices (TradingView's NQ1!, for one) sit a fixed amount off real prices
+      // between rolls. Every price was moved by that amount, so every move, and every result, is unchanged.
+      var gaps = aligned.offsets.filter(function (o) { return Math.abs(o.gap) >= spec.tick; });
+      lines.push("<p>Your trade prices are from a continuous contract adjusted for rolls, so they sit a fixed amount away from real prices. The lab found the gap and replayed each trade on real prices" +
+        (gaps.length ? ": " + gaps.slice(0, 4).map(function (o) { return num(o.gap, 2) + " points from " + date(o.first) + " to " + date(o.last); }).join("; ") : "") +
+        ". Moving every price by the same amount leaves every move, and so every result, unchanged.</p>");
+    }
     if (isFinite(current)) {
       lines.push("<p>Your losing trades closed about <strong>" + Math.round(current) + " ticks</strong> against you, so that is roughly your stop now.</p>");
     }

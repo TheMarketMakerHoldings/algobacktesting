@@ -29,6 +29,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -220,6 +221,23 @@ ALIGN.extend(
         },
     ]
 )
+# Roll-adjusted prices (TradingView's continuous contracts): a constant gap above real prices
+# before and after the September roll. Values are whole ticks, as real roll gaps are.
+ROLL_GAPS = (506.25, 300.5)
+# Trades that have nothing to do with the bars: random times in the example's sessions and
+# random prices near its level. No alignment may be claimed for them.
+_NOISE_RNG = np.random.default_rng(2460555)
+
+
+def _noise_trade(k: int) -> list[float]:
+    minute = int(30 + _NOISE_RNG.integers(0, 29))
+    clock = calendar.timegm((2026, 6 + k // 22, 1 + k % 22, 9, minute, 0)) * 1000
+    price = float(5900 + _NOISE_RNG.integers(-400, 400) * 0.25 + 900)
+    return [clock, price, 1 if _NOISE_RNG.random() < 0.5 else -1]
+
+
+NOISE = [_noise_trade(k) for k in range(60)]
+
 # File names a trader might have, and the contract the lab should read from them.
 NAMES = [
     ("NQ_Topstep_Pro_CME_MINI_NQ1!_2026-06-27_355f6.csv", "NQ"),
@@ -278,6 +296,8 @@ def js() -> dict[str, Any]:
         ],
         "roots": [r[0] for r in ROOTS],
         "names": [n[0] for n in NAMES],
+        "gaps": list(ROLL_GAPS),
+        "noise": NOISE,
         "wide": WIDE,
     }
     with tempfile.TemporaryDirectory() as tmp:
@@ -352,3 +372,22 @@ def test_wide_and_quoted_bar_files(js: dict[str, Any]) -> None:
         [nine_thirty + 60_000, nine_thirty + 60_000 + five_hours, 6000.5, 6002, 6000.25, 6001.75],
     ]
     assert js["wide"][1] is None
+
+
+def test_roll_adjusted_trades_line_up(js: dict[str, Any]) -> None:
+    r = js["rolled"]
+    assert r["plain"] == {"adjusted": False, "matched": 151}  # real prices: the plain match
+    # Shifted 15 minutes early and priced above the bars: the search finds both.
+    assert r["adjusted"] is True
+    assert r["shiftMinutes"] == 15
+    assert r["matched"] == r["entries"] == 151
+    assert r["atOpen"] == 151  # every entry back at its bar's open, where it filled
+    assert [g for g, _ in r["offsets"]] == list(ROLL_GAPS)
+    assert sum(n for _, n in r["offsets"]) == 151
+    # Moving every price by the same gap leaves every move unchanged, so the replay at each
+    # stop size gives exactly the same results as the real-price trades.
+    assert r["after"] == r["before"]
+
+
+def test_unrelated_trades_are_not_forced_to_line_up(js: dict[str, Any]) -> None:
+    assert js["rolled"]["noise"] == {"adjusted": False, "matched": 0}

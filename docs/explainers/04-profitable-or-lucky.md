@@ -101,6 +101,14 @@ The rules, all stated on the page:
 - **Stops and targets fill at their exact price.** Real fills can be worse.
 - **Trades and bars are lined up by time.** If the two files use different clocks, the lab
   tries whole-hour shifts and keeps the one where most entry prices fall inside their bar.
+- **Continuous-contract prices are corrected.** TradingView's `NQ1!` and similar series are
+  adjusted at each roll, so between two rolls every price sits the same number of points away
+  from the real contract. When most trades don't line up, the lab tries every shift of whole
+  minutes and, walking the trades in time order, keeps the stretches where one gap fits every
+  entry. The shift explaining the most trades wins, then the one needing the fewest gaps. Each
+  trade is then replayed on real prices; moving entry and exit by the same gap changes no move,
+  so no result changes. On one real export, 59 of 59 trades lined up with gaps of 507, 289.5
+  and about 0 points, which change exactly at the March and June rolls.
 
 **The search counts.** Comparing 19 stop sizes and keeping the best is itself a search,
 just like trying 19 setups. So the lab scores each size as one of (setups tried × stop
