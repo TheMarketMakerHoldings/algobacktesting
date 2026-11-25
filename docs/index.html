@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <meta name="referrer" content="no-referrer">
-<title>Are you profitable, or just lucky? · algobacktesting</title>
+<title>Is your trading edge real, or luck? · algobacktesting</title>
 <meta name="description" content="Free trading strategy check. Import your trades from TopstepX, Quantower, NinjaTrader or thinkorswim and see the chance your edge is real, after counting every setup you tried. Runs in your browser; nothing is uploaded.">
 <link rel="canonical" href="https://algobacktesting.com/">
 <meta name="theme-color" content="#5f6f7e">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="algobacktesting">
 <meta property="og:url" content="https://algobacktesting.com/">
-<meta property="og:title" content="Are you profitable, or just lucky?">
+<meta property="og:title" content="Is your trading edge real, or luck?">
 <meta property="og:description" content="Import a strategy's trades and see how likely it is that its edge is real, and how many more trades it would take to prove it.">
 <meta property="og:image" content="https://algobacktesting.com/social-card.png">
 <meta property="og:image:width" content="1200">
@@ -114,15 +114,24 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .lede { font-size: clamp(1.05rem, 1.6vw, 1.2rem); font-weight: 500; color: var(--ink); max-width: 34em; }
 .lede + .lede { margin-top: 14px; color: var(--ink-2); font-weight: 400; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
-.orb { position: relative; aspect-ratio: 1; width: min(100%, 520px); justify-self: center; border-radius: 50%; background: radial-gradient(circle at 30% 25%, #ffffff 0%, #f2fbf8 45%, #d4f5ec 72%, #9eead6 100%); box-shadow: 0 30px 80px rgba(23, 128, 106, 0.18); display: grid; place-items: center; }
-.orb svg { width: 78%; height: auto; }
-.orb-label { position: absolute; left: 50%; bottom: 12%; transform: translateX(-50%); font: 600 12px/1.3 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); white-space: nowrap; }
+/* The hero's sample: a real result, worked out live from the example file */
+.sample { margin: 0; justify-self: center; width: min(100%, 480px); padding: 22px; background: var(--white); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 14px 40px rgba(35, 36, 58, 0.08); display: flex; flex-direction: column; gap: 14px; }
+.sample-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+.sample-nums { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 10px; align-items: end; }
+.sample-nums > div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sample-nums b { font: 400 1.7rem/1.1 var(--serif); color: var(--navy); font-variant-numeric: tabular-nums; }
+.sample-chart { display: block; width: 100%; height: 130px; }
+.sample-chart .zero { stroke: var(--line-2); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.sample-chart .you { stroke-width: 2.5; vector-effect: non-scaling-stroke; }
+.sample-chart .luck { stroke-width: 2; vector-effect: non-scaling-stroke; }
+.hero .eyebrow { margin-bottom: 18px; }
 
 /* Facts strip */
 .facts { background: var(--warm); }
-.facts .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding-top: 36px; padding-bottom: 36px; }
-.fact b { display: block; font: 400 1.6rem/1.2 var(--serif); color: var(--navy); margin-bottom: 6px; }
-.fact span { font-size: 15px; color: var(--ink-2); }
+.facts .wrap { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; padding-top: 36px; padding-bottom: 36px; }
+.fact b { display: block; font: 400 1.35rem/1.2 var(--serif); color: var(--navy); margin-bottom: 6px; }
+.fact span { font-size: 14.5px; color: var(--ink-2); }
+.fact a { display: inline-block; margin-top: 6px; font-weight: 600; color: var(--teal-ink); }
 
 /* Section headings */
 .section { padding: clamp(56px, 8vw, 96px) 0; }
@@ -384,7 +393,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
   .lab-inputs { border-right: 0; border-bottom: 1px solid var(--line); }
   .cards { grid-template-columns: minmax(0, 1fr); }
   .footer .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .orb { width: min(100%, 400px); }
+  .facts .wrap { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 720px) {
   .topbar .wrap { padding-top: 10px; padding-bottom: 10px; }
@@ -414,9 +423,7 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
       <a href="#compare">Compare</a>
       <a href="#lab">Stop lab</a>
       <a href="#builder">Builder</a>
-      <a href="#how">How it works</a>
-      <a href="#export">Export help</a>
-      <a href="#developers">Developers</a>
+      <a href="#questions">Questions</a>
     </nav>
   </div>
 </header>
@@ -425,32 +432,36 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
   <section class="hero">
     <div class="wrap">
       <div>
-        <h1>Are you profitable, <em>or just lucky?</em></h1>
+        <span class="eyebrow">Backtest and trade-record check · open source</span>
+        <h1>Is your trading edge real, <em>or luck?</em></h1>
         <div class="dots" aria-hidden="true"></div>
-        <p class="lede">A winning streak can be luck, especially after trying a few setups. Load the trades of one strategy and see the chance its edge is real, once every setup you tried is counted.</p>
-        <p class="lede">Free, open source, and private: your trades are read in your browser and never uploaded.</p>
+        <p class="lede">Import one strategy's trades from TradingView, TopstepX, Quantower, NinjaTrader or thinkorswim. The check holds your results to what the luckiest of the strategies you tried would have made with no edge at all, using the Deflated Sharpe Ratio (Bailey and López de Prado, 2014).</p>
+        <p class="lede">It runs in your browser. Your files are never uploaded, there is no sign-up, and there is nothing to buy.</p>
         <div class="actions">
           <a class="pill teal" href="#check">Check my trades</a>
-          <a class="pill line" href="#how">How it works</a>
+          <a class="pill line" href="#how">See the method</a>
         </div>
       </div>
-      <div class="orb" aria-hidden="true">
-        <svg viewBox="0 0 400 260">
-          <line x1="20" y1="200" x2="380" y2="200" stroke="#c4c0b6" stroke-width="1.5"/>
-          <path d="M20 200 C 80 190, 120 150, 170 140 S 260 96, 380 70" fill="none" stroke="#1f9e80" stroke-width="3" stroke-dasharray="8 7"/>
-          <path d="M20 200 L 48 188 L 70 205 L 96 176 L 118 184 L 140 160 L 166 172 L 190 150 L 214 166 L 240 132 L 262 142 L 288 118 L 312 128 L 338 100 L 362 108 L 380 92" fill="none" stroke="#23243a" stroke-width="4" stroke-linejoin="round"/>
-          <circle cx="380" cy="92" r="9" fill="#17806a" stroke="#ffffff" stroke-width="4"/>
-        </svg>
-        <span class="orb-label">Your results against luck alone</span>
-      </div>
+      <figure class="sample" aria-labelledby="sample-cap">
+        <div class="sample-head"><span class="k">Sample result</span><span class="sub">from the page's made-up example file</span></div>
+        <div class="state idle" id="hs-verdict">Working it out</div>
+        <div class="sample-nums">
+          <div><span class="k">Chance the edge is real</span><b id="hs-prob">&ndash;</b></div>
+          <div><span class="k">Trades</span><b id="hs-trades">&ndash;</b></div>
+          <div><span class="k">Net after fees</span><b id="hs-net">&ndash;</b></div>
+        </div>
+        <svg class="sample-chart" id="hs-chart" viewBox="0 0 400 130" preserveAspectRatio="none" role="img" aria-label="Sample running profit against luck alone"></svg>
+        <figcaption id="sample-cap" class="note">Solid line: the example strategy's running profit. Dashed: what the best of its 5 setups would typically have made by luck alone. Worked out live by the same code that checks your file.</figcaption>
+      </figure>
     </div>
   </section>
 
-  <section class="facts" aria-label="At a glance">
+  <section class="facts" aria-label="Why you can check this">
     <div class="wrap">
-      <div class="fact"><b>Private by design</b><span>Your files are read on your device. The page is locked so it cannot send data to any other site.</span></div>
-      <div class="fact"><b>Peer-reviewed math</b><span>The Probabilistic and Deflated Sharpe Ratio of Bailey and López de Prado, with every published example reproduced.</span></div>
-      <div class="fact"><b>Built for futures traders</b><span>Reads TopstepX, Quantower, NinjaTrader and thinkorswim exports, fees and breakevens included.</span></div>
+      <div class="fact"><b>Reproduces the papers</b><span>Every worked example in Bailey and López de Prado (2012, 2014) and Bailey et al. (2017) reproduces to the printed precision. <a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/paper/verification-report.md">Verification report</a></span></div>
+      <div class="fact"><b>Open source, tested</b><span>MIT licence. Over 250 automated tests run on every change, including this page's math against the Python library. <a href="https://github.com/TheMarketMakerHoldings/algobacktesting">Code on GitHub</a></span></div>
+      <div class="fact"><b>Private by construction</b><span>Files are read on your device, and the page's security policy blocks it from sending data to any other site. <a href="#questions">How privacy works</a></span></div>
+      <div class="fact"><b>Independent</b><span>Built by Daniel Heidary as an open research tool. No accounts, no ads, nothing for sale. Statistics about past results, not advice.</span></div>
     </div>
   </section>
 
@@ -946,8 +957,10 @@ pre { margin: 0; padding: 18px 20px; overflow-x: auto; border-radius: 14px; back
         <li><a href="#compare">Compare strategies</a></li>
         <li><a href="#lab">Stop lab</a></li>
         <li><a href="#builder">Strategy builder</a></li>
+        <li><a href="#how">How it works</a></li>
         <li><a href="#export">Export help</a></li>
         <li><a href="#questions">Questions</a></li>
+        <li><a href="#developers">Python library</a></li>
       </ul></nav>
       <nav aria-labelledby="f-research"><h2 id="f-research">Research</h2><ul>
         <li><a href="https://github.com/TheMarketMakerHoldings/algobacktesting/blob/main/docs/paper/verification-report.md">Verification report</a></li>
@@ -3996,6 +4009,29 @@ function describeRule(rule) {
     update();
   }
 
+  /* ---------- the hero's sample result ---------- */
+  // Worked out once, from the example file, by the same code that checks a trader's file; it
+  // never shows the trader's own trades.
+  function heroSample() {
+    var v = view;
+    if (!v || !v.values) return;
+    var prob = edgeProbability(v.stats, v.trades, v.setups), sum = tradeSummary(v.values, v.before), state = $("hs-verdict");
+    state.className = "state " + (!(v.stats.mean > 0) ? "fail" : prob >= 0.95 ? "pass" : prob >= 0.5 ? "wait" : "fail");
+    state.textContent = !(v.stats.mean > 0) ? "Losing money" : prob >= 0.95 ? "Hard to explain by luck" : prob >= 0.5 ? "Promising, not proven" : "Could be luck";
+    $("hs-prob").textContent = pct(prob);
+    $("hs-trades").textContent = whole(v.trades);
+    $("hs-net").textContent = money(sum.total, v.unit, 0, true);
+    var n = v.values.length, eq = [0], luck = [0, 0], i;
+    for (i = 0; i < n; i++) eq.push(eq[i] + v.values[i]);
+    for (i = 2; i <= n; i++) luck.push(i * luckPerTrade(v.stats, i, v.setups));
+    var lo = Math.min(0, Math.min.apply(null, eq), Math.min.apply(null, luck)), hi = Math.max(Math.max.apply(null, eq), Math.max.apply(null, luck));
+    if (hi === lo) hi = lo + 1;
+    function x(k) { return (k / n * 400).toFixed(1); }
+    function y(val) { return (8 + (hi - val) / (hi - lo) * 114).toFixed(1); }
+    function path(list, from) { var d = ""; for (var k = from; k <= n; k++) d += (d ? "L" : "M") + x(k) + " " + y(list[k]); return d; }
+    $("hs-chart").innerHTML = '<line class="zero" x1="0" x2="400" y1="' + y(0) + '" y2="' + y(0) + '"/><path class="luck" d="' + path(luck, 2) + '"/><path class="you" d="' + path(eq, 0) + '"/>';
+  }
+
   /* ---------- shareable links ---------- */
   function shareResult() {
     if (!view) return null;
@@ -4211,6 +4247,7 @@ function describeRule(rule) {
   loadSaved();
   renderSaved();
   loadText($("example-csv").textContent.trim(), "example-trades.csv", true);
+  heroSample();
   openShared(location.hash);
 })();
 </script>
